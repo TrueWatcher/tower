@@ -1,0 +1,44 @@
+License
+
+Copyright (C) 2019 Alexander Roshchin
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
+-----------------------------------
+
+Third-party materials
+
+===== LeafletJS javacsript library code =====
+https://leafletjs.com
+https://github.com/Leaflet/Leaflet
+Copyright (c) 2010-2019, Vladimir Agafonkin
+Copyright (c) 2010-2011, CloudMade
+License: BSD 2-Clause "Simplified" License
+
+===== OpenStreetMap map tiles =====
+https://www.openstreetmap.org
+© OpenStreetMap contributors
+License: Creative Commons Attribution-ShareAlike 2.0
+
+===== Google Maps map data =====
+© 2019 Google and its data providers
+Terms of use: https://www.google.com/permissions/geoguidelines/
+
+===== Yandex Maps API, javascript code and map data =====
+https://tech.yandex.com/maps/commercial/
+https://tech.yandex.com/maps/jsapi/doc/2.1/terms/index-docpage/
+© 2015–2019  YANDEX LLC
+Terms of use: https://yandex.ru/legal/maps_termsofuse/
+
+===== Yandex Locator API and cell location data =====
+https://yandex.ru/dev/locator/
+© 2015–2019  YANDEX LLC
+Terms of use: https://yandex.ru/legal/locator_api/?lang=en
+
+===== mylnikov.org API and cell location data =====
+https://www.mylnikov.org/
+© Alexander Mylnikov
+License: MIT

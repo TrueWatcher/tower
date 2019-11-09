@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.preference.PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android" >
+
+  <ListPreference
+      app:key="cellResolver"
+      app:title="@string/chooseCellResolver"
+      app:entries="@array/cellResolverArray"
+      app:entryValues="@array/cellResolverValues" />
+
+  <ListPreference
+      app:key="mapProvider"
+      app:title="@string/chooseMapProvider"
+      app:entries="@array/mapProviderArray"
+      app:entryValues="@array/mapProviderValues" />
+
+  <EditTextPreference
+      app:key="mapZoom"
+      app:title="@string/chooseMapZoom" />
+      <!-- android:inputType="number"
+      does not work in support.v7.preferences -->
+
+
+  <EditTextPreference
+      app:key="maxPoints"
+      app:title="@string/chooseMaxPoints" />
+
+  <SwitchPreferenceCompat
+      app:key="useTrash"
+      app:title="@string/useTrash" />
+
+</android.support.v7.preference.PreferenceScreen>

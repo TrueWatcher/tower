@@ -1,0 +1,23 @@
+<resources>
+
+    <string-array name="cellResolverArray">
+        <item>mylnikov.org</item>
+        <item>Yandex Locator</item>
+    </string-array>
+    <string-array name="cellResolverValues">
+        <item>mylnikov</item>
+        <item>yandex</item>
+    </string-array>
+    
+    <string-array name="mapProviderArray">
+        <item>OpenStreetMap map</item>
+        <item>Google hybrid</item>
+        <item>Yandex hybrid</item>
+    </string-array>
+    <string-array name="mapProviderValues">
+        <item>osm map</item>
+        <item>google hyb</item>
+        <item>yandex hyb</item>
+    </string-array>
+
+</resources>

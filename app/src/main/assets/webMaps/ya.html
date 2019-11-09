@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Yandex Map</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <script src="utils.js"></script>
+</head>
+
+<body style="margin: 0; padding:0;">
+  <p id="ind">Starting Yandex Map view...</p>
+  <div id="mapDiv" style="width: 600px; height: 400px; position: relative; margin: 0; padding:0;">
+    <div style="margin: 0; padding:0; position: absolute; top: 50%; left: 50%; margin-right: -50%; transform: translate(-50%, -50%); z-index:10;">
+      <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1.5em" height="1.5em" viewbox="0 0 13 13" >
+        <polyline fill="none" stroke="magenta" stroke-width="1" points="6,6 0,6 12,6 6,6 6,0 6,12 " />
+      </svg>
+    </div>
+  </div>
+<script>
+  function paramsBuilder(latlon,zoom,type) {
+    if ( ! latlon) throw new Error("Empty LATLON");
+    if (typeof latlon == "string") {
+      latlon=latlon.split(",");
+      if (latlon.length != 2) { throw new Error("Wrong LATLON string"); }
+      latlon=[ parseFloat(latlon[0]), parseFloat(latlon[1]) ];
+    }    
+    if ( ! latlon instanceof Array || latlon.length != 2 || Number(latlon[0]) !== latlon[0] ) {
+      throw new Error( "Wrong LATLON array("+latlon.length+","+(Number(latlon[0]) === latlon[0]) +") ");
+    }
+    if (zoom <= 1 || zoom > 25) throw new Error("Wrong ZOOM=".concat(zoom));
+    if (type.charAt(0) == "s") type="yandex#satellite";
+    else if (type.charAt(0) == "h") type="yandex#hybrid";
+    else type="yandex#map";
+    return params={zoom: zoom, center: latlon, type: type};
+  }
+  
+  function yainit() {
+    var params;
+    try {
+      params=paramsBuilder(yainit.latlon, yainit.zoom, yainit.mapType);
+    }
+    catch (e) { ind.fail(" params error: "+e); };
+    ind.say("Params:"+JSON.stringify(params)+",creating map ");
+    try {
+      myMap = new ymaps.Map("mapDiv", params);
+    }
+    catch (e) { ind.fail("API failed: "+e); return; };
+    drawNamelessMarker(myMap, yainit.namelessMarkerData, addMark);
+    ind.say("markers:"+JSbridge.getMarkers());
+    drawMarkers(myMap);
+    // if the map is moved, read the new center coords
+    myMap.events.add('actionend', function (e) { 
+      // https://tech.yandex.ru/maps/doc/jsapi/2.1/ref/reference/Map-docpage/#Map__events-summary
+      JSbridge.exportCenterLatLon(myMap.getCenter()[0], myMap.getCenter()[1]);
+      JSbridge.saveZoom(""+myMap.getZoom());
+    });
+    ind.hide();
+  }
+  
+  var ind=new wm.utils.Ind(document.getElementById("ind"));
+  var scrInfo=wm.utils.getScreenParams();
+  var mapDiv=document.getElementById("mapDiv");
+  var w=""+Math.min(scrInfo.width,1200);// no exact limit known
+  var h=""+Math.min(scrInfo.height-2*scrInfo.emPx,800);
+  mapDiv.style.width=w+"px";
+  mapDiv.style.height=h+"px";
+  
+  var ll="55.79038894644,37.7759262544";
+  var zoom=16;
+  var type="gps";
+  if (typeof JSbridge == "undefined") { 
+    ind.say("mock coords");
+    JSbridge=new wm.utils.MockJSbridge("yandex hyb",ind);
+  }
+  ll=JSbridge.importLatLon();
+  zoom=JSbridge.importZoom();
+  ind.say(ll+",z="+zoom);
+
+  yainit.latlon=ll;
+  yainit.zoom=zoom;
+  yainit.mapType="hyb";
+  yainit.namelessMarkerData=JSbridge.getNamelessMarker();
+  
+  var myMap = {};
+  var starter="https://api-maps.yandex.ru/2.1/?apikey="+JSbridge.getKey()+"&lang=en_RU";
+  ind.say("loading API");  
+  var apiScript=document.createElement("script");
+  apiScript.onerror=function() { ind.fail("failed to load API, is your network Ok? ") };
+  apiScript.onload=function() {
+    ind.say("Ok");
+    ymaps.ready(yainit);
+  };
+  document.head.appendChild(apiScript);
+  apiScript.src=starter;
+  // further initializations are inside yainit
+  
+  function addMark(oMap,markData) {
+    // [ pointType, lat, lon, text ]
+    var colors={ cell:"white", gps:"red", mark:"magenta" };
+    if ( ! markData || markData.length < 3) return;
+    if ( ! markData || ! markData[0]) return;
+    if ( ! colors[markData[0]]) ind.fail("Unknown marker type:"+markData[0]);
+    var color=colors[markData[0]];
+    var text="";
+    if (markData[3]) {
+      text=markData[3];
+    }
+    var center=[ parseFloat(markData[1]), parseFloat(markData[2]) ];
+    var props={};
+    var iconType="islands#circleDotIcon";
+    if (text) {
+      props.iconContent=text;
+      iconType="islands#stretchyIcon";
+    }  
+    var params={ preset:iconType, iconColor:color };
+    var m=new ymaps.Placemark(center, props, params);
+    oMap.geoObjects.add(m);
+  }
+  
+  function drawNamelessMarker(oMap, nmJson, addMark) {
+    //alert(nmJson);
+    if ( ! nmJson || nmJson.length < 3) return; 
+    var nm=JSON.parse(nmJson);
+    if ( ! nm || ! nm[0]) return;
+    nm[3]="";
+    drawNamelessMarker.marker=addMark(oMap,nm);
+  }
+  
+  function drawMarkers(map) { wm.utils.putMarkers(map, ind, JSbridge.getMarkers(), addMark); }
+  
+</script>    
+</body>
+</html>

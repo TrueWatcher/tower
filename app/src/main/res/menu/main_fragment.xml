@@ -1,0 +1,32 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="truewatcher.tower.MainActivity" >
+
+    <item
+        android:id="@+id/action_cell"
+        android:orderInCategory="1"
+        app:showAsAction="always"
+        android:title="@string/action_cell" />
+    
+    <item
+        android:id="@+id/action_gps"
+        android:orderInCategory="2"
+        app:showAsAction="always"
+        android:title="@string/action_gps" />
+    
+    <item
+        android:id="@+id/action_add"
+        android:orderInCategory="3"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_add"
+        android:icon="@drawable/ic_add_white_24dp" />
+    
+    <item
+        android:id="@+id/action_list"
+        android:orderInCategory="4"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_list"
+        android:icon="@drawable/ic_format_list_bulleted_white_24dp" />
+
+</menu>

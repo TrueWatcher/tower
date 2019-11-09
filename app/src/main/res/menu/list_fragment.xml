@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android" >
+  
+  <item android:id="@+id/action_map_from_list"
+        android:orderInCategory="1"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_map_white_24"
+        android:title="@string/action_map" />
+  
+  <item android:id="@+id/action_file"
+        android:orderInCategory="2"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_folder_open_white_24dp"
+        android:title="@string/action_file"/>
+    
+  <item android:id="@+id/action_sort_proximity"
+        android:orderInCategory="3"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_sort_proximity"/>
+        
+  <item android:id="@+id/action_sort_id"
+        android:orderInCategory="4"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_sort_id"/>
+  
+  <item android:id="@+id/action_sort_reverse_id"
+        android:orderInCategory="5"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_sort_reverse_id"/>
+  
+  <item android:id="@+id/action_renumber"
+        android:orderInCategory="6"
+        app:showAsAction="never"
+        android:title="@string/action_renumber"/>
+  
+  <item android:id="@+id/action_wipe"
+        android:orderInCategory="7"
+        app:showAsAction="never"
+        android:title="@string/action_wipe"/>
+
+</menu>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="truewatcher.tower"
+    android:versionCode="30"
+    android:versionName="2.0.8" >
+<!--
+1.3.0 22.01.2019 fixes and additions
+1.3.1 23.01.2019 layout improvements, minor refactoring
+1.3.2 24.01.2019 added adjustFont and DeeperRadioGroup
+1.3.3 27.01.2019 added EditTextDialogFragment, adjusted layout
+1.3.4 3.2.2019   improvements
+1.4.0 22.2.2019  improved StorageHelper, added SYM to csv fields
+1.5.0 24.2.2019  added FilesActivity and List-Files command
+1.5.1 25.2.2019  implemented File-Open and File-Export
+1.5.2 26.2.2019  improvements and fixes, implemented File-Load
+1.6.0 27.2.2019  bugfixes; implemented File-Delete
+1.7.0 1.3.2019   implemented GPX import-export, testing required
+1.7.1 7.3.2019   refactoring and FilesActivity improvements
+1.8.0 14.4.2019  added TestHelper and Tests1 activity
+1.8.1 24.4.2019  added basic file operations tests
+1.8.2 4.5.2019   added basic csv import tests, minor refactoring
+1.8.3 5.5.2019   added basic gpx tests, minor refactoring and improvements
+1.8.4 6.5.2019   added PointList tests, some refactoring
+1.8.5 12.5.2019  added document assets/tower_stateVars, minor cleanup
+1.8.6 13.5.2019  improvements
+1.8.7 14.5.2019  more tests
+2.0.0 27.10.2019 migrated from Eclipse to Android Studio, fixed emerging errors
+2.0.1 28.10.2019 formal improvements
+2.0.2 28.10.2019 app-refacor-migrate to AppCompat; made it compile!
+2.0.3 29.10.2019 fixed Preferences
+2.0.4 31.10.2019 Added LICENSES. Added vector menu icons
+2.0.5 1.11.2019  Added launcher icon, improved navigation
+2.0.6 3.11.2019 Visual improvements
+2.0.7 5.11.2019 composed readme.md with images
+2.0.8 8.11.2019 improvements
+2.0.9 9.11.2019 improved myRegistry, added 2 files to assets
+-->
+
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-feature android:name="android.hardware.location.gps" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher3"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".AddPointActivity" >
+        </activity>
+        <activity android:name=".ListActivity" >
+        </activity>
+        <activity android:name=".FileActivity" >
+        </activity>
+        <activity android:name=".EditPointActivity" >
+        </activity>
+        <activity android:name=".PreferencesActivity" >
+        </activity>
+        <activity android:name=".Tests1" android:exported="true">
+        </activity>
+    </application>
+
+</manifest>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+    <item android:id="@+id/action_go"
+        android:orderInCategory="1"
+        app:showAsAction="always"
+        android:title="@string/action_ok"
+        android:icon="@drawable/ic_check_white_24dp" />
+    
+    <item android:id="@+id/action_list_from_file"
+        android:orderInCategory="2"
+        app:showAsAction="always"
+        android:title="@string/action_back"
+        android:icon="@drawable/ic_chevron_left_white_24dp" />
+
+</menu>

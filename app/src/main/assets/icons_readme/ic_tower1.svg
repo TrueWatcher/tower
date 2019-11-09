@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="48px" height="48px" viewbox="0 0 47 47" >
+  <circle stroke="none" fill="#aaa" fill-opacity="0.7" cx='24' cy='24' r='31' />
+  
+  <circle stroke="red" stroke-width="1" cx='24' cy='5' r='4' />  <!--transform="translate(0 -19)"  fill="#aaa" -->  
+  <circle stroke="red" stroke-width="1" fill="black" cx='24' cy='5' r='4' transform="rotate(120, 24, 24)" />
+  <circle stroke="red" stroke-width="1" fill="black" cx='24' cy='5' r='4' transform="rotate(-120, 24, 24)" /> 
+  
+  <circle stroke="black" stroke-width="3" fill="none" cx='24' cy='24' r='17' />
+  <circle stroke="#aaa" stroke-width="3" fill="none" cx='24' cy='24' r='14' />
+  
+  <rect x="24" y="24" width="22" height="22" stroke="black" stroke-width="2" fill="none" transform="translate(-11, -11)" />
+  
+  <polygon fill="black" stroke="none" points="24,22 22,7 26,7" transform="rotate(45, 24, 24)" />
+  <polygon fill="black" stroke="none" points="24,22 22,7 26,7" transform="rotate(135, 24, 24)" />
+  <polygon fill="black" stroke="none" points="24,22 22,7 26,7" transform="rotate(-45, 24, 24)" />
+  <polygon fill="black" stroke="none" points="24,22 22,7 26,7" transform="rotate(-135, 24, 24)" />
+  
+  <rect x="24" y="24" width="10" height="10" stroke="#333" stroke-width="1" fill="none" transform="translate(-5, -5)" />
+  
+  <rect x="24" y="24" width="4" height="4" fill="#777" transform="translate(-2, -2)" />
+</svg>

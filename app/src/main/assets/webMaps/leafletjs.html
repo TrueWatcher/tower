@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>leafletjs</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <script src="utils.js"></script>
+  <link rel="stylesheet" type="text/css" href="leafletjs/leaflet.css" />
+  <script src="leafletjs/leaflet.js"></script>
+</head>
+
+<body style="margin: 0; padding:0;">
+  <p id="ind">Starting leafletjs view...</p>
+  <div id="mapDiv" style="width: 600px; height: 400px; position: relative; margin: 0; padding:0;">
+    <div style="margin: 0; padding:0; position: absolute; top: 50%; left: 50%; margin-right: -50%; transform: translate(-50%, -50%); z-index:990;">
+      <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1.5em" height="1.5em" viewbox="0 0 13 13" >
+        <polyline fill="none" stroke="magenta" stroke-width="1" points="6,6 0,6 12,6 6,6 6,0 6,12 " />
+      </svg>
+    </div>
+  </div>
+  
+<script>
+
+  var ind=new wm.utils.Ind(document.getElementById("ind"));
+  var scrInfo=wm.utils.getScreenParams();
+  //alert(scrInfo.width+"/"+scrInfo.height);
+  var mapDiv=document.getElementById("mapDiv");
+  var w=""+Math.min(scrInfo.width,1200);// no exact limit known
+  var h=""+Math.min(scrInfo.height-2*scrInfo.emPx, 800);
+  //alert(w+"/"+h);
+  mapDiv.style.width=w+"px";
+  mapDiv.style.height=h+"px";
+  
+  var ll="55.79038894644,37.7759262544";
+  var zoom=16;
+  var type="gps";
+  var mapProvider="not set";
+  if (typeof JSbridge == "undefined") { 
+    ind.say("mock coords");
+    JSbridge=new wm.utils.MockJSbridge("google sat",ind);//"google hyb"//"osm map"
+  }
+  ll=JSbridge.importLatLon();
+  zoom=JSbridge.importZoom();
+  mapProvider=JSbridge.importMapType();
+  ind.say(ll+",z="+zoom);
+  var lls=ll.split(",");
+  var lat=lls[0];
+  var lon=lls[1];
+  
+  var map;
+
+  function initmap() {
+    map = new L.Map('mapDiv');
+    map.setView(new L.LatLng(lat,lon),zoom);
+    drawNamelessMarker(map);
+    ind.say("markers:"+JSbridge.getMarkers());
+    drawMarkers(map);
+    map.addLayer(makeTileLayer(mapProvider));
+    map.on('moveend', function(e) {
+      JSbridge.exportCenterLatLon(""+map.getCenter().lat, ""+map.getCenter().lng);
+      JSbridge.saveZoom(""+map.getZoom());
+    } );
+  }
+  
+  function makeTileLayer(mapProvider) {
+    var l={};
+    var urls={
+      "osm map": 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      "google hyb": 'http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
+      "google sat": 'http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+    };
+    // lyrs= Hybrid: s,h; Satellite: s; Streets: m; Terrain: p;
+    // https://stackoverflow.com/questions/9394190/leaflet-map-api-with-google-satellite-layer
+    var attribs={
+      "osm": 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+      "google": 'Map data © <a href="https://maps.google.com">Google</a>',
+    }
+    var provider=mapProvider.split(" ")[0];
+    if (provider == "osm") {
+      l=new L.TileLayer(urls[mapProvider], { minZoom: 8, maxZoom: 19, attribution: attribs[provider] });
+    }
+    else if (provider == "google") {
+      l=new L.TileLayer(urls[mapProvider], { maxZoom: 20, attribution: attribs[provider], subdomains:['mt0','mt1','mt2','mt3'] });
+    }
+    else ind.fail("Unknown provider:"+mapProvider);
+    return l;
+  }
+  initmap();
+  
+  function addMark(oMap,type,lat,lon,text) {
+    if (type instanceof Array && type.length == 4) {
+      text=type[3];
+      lon=type[2];
+      lat=type[1];
+      type=type[0];
+    }
+    var colors={ cell:"white", gps:"red", mark:"magenta" };
+    var color=colors[type];
+    var center;
+    if ( lat && lon) {
+      center=[lat,lon];
+    }
+    else { center=oMap.getCenter(); }
+    var radius=scrInfo.emPx*0.5;
+    //alert(radius);
+    var params={ color: color, fillColor: color, fillOpacity: 0.3, radius: radius };
+    var circle = L.circleMarker(center, params).addTo(oMap);
+    if (text) circle.bindTooltip(text, {permanent: true, offset: [-5, 0]} ); direction: 'right'
+    return circle;
+  }
+  
+  function drawNamelessMarker(map) {
+    var nmJson=JSbridge.getNamelessMarker();
+    //alert(nmJson);
+    if ( ! nmJson || nmJson.length < 5) return; 
+    var nm=JSON.parse(nmJson);
+    if ( ! nm || ! nm[0]) return; 
+    drawNamelessMarker.marker=addMark(map,nm[0],nm[1],nm[2]);
+  }
+  
+  function drawMarkers(map) { wm.utils.putMarkers(map, ind, JSbridge.getMarkers(), addMark); }
+  
+  ind.hide();
+
+  
+</script>    
+</body>
+</html>

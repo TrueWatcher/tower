@@ -1,0 +1,50 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="truewatcher.tower.MainActivity" >
+
+    <item
+        android:id="@+id/action_map"
+        android:orderInCategory="1"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_map_white_24"
+        android:title="@string/action_map" />
+
+    <item
+        android:id="@+id/action_list"
+        android:orderInCategory="1"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_format_list_bulleted_white_24dp"
+        android:title="@string/action_list" />
+
+    <item
+        android:id="@+id/action_center"
+        android:orderInCategory="2"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_center"/>
+    
+    <item
+        android:id="@+id/action_protect"
+        android:orderInCategory="3"
+        app:showAsAction="never"
+        android:title="@string/action_protect"/>
+    
+    <item
+        android:id="@+id/action_comment"
+        android:orderInCategory="4"
+        app:showAsAction="never"
+        android:title="@string/action_comment"/>
+    
+    <item
+        android:id="@+id/action_delete"
+        android:orderInCategory="5"
+        app:showAsAction="never"
+        android:title="@string/action_delete"/>
+    
+    <item
+        android:id="@+id/action_coords"
+        android:orderInCategory="6"
+        app:showAsAction="never"
+        android:title="@string/action_coords"/>
+
+</menu>

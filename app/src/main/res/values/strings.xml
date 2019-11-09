@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">tower</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_cell">Cell</string>
+    <string name="action_gps">GPS</string>
+    <string name="action_add">Add</string>
+    <string name="action_list">List</string>
+    <string name="action_map">Map</string>
+    <string name="action_file">File</string>
+    <string name="action_go">Go</string>
+    <string name="action_ok">OK</string>
+    <string name="action_protect">Toggle protect</string>
+    <string name="action_comment">Edit comment</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_coords">Get coords</string>
+    <string name="action_sort_id">By ID</string>
+    <string name="action_sort_reverse_id">By ID, reverse</string>
+    <string name="action_sort_proximity">By proximity</string>
+    <string name="action_renumber">Renumber from 1</string>
+    <string name="action_wipe">Delete ALL points</string>
+    <string name="action_center">As center</string>
+    <string name="action_open">"Open"</string>
+    <string name="action_load">"Load"</string> 
+    <string name="action_export">"Export"</string>
+    <string name="action_back">"Back"</string>
+    <string name="rbMapCenter">Current map center</string>
+    <string name="rbWaypoint">New waypoint</string>
+    <string name="etComment">(comment)</string>
+    <string name="etNote">(add note)</string>
+    <string name="ckRemoveExported">remove exported points</string>
+    <string name="get">Get</string>
+    <string name="action_done">Done</string>
+    <string name="chooseCellResolver">Mobile cell info service</string>
+    <string name="chooseMapProvider">Map service</string>
+    <string name="chooseMapZoom">Map zoom level</string>
+    <string name="chooseMaxPoints">Max number of points</string>
+    <string name="useTrash">Save removed points to trash.csv</string>
+    <string name="are_you_sure">Are you sure ?</string>
+    <string name="action_cancel">Ops, never mind</string>
+    <string name="asCenter">"Use as center"</string>
+    <string name="date">"Date:"</string>
+    <string name="accuracy">"Accuracy:"</string>
+    <string name="altitude">"Altitude:"</string>
+    <string name="lock">"🔒"</string>
+    <string name="enter">"⏎"</string>
+    <string name="spDirCsv">"select file"</string>
+    <string name="etExportFile">"file name"</string>     
+</resources>
