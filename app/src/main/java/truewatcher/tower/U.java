@@ -13,6 +13,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -283,5 +284,20 @@ public abstract class U {
       return s;
     }
     return value;
+  }
+
+  public static boolean classExists(String className) {
+    // BuildConfig.class.getCanonicalName()
+    Class<?> objectClass;
+    try { objectClass=Class.forName(className); }
+    catch (ClassNotFoundException e) { return false; }
+    return true;
+  }
+
+  public static boolean classHasField(Class<?> classClass, String fieldName) {
+    Class<?> objectClass;
+    try { classClass.getField(fieldName); }
+    catch (NoSuchFieldException e) { return false; }
+    return true;
   }
 }

@@ -9,9 +9,9 @@ import android.util.Log;
 
 interface CellResolver {
   public String makeResolverUri(JSONObject celldata);
-  public String makeResolverData(JSONObject celldata);
+  public String makeResolverData(JSONObject celldata) throws U.DataException;
   public AsyncTask<String, Void, String> getRequestTask(HttpReceiver receiver);
-  public JSONObject getResolvedData(String response) throws Exception;
+  public JSONObject getResolvedData(String response) throws U.DataException;
 }
 
 public class CellResolverFactory {
@@ -42,19 +42,19 @@ public class CellResolverFactory {
     
     public AsyncTask<String, Void, String> getRequestTask(HttpReceiver receiver) { return new HttpGetRequest(receiver); }
     
-    public JSONObject getResolvedData(String response) throws Exception {
+    public JSONObject getResolvedData(String response) throws U.DataException {
       JSONObject rd=new JSONObject();
-      if (response == null || response.length() == 0) { throw new Exception("No response"); }
+      if (response == null || response.length() == 0) { throw new U.DataException("No response"); }
       try {
         rd=new JSONObject(response);
+        int respCode=rd.optInt("result");
+        if (respCode != 200) { throw new U.DataException("Resolver failure, code="+respCode); }
+        rd=rd.getJSONObject("data");
       }
-      catch (JSONException e) { throw new Exception("Unparseble response"); }
-      int respCode=rd.optInt("result");
-      if (respCode != 200) { throw new Exception("Resolver failure, code="+respCode); }
-      rd=rd.getJSONObject("data");
+      catch (JSONException e) { throw new U.DataException("Unparseble response"); }
       String lat=String.valueOf(rd.opt("lat"));
       String lon=String.valueOf(rd.opt("lon"));
-      if (lat.indexOf(".") < 0 || lon.indexOf(".") < 0) { throw new Exception("Wrong lat or lon:"+lat+"/"+lon); }
+      if (lat.indexOf(".") < 0 || lon.indexOf(".") < 0) { throw new U.DataException("Wrong lat or lon:"+lat+"/"+lon); }
       return rd;
     }
   }
@@ -65,9 +65,10 @@ public class CellResolverFactory {
       return "https://api.lbs.yandex.net/geolocation";
     }
     
-    public String makeResolverData(JSONObject cellData) {
+    public String makeResolverData(JSONObject cellData) throws U.DataException {
       String key=MyRegistry.getInstance().getScrambled("yandexLocatorKey");
       //Log.d(U.TAG, "CellResolverFactory"+"locator key:"+MyRegistry.getInstance().getScrambled("yandexLocatorKey"));
+      if (key.isEmpty()) throw new U.DataException("missing API key");
       String r="json={";
       r+="\"common\":{\"version\":\"1.0\", \"api_key\":\""+key+"\"}";
       r+=", ";
@@ -88,27 +89,27 @@ public class CellResolverFactory {
     
     public AsyncTask<String, Void, String> getRequestTask(HttpReceiver receiver) { return new HttpPostRequest(receiver); }
     
-    public JSONObject getResolvedData(String response) throws Exception {
+    public JSONObject getResolvedData(String response) throws U.DataException {
       JSONObject rd=new JSONObject();
       JSONObject res=new JSONObject();
-      if (response == null || response.length() == 0) { throw new Exception("No response"); }
+      if (response == null || response.length() == 0) { throw new U.DataException("No response"); }
       try {
         rd=new JSONObject(response);
+        String error=rd.optString("error");
+        if (error != "") { throw new U.DataException("Resolver failure, error="+error); }
+        rd=rd.getJSONObject("position");
       }
-      catch (JSONException e) { throw new Exception("Unparseble response"); }
-      String error=rd.optString("error");
-      if (error != "") { throw new Exception("Resolver failure, error="+error); }
-      rd=rd.getJSONObject("position");
+      catch (JSONException e) { throw new U.DataException("Unparseble response"); }
       String lat=String.valueOf(rd.opt("latitude"));
       String lon=String.valueOf(rd.opt("longitude"));
-      if (lat.indexOf(".") < 0 || lon.indexOf(".") < 0) { throw new Exception("Wrong lat or lon:"+lat+"/"+lon); }
+      if (lat.indexOf(".") < 0 || lon.indexOf(".") < 0) { throw new U.DataException("Wrong lat or lon:"+lat+"/"+lon); }
       String range=String.valueOf(rd.opt("precision"));
       try {
         res.put("lat",lat);
         res.put("lon",lon);
         if (range != "") res.put("range",range);
       }
-      catch (JSONException e) { throw new Exception("Unrecodable response"); }
+      catch (JSONException e) { throw new U.DataException("Unrecodable response"); }
       return res;
     }     
   }

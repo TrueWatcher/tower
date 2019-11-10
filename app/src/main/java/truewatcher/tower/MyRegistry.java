@@ -63,6 +63,8 @@ public class MyRegistry {
     int lHalf=(int) Math.floor(l/2.);
     char c;
     int sourceIndex,targetIndex;
+
+    if (l < 3) return new String(ca);
     for (int i=0; i < transpose.length; i+=1) {
       sourceIndex=transpose[i];
       if (sourceIndex >= lHalf) break;
@@ -109,7 +111,7 @@ public class MyRegistry {
   }
   
   private static String getDefaultsString() {
-    String defs="{\"cellResolver\":\"yandex\",\"mapProvider\":\"osm map\",\"mapZoom\":\"17\",\"maxPoints\":\"30\","
+    String defs="{\"cellResolver\":\"mylnikov\",\"mapProvider\":\"osm map\",\"mapZoom\":\"17\",\"maxPoints\":\"30\","
     + "\"useTrash\":\"false\",\"gpsAcceptableAccuracy\":\"8\",\"gpsMaxFixCount\":\"10\","
     + "\"myFile\":\"current.csv\","    
     + "\"yandexMapKey\":\"\", \"yandexLocatorKey\":\"\""
@@ -143,15 +145,28 @@ public class MyRegistry {
 
   private void syncSecret(Context context, String key, String assetFileName) {
     String s="";
-    if (sMap.get(key).length() < 3) {
+
+    if (sMap.get(key).length() > 3) return; // already synced
+    // look in BuildConfig
+    if (U.classHasField(BuildConfig.class, key)) {
       try {
-        s=U.readAsset(context, assetFileName).trim();
-        this.set(key,s);
+        this.set(key, Class.forName("BuildConfig").getField(key));
+        this.set(key, this.getScrambled(key));
         this.saveToShared(context, key);
+        return;
       }
-      catch (IOException e) {
-        Log.e(U.TAG, "MyRegistry:"+"Missing assets/"+assetFileName);
-      }
+      catch (ClassNotFoundException e) { throw new U.RunException("This should not happen 1"); }
+      catch (NoSuchFieldException e) { throw new U.RunException("This should not happen 2"); }
+    }
+
+    // look in assets
+    try {
+      s=U.readAsset(context, assetFileName).trim();
+      this.set(key,s);
+      this.saveToShared(context, key);
+    }
+    catch (IOException e) {
+      Log.w(U.TAG, "MyRegistry:"+"Missing assets/"+assetFileName);
     }
   }
 

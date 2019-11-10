@@ -59,7 +59,9 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
   }
   
   private void startResolveCell() {
-    
+    String resolverUri = "";
+    String reqData = "";
+
     try {
       cellData=new JSONObject(mPoint.cellData);
     }
@@ -69,9 +71,17 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
       mStatus="Wrong point.cellData";
       onPointavailable(mPoint);
     }
-    mCellResolver = CellResolverFactory.getResolver( MyRegistry.getInstance().get("cellResolver") );
-    String resolverUri=mCellResolver.makeResolverUri(cellData);
-    String reqData=mCellResolver.makeResolverData(cellData);
+    try {
+      mCellResolver = CellResolverFactory.getResolver(MyRegistry.getInstance().get("cellResolver"));
+      resolverUri = mCellResolver.makeResolverUri(cellData);
+      reqData = mCellResolver.makeResolverData(cellData);
+    }
+    catch (U.DataException e) {
+      Log.e(U.TAG,e.getMessage());
+      mStatus="Failure:"+e.getMessage();
+      onPointavailable(mPoint);
+      return;
+    }
     if (U.DEBUG) Log.i(U.TAG,"startResolveCell:"+"About to query "+resolverUri+"\n data="+reqData);
     AsyncTask<String, Void, String> req = mCellResolver.getRequestTask(this);
     req.execute(resolverUri,reqData);
@@ -89,7 +99,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
       String r=resolvedData.optString("range");
       if ( r != null && ! r.isEmpty()) mPoint.range=r;
     }
-    catch (Exception e) { 
+    catch (U.DataException e) {
       Log.e(U.TAG,e.getMessage());
       mStatus="failure:"+e.getMessage();
     }

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.tower"
-    android:versionCode="31"
-    android:versionName="2.0.9" >
+    android:versionCode="32"
+    android:versionName="2.0.10" >
 <!--
 2.0.9 31 9.11.2019 improved myRegistry, added 2 files to assets
+2.0.10 32 10.11.2019 added BuildConfig check
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

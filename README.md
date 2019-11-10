@@ -85,4 +85,9 @@ This distribution includes the _LeafletJS_ javacsript library code ver. 1.3.4 (h
 which has BSD 2-Clause "Simplified" License
 
 This program uses several web APIs and loads data and javascript code, details and references are included in the LICENSES file.
+
+## API keys
+
+The keys for web services are not included in this repo, so, if you build from it directly, some features will not work. 
+You are free to obtain your own keys for Yandex Locator and Yandex Maps; the easiest way to use them is via Gradle files as BuildConfig.yandexLocatorKey and BuildConfig.yandexMapKey ([instruction][https://stackoverflow.com/questions/35722904/saving-the-api-key-in-gradle-properties]).
     
