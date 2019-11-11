@@ -166,7 +166,7 @@ public class MyRegistry {
       this.saveToShared(context, key);
     }
     catch (IOException e) {
-      Log.w(U.TAG, "MyRegistry:"+"Missing assets/"+assetFileName);
+      if (U.DEBUG) Log.d(U.TAG, "MyRegistry:"+"Missing "+assetFileName);
     }
   }
 

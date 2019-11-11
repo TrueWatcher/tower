@@ -43,6 +43,7 @@ public class Tests1 extends SingleFragmentActivity {
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
       Log.i(U.TAG,"mainFragment:onCreateView");
       View v = inflater.inflate(R.layout.fragment_tests, container, false);
+      U.debugOn();
       TvA = (TextView) v.findViewById(R.id.tvA);
       //TvA.setText("Starting tests");
       th=TestHelper.getInstance(TvA);
@@ -55,7 +56,7 @@ public class Tests1 extends SingleFragmentActivity {
       super.onResume();
       try {
         //testAssertions();
-        
+        testTimeConversion();
         mPath = getActivity().getExternalFilesDir(null).getPath();
         //testFileUtilities();
         mSh = new StorageHelper();
@@ -143,9 +144,20 @@ public class Tests1 extends SingleFragmentActivity {
       File exists2=U.fileExists(mPath, testName, extDat);
       th.assertTrue(null == exists2,"The target file still exists","File "+testName+" is gone");
     }
-    
+
+    private void testTimeConversion() throws IOException, TestFailure, U.DataException  {
+      th.printlnln("Time conversion -----");
+      th.printlnln("Local offset (hr):"+String.valueOf(U.getTimeOffsetHr()));
+      String utc1="2019-10-17T00:58:43Z";
+      th.println("UTC:"+utc1+">Local:"+U.utcToLocalTime(utc1));
+      String utc2="2019-10-17T23:58:43Z";
+      th.println("UTC:"+utc2+">Local:"+U.utcToLocalTime(utc2));
+      String loc1="2019-11-17 10:01";
+      th.println("Local:"+loc1+">UTC:"+U.localTimeToUTC(loc1));
+    }
+
     private void testDistancesPresentation() {
-      th.printlnln("Distances presentation -----");
+      th.printlnln("Distance presentation -----");
       th.println("123>"+ListHelper.proximityToKm(123));
       th.println("1234>"+ListHelper.proximityToKm(1234));
       th.println("12345>"+ListHelper.proximityToKm(12345));

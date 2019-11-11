@@ -143,10 +143,9 @@ public class GpxHelper {
       else csv.put("type","mark");    
     }
     String time=csv.get("time");
-    if (time != null && ! time.equals("")) {
-      time=time.replace("T"," ");
-      String regex=":\\d\\dZ";
-      time=time.replaceAll(regex,"");
+    if (time != null && ! time.isEmpty()) {
+      try { time=U.utcToLocalTime(time); }
+      catch (U.DataException e) { time=Point.getDate(); }
       csv.put("time",time);
     }
     return csv;
@@ -196,7 +195,6 @@ public class GpxHelper {
   }
   
   private String mWptTemplate;
-  private String mTimeTemplate;
   private Map<String,String> mSyms=new ArrayMap<String,String>();
   public String mProgress="";
   public int mCount=0;
@@ -206,7 +204,6 @@ public class GpxHelper {
   
   private void init() {
     mWptTemplate="<wpt lat=\"%s\" lon=\"%s\" %s%s%s>%s<time>%s</time><name>%s</name>%s<sym>%s</sym>%s</wpt>";
-    mTimeTemplate="%sT%s:30Z";
     mSyms.put("cell","Navaid, Blue");
     mSyms.put("gps","Flag, Red");
     mSyms.put("mark","Navaid, Violet");// Navaid, Magenta is rendered as Flag, Blue by Garmin
@@ -258,8 +255,11 @@ public class GpxHelper {
     if ( ! content.get("protect").isEmpty() ) protectAttr=" protect=\""+content.get("protect")+"\" ";
     String time="";
     if ( ! content.get("time").isEmpty() ) {
-      String[] dateTime=TextUtils.split(content.get("time")," ");
-      time=String.format(mTimeTemplate, dateTime[0], dateTime[1]);
+      try { time=U.localTimeToUTC(content.get("time")); }
+      catch (U.DataException e)  {
+        try { time=U.localTimeToUTC(Point.getDate()); }
+        catch (U.DataException ee)  { time=""; }
+      }
     }    
     String eleEl="";
     if ( ! content.get("alt").isEmpty() ) {
