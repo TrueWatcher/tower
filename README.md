@@ -19,7 +19,7 @@ for finding user location (by phone cell or GPS), viewing online maps, creating 
 * NOT implemented: map offline caching, track recording, routing, photo and video point attachments, serving cold beer :)
 * tracks may be implemented in later versions
 
-## How to use it
+## How to use it and where to get it
 
 See [the manual](http://tower.posmotrel.net)
 
