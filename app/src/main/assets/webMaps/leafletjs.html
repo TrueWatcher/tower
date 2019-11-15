@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 <head>
   <title>leafletjs</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -7,6 +7,9 @@
   <script src="utils.js"></script>
   <link rel="stylesheet" type="text/css" href="leafletjs/leaflet.css" />
   <script src="leafletjs/leaflet.js"></script>
+  <style>
+    #attributionDiv a:link, #attributionDiv a:visited { color: inherit; }
+  </style>
 </head>
 
 <body style="margin: 0; padding:0;">
@@ -18,7 +21,8 @@
       </svg>
     </div>
   </div>
-  
+  <div id="attributionDiv" style="margin: 0; padding: 0.5em; position: fixed; bottom: 0%; left: 0%; z-index:990; color: #888; text-align: left; font-family: Arial, Helvetica, sans-serif; font-size: 70%">Something is wrong if you see this
+  </div>
 <script>
 
   var ind=new wm.utils.Ind(document.getElementById("ind"));
@@ -71,18 +75,23 @@
     };
     // lyrs= Hybrid: s,h; Satellite: s; Streets: m; Terrain: p;
     // https://stackoverflow.com/questions/9394190/leaflet-map-api-with-google-satellite-layer
+    var year=new Date().getFullYear();
     var attribs={
-      "osm": 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
-      "google": 'Map data © <a href="https://maps.google.com">Google</a>',
+      "osm": 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors '+year,
+      "google": 'Imagery © CNES / Airbus, Landsat / Copernicus, Maxar Technologies, '+year+',Map data © <a href="https://maps.google.com">Google</a> '+year
+    }
+    var attribsColors={
+      "osm": "black", "google" : "#fff"
     }
     var provider=mapProvider.split(" ")[0];
     if (provider == "osm") {
-      l=new L.TileLayer(urls[mapProvider], { minZoom: 8, maxZoom: 19, attribution: attribs[provider] });
+      l=new L.TileLayer(urls[mapProvider], { minZoom: 8, maxZoom: 19 });
     }
     else if (provider == "google") {
-      l=new L.TileLayer(urls[mapProvider], { maxZoom: 20, attribution: attribs[provider], subdomains:['mt0','mt1','mt2','mt3'] });
+      l=new L.TileLayer(urls[mapProvider], { maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'] });
     }
-    else ind.fail("Unknown provider:"+mapProvider);
+    else ind.fail("Unknown provider:"+mapProvider);// throws Error
+    addAttribution(attribs[provider], attribsColors[provider]);
     return l;
   }
   initmap();
@@ -119,6 +128,13 @@
   }
   
   function drawMarkers(map) { wm.utils.putMarkers(map, ind, JSbridge.getMarkers(), addMark); }
+  
+  function addAttribution(html, color) {
+    var leafletAttr='<a href="http://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>';
+    var el=document.getElementById("attributionDiv");
+    el.innerHTML=leafletAttr+"<br />"+html;
+    el.style.color=color;
+  }
   
   ind.hide();
 

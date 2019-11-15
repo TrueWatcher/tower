@@ -75,7 +75,7 @@ wm.utils.MockJSbridge=function(provider,ind) {
   this.getKey=function() {
     var yaKey="";// <<<--- Put the Yandex Maps key here
     if (provider.indexOf("yandex") === 0) {
-      if ( ! yaKey) ind.fail("No key found for Yandex");
+      //if ( ! yaKey) ind.fail("No key found for Yandex");
       return yaKey;
     }  
     ind.fail("No key for "+provider);

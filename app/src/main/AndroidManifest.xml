@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.tower"
-    android:versionCode="33"
-    android:versionName="2.0.11" >
+    android:versionCode="34"
+    android:versionName="2.0.12" >
 <!--
 2.0.9 31 9.11.2019 improved myRegistry, added 2 files to assets
 2.0.10 32 10.11.2019 added BuildConfig check
 2.0.11 33 11.11.2019 fixed GPX time issue, added time conversion utils and test
+2.0.12 34 16.11.2019 fixed attribution position issue
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
