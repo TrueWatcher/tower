@@ -94,12 +94,15 @@ public class GpxHelper {
     csv.put("protect",parser.getAttributeValue(null, "protect"));
     
     // Read nested tags
-    // ele time name sym cmt desc
+    // ele time name sym cmt desc extensions
     while (parser.next() != XmlPullParser.END_TAG) {
       if (parser.getEventType() != XmlPullParser.START_TAG) {
         continue;
       }
       String name = parser.getName();
+      if (name.equals("type")) {
+        csv.put("type",readTagText("type",parser));
+      }
       if (name.equals("ele")) {
         csv.put("alt",readTagText("ele",parser));
       }
@@ -116,7 +119,11 @@ public class GpxHelper {
         csv.put("sym",readTagText("sym",parser));
       }
       else if (name.equals("desc")) {
-        csv.put("desc",readTagText("desc",parser));
+        csv.put("note",readTagText("desc",parser));
+      }
+      else if (name.equals("extensions")) {
+        Map<String,String> extensions=readExtensions(parser);
+        csv.putAll(extensions);
       }
       else {
         skip(parser);
@@ -125,16 +132,36 @@ public class GpxHelper {
     return postProcess(csv);
   }
 
-  private Map<String,String> postProcess(Map<String,String> csv) {
-    String desc=csv.get("desc");
-    if (desc != null && ! desc.equals("") && ! desc.equals(Point.SEP)) {
-      int sp=desc.indexOf(Point.SEP);
-      if (sp >=0) {
-        String[] cellNote=TextUtils.split(desc,Point.SEP);// string.split() SUCKS !!!
-        csv.put("cellData",cellNote[0]);
-        csv.put("note",cellNote[1]);
+  private Map<String,String> readExtensions(XmlPullParser parser) throws XmlPullParserException, IOException {
+    Map<String, String> extensions = new ArrayMap<String, String>();
+
+    parser.require(XmlPullParser.START_TAG, ns, "extensions");
+    while (parser.next() != XmlPullParser.END_TAG) {
+      if (parser.getEventType() != XmlPullParser.START_TAG) {
+        continue;
+      }
+      String name = parser.getName();
+      if (name.equals("type")) {
+        extensions.put("type",readTagText("type",parser));
+      }
+      else if (name.equals("range")) {
+        extensions.put("range",readTagText("range",parser));
+      }
+      else if (name.equals("protect")) {
+        extensions.put("protect",readTagText("protect",parser));
+      }
+      else if (name.equals("cellData")) {
+        extensions.put("cellData",readTagText("cellData",parser));
+      }
+      else {
+        if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"Unknown extensions:"+name);
+        skip(parser);
       }
     }
+    return extensions;
+  }
+
+  private Map<String,String> postProcess(Map<String,String> csv) {
     String type=csv.get("type");
     //if (U.DEBUG) Log.d(U.TAG,"GpxHelper:","type="+type);
     if (type == null || type.equals("")) {
@@ -194,21 +221,22 @@ public class GpxHelper {
     return TextUtils.join(Point.SEP,data)+Point.NL;
   }
   
-  private String mWptTemplate;
+  private String mWptTemplate, mExtensionsTemplate;
   private Map<String,String> mSyms=new ArrayMap<String,String>();
   public String mProgress="";
   public int mCount=0;
   private String mHeader=TextUtils.join(Point.SEP, Point.FIELDS);
-  private String mGpxFramingHead;
-  private String mGpxFramingTail;
+  private String mGpxFramingHead, mGpxFramingTail;
   
   private void init() {
-    mWptTemplate="<wpt lat=\"%s\" lon=\"%s\" %s%s%s>%s<time>%s</time><name>%s</name>%s<sym>%s</sym>%s</wpt>";
+    mWptTemplate="<wpt lat=\"%s\" lon=\"%s\" >%s<time>%s</time><name>%s</name>%s<sym>%s</sym>%s%s</wpt>";
+    mExtensionsTemplate="<extensions>%s%s%s%s</extensions>";
     mSyms.put("cell","Navaid, Blue");
     mSyms.put("gps","Flag, Red");
     mSyms.put("mark","Navaid, Violet");// Navaid, Magenta is rendered as Flag, Blue by Garmin
     mSyms.put("default","Navaid, Red");
-    mGpxFramingHead="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?><gpx>";
+    mGpxFramingHead="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" +
+            "<gpx version=\"1.1\" xmlns=\"http://www.topografix.com/GPX/1/1\" creator=\"truewatcher.tower\"> >";
     mGpxFramingTail="</gpx>";
   }
 
@@ -231,7 +259,7 @@ public class GpxHelper {
       if (lines[i].length() < 2) continue;
       values=TextUtils.split(lines[i], Point.SEP);
       csv=U.arrayCombine(Point.FIELDS, values);
-      wpt=makeGpxEntry(csv);
+      wpt=makeWpt(csv);
       outBuf+=wpt+Point.NL;
       mCount+=1;
     }
@@ -239,47 +267,56 @@ public class GpxHelper {
     return outBuf;
   }
 
-  private String makeGpxEntry(Map<String,String> content) throws U.DataException {
+  private String makeWpt(Map<String,String> content) throws U.DataException {
     if ( content.get("id").isEmpty() ) { throw new U.DataException("No id"); }
     String id=content.get("id");
     if ( content.get("lat").isEmpty() || content.get("lon").isEmpty()) {
       mProgress+="\n"+id+": no coords, skipped";
       return "";
     }
-    String typeAttr=" type=\""+content.get("type")+"\" ";
-    String rangeAttr="";
-    if ( ! content.get("range").isEmpty() ) {
-      rangeAttr=" range=\""+U.str2int(content.get("range"))+"\" ";
-    }
-    String protectAttr="";
-    if ( ! content.get("protect").isEmpty() ) protectAttr=" protect=\""+content.get("protect")+"\" ";
-    String time="";
+    String time="", ele="", cmt="", sym="", desc="";
     if ( ! content.get("time").isEmpty() ) {
       try { time=U.localTimeToUTC(content.get("time")); }
       catch (U.DataException e)  {
         try { time=U.localTimeToUTC(Point.getDate()); }
         catch (U.DataException ee)  { time=""; }
       }
-    }    
-    String eleEl="";
+    }
     if ( ! content.get("alt").isEmpty() ) {
-      eleEl="<ele>"+content.get("alt")+"</ele>";
+      ele="<ele>"+content.get("alt")+"</ele>";
     }
-    String cmtEl="";
     if ( ! content.get("comment").isEmpty() ) {
-      cmtEl="<cmt>"+content.get("comment")+"</cmt>";
+      cmt="<cmt>"+content.get("comment")+"</cmt>";
     }
-    String sym;
     if ( ! content.get("sym").isEmpty() ) sym=content.get("sym");
     else sym=getSym(content.get("type"));
-    String descEl="";
-    if ( ! content.get("cellData").isEmpty() || ! content.get("note").isEmpty() ) {
-      descEl="<desc>"+content.get("cellData")+Point.SEP+content.get("note")+"</desc>";
+    if (! content.get("note").isEmpty() ) {
+      desc="<desc>"+content.get("note")+"</desc>";
     }
-    //<wpt lat="%s" lon="%s" %s%s%s>%s<time>%s</time><name>%s</name>%s<sym>%s</sym>%s</wpt>
-    String entry=String.format(mWptTemplate, content.get("lat"), content.get("lon"), typeAttr, rangeAttr, protectAttr, 
-        eleEl, time, id, cmtEl, sym, descEl);
+    String extensions=buildExtensions(content);
+
+    //<wpt lat="%s" lon="%s" >%s<time>%s</time><name>%s</name>%s<sym>%s</sym>%s%s</wpt>
+    String entry=String.format(mWptTemplate, content.get("lat"), content.get("lon"),
+        ele, time, id, cmt, sym, desc, extensions);
     return entry;
+  }
+
+  private String buildExtensions(Map<String,String> content) {
+    String typeEl="", rangeEl="", protectEl="", cellDataEl="";
+    if ( ! content.get("type").isEmpty() ) {
+      typeEl="<type>"+content.get("type")+"</type>";
+    }
+    if ( ! content.get("range").isEmpty() ) {
+      rangeEl="<range>"+U.str2int(content.get("range"))+"</range>";
+    }
+    if ( ! content.get("protect").isEmpty() ) {
+      protectEl="<protect>"+content.get("protect")+"</protect>";
+    }
+    if ( ! content.get("cellData").isEmpty() ) {
+      protectEl="<cellData>"+content.get("cellData")+"</cellData>";
+    }
+    if (typeEl.isEmpty() && rangeEl.isEmpty() && protectEl.isEmpty() && cellDataEl.isEmpty()) return "";
+    return String.format(mExtensionsTemplate, typeEl, rangeEl, protectEl, cellDataEl);
   }
   
   private String getSym(String type) {

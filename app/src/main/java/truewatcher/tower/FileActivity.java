@@ -50,7 +50,7 @@ public class FileActivity extends SingleFragmentActivity {
     
     private LinearLayout lTop, lExport;
     private RadioGroup rgAct, rgMode;
-    private TextView tvAlert;
+    private TextView tvAlert, tvMyFolder;
     private EditText etExportFile,etExportFrom,etExportUntil;
     private Spinner spDirCsv, spDirGpx;
     private CheckBox ckRemoveExported;
@@ -77,7 +77,9 @@ public class FileActivity extends SingleFragmentActivity {
       spDirGpx.setOnItemSelectedListener((OnItemSelectedListener) this);
       spDirCsv.setOnItemSelectedListener((OnItemSelectedListener) this);
       
-      tvAlert=(TextView) v.findViewById(R.id.tvAlert);      
+      tvAlert=(TextView) v.findViewById(R.id.tvAlert);
+      tvMyFolder=(TextView) v.findViewById(R.id.tvMyFolder);
+      tvMyFolder.setText("Data folder: "+mStorageHelper.getMyDir());
       lTop=(LinearLayout) v.findViewById(R.id.lTop);
       rgMode = (RadioGroup) v.findViewById(R.id.rgMode);
       rgMode.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {

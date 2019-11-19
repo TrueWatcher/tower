@@ -54,7 +54,10 @@ public class PointViewer extends PointIndicator implements PointReceiver {
   
   public void redraw() {
     JSbridge jsb=Model.getInstance().getJSbridge();
-    if (jsb.importLatLon().indexOf("null") >= 0) return;// no map center
+    if (jsb.importLatLon().indexOf("null") >= 0) {// no map center
+      showWallpaper();
+      return;
+    }
     hideProgress();
     hideData();
     //addData("redraw");
@@ -72,5 +75,10 @@ public class PointViewer extends PointIndicator implements PointReceiver {
     if (pt[0].equals("osm") || pt[0].equals("google") ) { return leafletjsPage; }
     else if (pt[0].equals("yandex")) { return yandexPage; }
     return "";
+  }
+
+  private void showWallpaper() {
+    final String wallpaperPage="file:///android_asset/webMaps/wallpaper.html";
+    wvWebView.loadUrl(wallpaperPage);
   }
 }
