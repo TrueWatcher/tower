@@ -236,7 +236,7 @@ public class GpxHelper {
     mSyms.put("mark","Navaid, Violet");// Navaid, Magenta is rendered as Flag, Blue by Garmin
     mSyms.put("default","Navaid, Red");
     mGpxFramingHead="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" +
-            "<gpx version=\"1.1\" xmlns=\"http://www.topografix.com/GPX/1/1\" creator=\"truewatcher.tower\"> >";
+            "<gpx version=\"1.1\" xmlns=\"http://www.topografix.com/GPX/1/1\" creator=\"truewatcher.tower\" >";
     mGpxFramingTail="</gpx>";
   }
 
