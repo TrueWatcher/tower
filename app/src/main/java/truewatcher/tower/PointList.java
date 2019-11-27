@@ -290,5 +290,22 @@ public class PointList {
   
   public boolean hasProximityOrigin() {  return mProximityOrigin != null; }
   public Point getProximityOrigin() {  return mProximityOrigin; }
+
+  public int findNearest(Point cursor) {
+    double deg2rad = 0.0174532925199433;
+    double cosLat=Math.cos(Double.parseDouble(cursor.lat)*deg2rad);
+    double minSqDistance=1e99, sqDistance;
+    int foundId=-1;
+    Point p;
+
+    while ((p=iterate()) != null) {
+      sqDistance=U.sqDistance(p, cursor, cosLat);
+      if (sqDistance < minSqDistance) {
+        minSqDistance=sqDistance;
+        foundId=p.getId();
+      }
+    }
+    return foundId;
+  }
   
 }

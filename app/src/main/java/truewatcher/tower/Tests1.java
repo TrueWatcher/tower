@@ -259,6 +259,15 @@ public class Tests1 extends SingleFragmentActivity {
       //th.println("p1 to p2:"+U.proximityM(p1, pl.getLocation()));//11305.53437084871
       //th.println("p8 to p2:"+U.proximityM(p8, pl.getLocation()));//50905.7112442492
       //th.println("p2 to itself:"+U.proximityM(p2, pl.getLocation()));//0.0
+      th.println("azimuth p1 to p2:"+U.azimuth(p1, p2));
+      th.println("azimuth p2 to p1:"+U.azimuth(p2, p1));
+      th.println("azimuth p8 to p1:"+U.azimuth(p8, p1));
+      th.println("azimuth p1 to p8:"+U.azimuth(p1, p8));
+      Point nearP2=new Point("mark", p2.lat+1, p2.lon+5);
+      th.assertEquals(2, mPl.findNearest(nearP2), "Failed to find p2 from nearP2",
+              "Found p2");
+      th.assertEquals(8, mPl.findNearest(p8), "Failed to find p8 from itself",
+              "Found p8");
     }
     
     private void testCsvExport() throws TestFailure {

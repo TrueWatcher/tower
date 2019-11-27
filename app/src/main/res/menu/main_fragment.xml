@@ -21,10 +21,17 @@
         app:showAsAction="ifRoom"
         android:title="@string/action_add"
         android:icon="@drawable/ic_add_white_24dp" />
-    
+
+    <item
+        android:id="@+id/action_waypoint"
+        android:orderInCategory="4"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_waypoint"
+        android:icon="@drawable/ic_target_variant_white" />
+
     <item
         android:id="@+id/action_list"
-        android:orderInCategory="4"
+        android:orderInCategory="5"
         app:showAsAction="ifRoom"
         android:title="@string/action_list"
         android:icon="@drawable/ic_format_list_bulleted_white_24dp" />

@@ -84,10 +84,12 @@ public class ListActivity extends SingleFragmentActivity {
       lvListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
-          String iid = String.valueOf(mListHelper.getIdByPosition(position));
-          if (U.DEBUG) Log.i(U.TAG,"ListPointsFragment:"+"Clicked at line="+position+", id="+iid);
+          int clickedId = mListHelper.getIdByPosition(position);
+          if (U.DEBUG) Log.i(U.TAG,"ListPointsFragment:"+"Clicked at line="+position+
+                  ", id="+String.valueOf(clickedId));
           Intent i = new Intent(mFragment.getActivity(), EditPointActivity.class);
-          i.putExtra("id", iid);
+          i.putExtra("id", clickedId);
+          i.putExtra("caller", EditPointActivity.EditPointFragment.LIST);
           startActivityForResult(i, 1);
         }
       });

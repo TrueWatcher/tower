@@ -138,21 +138,44 @@ public abstract class U {
   // a great distance - to put empty points to bottom
   public static final double FAR = 1e8;
 
-  // calculates distance in meters from coords (assumed spherical)
+  // calculates distance in meters from coords (assumed spherical, aka haversine)
   public static double proximityM(Point p, Point center) {
     if (!p.hasCoords()) return FAR;
     double earthRadius = 6371000;
-    double rad = 0.0174532925199433;
+    double deg2rad = 0.0174532925199433;
 
-    double dLat = rad * (Double.parseDouble(center.lat) - Double.parseDouble(p.lat));
-    double dLon = rad * (Double.parseDouble(center.lon) - Double.parseDouble(p.lon));
-    double lat1 = rad * (Double.parseDouble(p.lat));
-    double lat2 = rad * (Double.parseDouble(center.lat));
+    double dLat = deg2rad * (Double.parseDouble(center.lat) - Double.parseDouble(p.lat));
+    double dLon = deg2rad * (Double.parseDouble(center.lon) - Double.parseDouble(p.lon));
+    double lat1 = deg2rad * (Double.parseDouble(p.lat));
+    double lat2 = deg2rad * (Double.parseDouble(center.lat));
     double slat = Math.sin(dLat / 2);
     double slon = Math.sin(dLon / 2);
     double a = slat * slat + slon * slon * Math.cos(lat1) * Math.cos(lat2);
     double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return earthRadius * c;
+  }
+
+  public static double azimuth(Point p, Point center) {
+    if (center.lat.equals(p.lat) && center.lon.equals(p.lon)) return 1000;
+    double dLat = (Double.parseDouble(center.lat) - Double.parseDouble(p.lat));
+    double dLon = (Double.parseDouble(center.lon) - Double.parseDouble(p.lon));
+    double deg2rad = 0.0174532925199433;
+    double cosLat=Math.cos(Double.parseDouble(center.lat)*deg2rad);
+    return Math.atan2(dLon*cosLat, dLat)/deg2rad;
+  }
+
+  // find square distance in arbitrary units, fast for sorting
+  public static double sqDistance(Point p, Point center) {
+    double deg2rad = 0.0174532925199433;
+    double cosLat=Math.cos(Double.parseDouble(center.lat)*deg2rad);
+    return sqDistance(p,center,cosLat);
+  }
+
+  public static double sqDistance(Point p, Point center, double cosLat) {
+    double dLat = (Double.parseDouble(center.lat) - Double.parseDouble(p.lat));
+    double dLon = (Double.parseDouble(center.lon) - Double.parseDouble(p.lon));
+    double dx=dLon*cosLat;
+    return dLat*dLat+dx*dx;
   }
 
   // set extension in a full file name

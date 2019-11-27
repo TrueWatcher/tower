@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -63,6 +64,7 @@ public class MainActivity extends SingleFragmentActivity {
     private CellInformer mCellInformer = mModel.getCellInformer();;
     private GpsInformer mGpsInformer = mModel.getGpsInformer();;
     private PointList mPointList = mModel.getPointList();
+    private JSbridge mJSbridge = mModel.getJSbridge();
     private U.Summary mReadPoints=null;
 
     @Override
@@ -126,12 +128,38 @@ public class MainActivity extends SingleFragmentActivity {
         startActivity(si);
         return true;
       }
+      if (id == R.id.action_waypoint) {
+        int nearestId=-1;
+        try { nearestId=findPointNearCursor(); }
+        catch (U.DataException e) {
+          mTwA.setText(e.getMessage());
+          return true;
+        }
+        Intent si=new Intent(this.getActivity(), EditPointActivity.class);
+        si.putExtra("id", nearestId);
+        si.putExtra("caller", EditPointActivity.EditPointFragment.MAP);
+        startActivity(si);
+        return true;
+      }
       if (id == R.id.action_list) {
         Intent si=new Intent(this.getActivity(), ListActivity.class);
         startActivity(si);
         return true;
       }
       return super.onOptionsItemSelected(item);
+    }
+
+    private int findPointNearCursor() throws U.DataException {
+      if (mPointList.getSize() == 0) {
+        throw new U.DataException("No stored points");
+      }
+      String ll=mJSbridge.importLatLon();
+      if (ll.contains("null")) {// no map center
+        throw new U.DataException("No active map");
+      }
+      String[] latLon=TextUtils.split(ll,",");
+      Point cursor=new Point("mark",latLon[0],latLon[1]);
+      return mPointList.findNearest(cursor);
     }
     
     @TargetApi(23)

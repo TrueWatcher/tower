@@ -19,14 +19,18 @@ import android.widget.TextView;
 import java.util.Map;
 
 public class EditPointActivity extends SingleFragmentActivity {
-  private String mArg="empty";
+  private int mArgId=-1;
+  private String mArgCaller="";
   
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Intent intent = getIntent();
     Bundle bd = intent.getExtras();       
-    if (bd != null) { mArg = (String) bd.get("id"); }
+    if (bd != null) {
+      mArgId = bd.getInt("id");
+      mArgCaller = (String) bd.get("caller");
+    }
   }
 
   @Override
@@ -46,7 +50,8 @@ public class EditPointActivity extends SingleFragmentActivity {
     return super.onOptionsItemSelected(item);
   }
   
-  public String getArg() { return mArg; }
+  public int getArgId() { return mArgId; }
+  public String getArgCaller() { return mArgCaller; }
   
   public void showEditTextDialog(DialogFragment dialog) {
     dialog.show(getSupportFragmentManager(), "EditTextDialogFragment");
@@ -59,6 +64,9 @@ public class EditPointActivity extends SingleFragmentActivity {
   public static class EditPointFragment extends Fragment
       implements ConfirmationDialogFragment.ConfirmationDialogReceiver,
       EditTextDialogFragment.EditTextDialogReceiver {
+
+    public static final String MAP="map";
+    public static final String LIST="list";
     private Model mModel;
     private PointList mPointList;
     private android.support.v4.app.Fragment mFragment;
@@ -84,12 +92,6 @@ public class EditPointActivity extends SingleFragmentActivity {
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
       View v = inflater.inflate(R.layout.fragment_edit_point, container, false);
       tvAlert = (TextView) v.findViewById(R.id.tvAlert);
-      // getting data from the activity argument
-      // https://stackoverflow.com/questions/12739909/send-data-from-activity-to-fragment-in-android
-      EditPointActivity activity = (EditPointActivity) getActivity();
-      String myData = activity.getArg();
-      if (U.DEBUG) Log.d(U.TAG,"EditPointFragment:"+"Got data="+myData);
-      
       tvType=(TextView) v.findViewById(R.id.tvType);
       tvProtect=(TextView) v.findViewById(R.id.tvProtect);
       tvId=(TextView) v.findViewById(R.id.tvId);
@@ -121,6 +123,10 @@ public class EditPointActivity extends SingleFragmentActivity {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
       inflater.inflate(R.menu.edit_point_fragment, menu);
+      if (extractCaller().equals(this.MAP)) {
+        MenuItem actionList = menu.findItem(R.id.action_list);
+        actionList.setVisible(false);
+      }
     }
     
     @Override
@@ -219,12 +225,18 @@ public class EditPointActivity extends SingleFragmentActivity {
       // getting data from the activity argument
       // https://stackoverflow.com/questions/12739909/send-data-from-activity-to-fragment-in-android
       EditPointActivity activity = (EditPointActivity) mFragment.getActivity();
-      String myData = activity.getArg();
-      if (U.DEBUG) Log.d(U.TAG,"Editor:"+"Got id="+myData);
-      int iid=Integer.parseInt(myData);
-      return iid;
+      int myData = activity.getArgId();
+      if (U.DEBUG) Log.d(U.TAG,"Editor:"+"Got id="+String.valueOf(myData));
+      return myData;
     }
-    
+
+    private String extractCaller() {
+      EditPointActivity activity = (EditPointActivity) mFragment.getActivity();
+      String myData = activity.getArgCaller();
+      if (U.DEBUG) Log.d(U.TAG,"Editor:"+"Got caller="+myData);
+      return myData;
+    }
+
     private class Editor implements PointReceiver {
       private Point p;
       

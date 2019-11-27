@@ -6,6 +6,7 @@
     <string name="action_cell">Cell</string>
     <string name="action_gps">GPS</string>
     <string name="action_add">Add</string>
+    <string name="action_waypoint">Point</string>
     <string name="action_list">List</string>
     <string name="action_map">Map</string>
     <string name="action_file">File</string>
@@ -21,10 +22,10 @@
     <string name="action_renumber">Renumber from 1</string>
     <string name="action_wipe">Delete ALL points</string>
     <string name="action_center">As center</string>
-    <string name="action_open">"Open"</string>
-    <string name="action_load">"Load"</string> 
-    <string name="action_export">"Export"</string>
-    <string name="action_back">"Back"</string>
+    <string name="action_open">Open</string>
+    <string name="action_load">Load</string>
+    <string name="action_export">Export</string>
+    <string name="action_back">Back</string>
     <string name="rbMapCenter">Current map center</string>
     <string name="rbWaypoint">New waypoint</string>
     <string name="etComment">(comment)</string>
@@ -39,12 +40,12 @@
     <string name="useTrash">Save removed points to trash.csv</string>
     <string name="are_you_sure">Are you sure ?</string>
     <string name="action_cancel">Ops, never mind</string>
-    <string name="asCenter">"Use as center"</string>
-    <string name="date">"Date:"</string>
-    <string name="accuracy">"Accuracy:"</string>
-    <string name="altitude">"Altitude:"</string>
-    <string name="lock">"🔒"</string>
-    <string name="enter">"⏎"</string>
-    <string name="spDirCsv">"select file"</string>
-    <string name="etExportFile">"file name"</string>     
+    <string name="asCenter">Use as center</string>
+    <string name="date">Date:</string>
+    <string name="accuracy">Accuracy:</string>
+    <string name="altitude">Altitude:</string>
+    <string name="lock">🔒</string>
+    <string name="enter">⏎</string>
+    <string name="spDirCsv">select file</string>
+    <string name="etExportFile">file name</string>
 </resources>
