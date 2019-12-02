@@ -386,7 +386,7 @@ public class Tests1 extends SingleFragmentActivity {
       th.assertTrue( ! mPl.isDirty(), "DIRTY is set", "DIRTY is cleared on save");
       th.assertEqualsList(Arrays.asList("1","2","3"), mPl.getIndices(), "Wrong index list", "Point list Ok");
       
-      th.println("Trying to open csv with more than MAXXCOUNT lines, expecting exception");
+      th.println("Trying to open csv with more than MAXCOUNT lines, expecting exception");
       int maxPointCount=2;// deliberately too small
       PointList newPl=new PointList(maxPointCount, mSh);
       String exceptionThrown="";

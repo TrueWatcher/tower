@@ -3,6 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android" >
 
+  <Preference
+      app:key="pAlert"
+      android:selectable="false"
+      android:title=""
+      android:summary="" />
+
   <ListPreference
       app:key="cellResolver"
       app:title="@string/chooseCellResolver"
@@ -29,5 +35,13 @@
   <SwitchPreferenceCompat
       app:key="useTrash"
       app:title="@string/useTrash" />
+
+  <EditTextPreference
+      app:key="yandexMapKey"
+      app:title="@string/yandexMapKey" />
+
+  <EditTextPreference
+      app:key="yandexLocatorKey"
+      app:title="@string/yandexLocatorKey" />
 
 </android.support.v7.preference.PreferenceScreen>

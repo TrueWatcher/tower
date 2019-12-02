@@ -73,24 +73,27 @@ public class MainActivity extends SingleFragmentActivity {
       if (U.DEBUG) Log.i(U.TAG,"mainFragment:onCreate");
       setHasOptionsMenu(true);
 
+      //if (U.DEBUG) U.clearPrefs(getActivity()); // DEBUG
+
       mRegistry.readFromShared(getActivity());
       mRegistry.syncSecrets(getActivity());
       mPointList.adoptMax(mRegistry.getInt("maxPoints"));
-      
-      mReadPoints=null;      
-      if (mPointList.isEmpty()) {
-        mModel.getStorageHelper().init(this.getActivity(), mRegistry.get("myFile"));
-        try {          
-          mReadPoints=mPointList.load();
-          if (U.DEBUG) Log.d(U.TAG,"MainPageFragment:"+ "Loaded "+mReadPoints+" points");
-        }
-        catch (Exception e) {
-          Log.e(U.TAG,"MainPageFragment:"+e.getMessage());
-        }
-      }
-      
+      loadStoredPoints();
       mCellInformer.setFragment(this);
       mGpsInformer.setFragment(this);
+    }
+
+    private void loadStoredPoints() {
+      mReadPoints=null;
+      if ( ! mPointList.isEmpty()) return;
+      mModel.getStorageHelper().init(this.getActivity(), mRegistry.get("myFile"));
+      try {
+        mReadPoints=mPointList.load();
+        if (U.DEBUG) Log.d(U.TAG,"MainPageFragment:"+ "Loaded "+mReadPoints.adopted+" points");
+      }
+      catch (Exception e) {
+        Log.e(U.TAG,"MainPageFragment:"+e.getMessage());
+      }
     }
 
     @Override
@@ -184,9 +187,12 @@ public class MainActivity extends SingleFragmentActivity {
       mGpsInformer.setFragment(this);
       mTwA.setText("");
       mTwB.setText("");
+      if (mModel.getJSbridge().importLatLon().contains("null") && mRegistry.noAnyKeys()) {
+        mPv.addProgress(getString(R.string.keyless_warning),"\n");
+      }
       if (mReadPoints != null) {
         mPv.addProgress(mReadPoints.act+" "+mReadPoints.adopted+" points (of "+mReadPoints.found+") from "
-          +mReadPoints.fileName);
+          +mReadPoints.fileName, "\n");
         mReadPoints=null;
       }
       if (mModel.getJSbridge().isDirty()) {

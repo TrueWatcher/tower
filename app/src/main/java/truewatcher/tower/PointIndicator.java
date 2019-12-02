@@ -25,9 +25,11 @@ public class PointIndicator {
     twProgress.setVisibility(View.VISIBLE);
   }
 
-  public void addProgress(String p) { 
+  public void addProgress(String p) { addProgress(p, ", "); }
+
+  public void addProgress(String p, String separator) {
     String t = (String) twProgress.getText();
-    if (t.length() > 0) t=t+", ";
+    if (t.length() > 0) t=t+separator;
     twProgress.setText(t+p);
     twProgress.setVisibility(View.VISIBLE);
   }

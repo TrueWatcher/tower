@@ -54,7 +54,7 @@ public class PointViewer extends PointIndicator implements PointReceiver {
   
   public void redraw() {
     JSbridge jsb=Model.getInstance().getJSbridge();
-    if (jsb.importLatLon().indexOf("null") >= 0) {// no map center
+    if (jsb.importLatLon().contains("null")) {// no map center
       showWallpaper();
       return;
     }

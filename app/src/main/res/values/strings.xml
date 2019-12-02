@@ -48,4 +48,7 @@
     <string name="enter">⏎</string>
     <string name="spDirCsv">select file</string>
     <string name="etExportFile">file name</string>
+    <string name="yandexMapKey">API key for Yandex Maps</string>
+    <string name="yandexLocatorKey">API key for Yandex Locator</string>
+    <string name="keyless_warning">This distribution has no API keys, so some services are not available</string>
 </resources>

@@ -2,7 +2,10 @@ package truewatcher.tower;
 
 import android.content.Context;
 import java.text.SimpleDateFormat ;
+
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.util.TypedValue;
@@ -160,22 +163,22 @@ public abstract class U {
     double dLat = (Double.parseDouble(center.lat) - Double.parseDouble(p.lat));
     double dLon = (Double.parseDouble(center.lon) - Double.parseDouble(p.lon));
     double deg2rad = 0.0174532925199433;
-    double cosLat=Math.cos(Double.parseDouble(center.lat)*deg2rad);
-    return Math.atan2(dLon*cosLat, dLat)/deg2rad;
+    double cosLat = Math.cos(Double.parseDouble(center.lat) * deg2rad);
+    return Math.atan2(dLon * cosLat, dLat) / deg2rad;
   }
 
   // find square distance in arbitrary units, fast for sorting
   public static double sqDistance(Point p, Point center) {
     double deg2rad = 0.0174532925199433;
-    double cosLat=Math.cos(Double.parseDouble(center.lat)*deg2rad);
-    return sqDistance(p,center,cosLat);
+    double cosLat = Math.cos(Double.parseDouble(center.lat) * deg2rad);
+    return sqDistance(p, center, cosLat);
   }
 
   public static double sqDistance(Point p, Point center, double cosLat) {
     double dLat = (Double.parseDouble(center.lat) - Double.parseDouble(p.lat));
     double dLon = (Double.parseDouble(center.lon) - Double.parseDouble(p.lon));
-    double dx=dLon*cosLat;
-    return dLat*dLat+dx*dx;
+    double dx = dLon * cosLat;
+    return dLat * dLat + dx * dx;
   }
 
   // set extension in a full file name
@@ -348,62 +351,72 @@ public abstract class U {
   // https://developer.android.com/reference/java/util/Date#getTimezoneOffset()
   public static float getTimeOffsetHr() {
     Calendar calendar = Calendar.getInstance(Locale.getDefault());
-    float offset = (calendar.get(Calendar.ZONE_OFFSET) + calendar.get(Calendar.DST_OFFSET)) / (60*60*1000);
+    float offset = (calendar.get(Calendar.ZONE_OFFSET) + calendar.get(Calendar.DST_OFFSET)) / (60 * 60 * 1000);
     return offset;
   }
 
   public static String utcToLocalTime(String utcDateTime) throws U.DataException {
 
-    String dateFormateInLocalTimeZone="";//Will hold the final converted date
-    String dataUTC="";
+    String dateFormateInLocalTimeZone = "";//Will hold the final converted date
+    String dataUTC = "";
     Date localDate = null;
     SimpleDateFormat formatter;
     SimpleDateFormat parser;
 
     parser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");// input format
     parser.setTimeZone(TimeZone.getTimeZone("UTC"));
-    try { localDate = parser.parse(utcDateTime); }
-    catch (ParseException e) {
-      Log.e(U.TAG, "UTCtoLocalTime:"+"Failed to parse:"+utcDateTime+", "+e.getMessage());
+    try {
+      localDate = parser.parse(utcDateTime);
+    } catch (ParseException e) {
+      Log.e(U.TAG, "UTCtoLocalTime:" + "Failed to parse:" + utcDateTime + ", " + e.getMessage());
       throw new U.DataException(e.getMessage());
     }
 
     formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");//Set output format
     if (U.DEBUG) {
       formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-      dataUTC=formatter.format(localDate);
+      dataUTC = formatter.format(localDate);
     }
     formatter.setTimeZone(TimeZone.getDefault());
     dateFormateInLocalTimeZone = formatter.format(localDate);
-    if (U.DEBUG) Log.d( U.TAG,"UTCtoLocalTime: "+utcDateTime+"="+dataUTC+">"+dateFormateInLocalTimeZone );
+    if (U.DEBUG)
+      Log.d(U.TAG, "UTCtoLocalTime: " + utcDateTime + "=" + dataUTC + ">" + dateFormateInLocalTimeZone);
     return dateFormateInLocalTimeZone;
   }
 
   public static String localTimeToUTC(String localDateTime) throws U.DataException {
 
-    String dateFormateInUTC="";//Will hold the final converted date
-    String dataLocal="";
+    String dateFormateInUTC = "";//Will hold the final converted date
+    String dataLocal = "";
     Date localDate = null;
     SimpleDateFormat formatter;
     SimpleDateFormat parser;
 
     parser = new SimpleDateFormat("yyyy-MM-dd HH:mm");// input format
     parser.setTimeZone(TimeZone.getDefault());
-    try { localDate = parser.parse(localDateTime); }
-    catch (ParseException e) {
-      Log.e(U.TAG, "localTimeToUTC:"+"Failed to parse:"+localDateTime+", "+e.getMessage());
+    try {
+      localDate = parser.parse(localDateTime);
+    } catch (ParseException e) {
+      Log.e(U.TAG, "localTimeToUTC:" + "Failed to parse:" + localDateTime + ", " + e.getMessage());
       throw new U.DataException(e.getMessage());
     }
 
     formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm':30Z'");// output format
     if (U.DEBUG) {
       formatter.setTimeZone(TimeZone.getDefault());
-      dataLocal=formatter.format(localDate);
+      dataLocal = formatter.format(localDate);
     }
     formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
     dateFormateInUTC = formatter.format(localDate);
-    if (U.DEBUG) Log.d( U.TAG,"localTimeToUTC: "+localDateTime+"="+dataLocal+">"+dateFormateInUTC );
+    if (U.DEBUG)
+      Log.d(U.TAG, "localTimeToUTC: " + localDateTime + "=" + dataLocal + ">" + dateFormateInUTC);
 
     return dateFormateInUTC;
+  }
+
+  public static void clearPrefs(Context context) {
+    final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+    SharedPreferences.Editor editor = pref.edit();
+    editor.clear().commit();
   }
 }

@@ -114,7 +114,7 @@ public class MyRegistry {
     String defs="{\"cellResolver\":\"mylnikov\",\"mapProvider\":\"osm map\",\"mapZoom\":\"17\",\"maxPoints\":\"30\","
     + "\"useTrash\":\"false\",\"gpsAcceptableAccuracy\":\"8\",\"gpsMaxFixCount\":\"10\","
     + "\"myFile\":\"current.csv\","    
-    + "\"yandexMapKey\":\"\", \"yandexLocatorKey\":\"\""
+    + "\"yandexMapKey\":\"\", \"yandexLocatorKey\":\"\", \"isKeylessDistro\":\"false\""
     + "}";
     return defs;
   }
@@ -153,6 +153,7 @@ public class MyRegistry {
         this.set(key, Class.forName("BuildConfig").getField(key));
         this.set(key, this.getScrambled(key));
         this.saveToShared(context, key);
+        if (U.DEBUG) Log.d(U.TAG, "MyRegistry:"+" found a key in buildconfig: "+key);
         return;
       }
       catch (ClassNotFoundException e) { throw new U.RunException("This should not happen 1"); }
@@ -173,5 +174,14 @@ public class MyRegistry {
   public void syncSecrets(Context context) {
     syncSecret(context, "yandexMapKey", "_yandexmap.txt");
     syncSecret(context, "yandexLocatorKey", "_yandexlocator.txt");
+    if (noAnyKeys()) {
+      this.set("isKeylessDistro", true);
+      this.saveToShared(context, "isKeylessDistro");
+      if (U.DEBUG) Log.d(U.TAG, "MyRegistry:"+"This is a distro without API keys");
+    }
+  }
+
+  public boolean noAnyKeys() {
+    return sMap.get("yandexMapKey").isEmpty() && sMap.get("yandexLocatorKey").isEmpty();
   }
 }
