@@ -11,11 +11,15 @@
     
     <string-array name="mapProviderArray">
         <item>OpenStreetMap map</item>
+        <item>OpenTopoMap map</item>
+        <item>blank map</item>
         <item>Google hybrid</item>
         <item>Yandex hybrid</item>
     </string-array>
     <string-array name="mapProviderValues">
         <item>osm map</item>
+        <item>opentopo map</item>
+        <item>blank map</item>
         <item>google hyb</item>
         <item>yandex hyb</item>
     </string-array>

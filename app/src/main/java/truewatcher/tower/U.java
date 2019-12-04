@@ -318,8 +318,8 @@ public abstract class U {
 
   // removes non-digits from a value, if a key belongs to a list
   // makes a substitute for inputType=number
-  public static String enforceInt(List<String> intKeys, String key, String value) {
-    if (intKeys.contains(key)) {
+  public static String enforceInt(String[] intKeys, String key, String value) {
+    if (Arrays.asList(intKeys).contains(key)) {
       String s = value.replaceAll("[^\\d]", "");
       if (s.isEmpty()) s = "0";
       return s;
@@ -414,9 +414,26 @@ public abstract class U {
     return dateFormateInUTC;
   }
 
+  // clears all shared preferences
   public static void clearPrefs(Context context) {
     final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
     SharedPreferences.Editor editor = pref.edit();
     editor.clear().commit();
+  }
+
+  public static String joinJsonArrays(String a1, String a2) {
+    String empty="[]";
+    int l1=a1.length();
+    int l2=a2.length();
+    if ( ! (a1.startsWith("[") && a1.endsWith("]")) ) throw new U.RunException("Wrong A1="+a1);
+    if ( ! (a2.startsWith("[") && a2.endsWith("]")) ) throw new U.RunException("Wrong A2="+a1);
+    if (a1.equals(empty)) return a2;
+    if (a2.equals(empty)) return a1;
+    String res=a1.substring(0, l1-1).concat(",").concat(a2.substring(1,l2));
+    return res;
+  }
+
+  public static boolean inArray(String needle, String[] haystack) {
+    return Arrays.asList(haystack).contains(needle);
   }
 }

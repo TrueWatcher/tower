@@ -17,11 +17,15 @@ public class PointIndicator {
 
   public void initProgress() { 
     twProgress.setText("");
-    twProgress.setVisibility(View.VISIBLE);
+    showProgress();
   }
   
   public void showProgress(String p) { 
     twProgress.setText(p);
+    showProgress();
+  }
+
+  public void showProgress() {
     twProgress.setVisibility(View.VISIBLE);
   }
 

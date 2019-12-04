@@ -62,6 +62,7 @@ wm.utils.Ind=function(el) {
 };
 
 wm.utils.MockJSbridge=function(provider,ind) {
+  var _this=this;
   var _zoom="16";
   var _lat="55.79038894644";
   var _lon="37.7759262544";
@@ -82,7 +83,25 @@ wm.utils.MockJSbridge=function(provider,ind) {
   };
   this.getNamelessMarker=function() { return '["gps","'+_lat+'","'+_lon+'"]'; };
   this.getMarkers=function() { return '[["mark","'+(parseFloat(_lat)+1e-3)+'","'+_lon+'","upper_mark"]]'; };
+  this.importViewTrackLatLonJson=function() { return '[\
+    [[55.7904,37.7760],[55.791,37.777],[55.792,37.778],[55.793,37.779]],\
+    [[55.791,37.778],[55.792,37.779],[55.793,37.780]]\
+  ]'; };
+  this.moveLatLon=function() {
+    _lat=(parseFloat(_lat)-0.001).toString();
+    _lon=(parseFloat(_lon)-0.001).toString();
+  };
+  this.setupEventThrower=function() {
+    document.onkeyup=function(e) { 
+      console.log("keyup:"+e.code);
+      if (e.code != "Space") return false;
+      _this.moveLatLon();
+      (function() { window.dispatchEvent(onDatareloadEvent); }) ();
+      return false;
+    }    
+  };
 };
+
 
 wm.utils.putMarkers=function(oMap, ind, markersJson, putOneMarker) {
   var markersArr=[];

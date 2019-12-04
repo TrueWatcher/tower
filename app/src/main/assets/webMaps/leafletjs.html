@@ -33,7 +33,7 @@
   var h=""+Math.min(scrInfo.height-2*scrInfo.emPx, 800);
   //alert(w+"/"+h);
   mapDiv.style.width=w+"px";
-  mapDiv.style.height=h+"px";
+  mapDiv.style.height=h+"px";  
   
   var ll="55.79038894644,37.7759262544";
   var zoom=16;
@@ -41,7 +41,8 @@
   var mapProvider="not set";
   if (typeof JSbridge == "undefined") { 
     ind.say("mock coords");
-    JSbridge=new wm.utils.MockJSbridge("google sat",ind);//"google hyb"//"osm map"
+    JSbridge=new wm.utils.MockJSbridge("opentopo map",ind);//"google hyb"//"osm map"//"google sat"
+    JSbridge.moveLatLon();
   }
   ll=JSbridge.importLatLon();
   zoom=JSbridge.importZoom();
@@ -56,45 +57,67 @@
   function initmap() {
     map = new L.Map('mapDiv');
     map.setView(new L.LatLng(lat,lon),zoom);
+    addViewTrack(map, getColor("mark"));
     drawNamelessMarker(map);
     ind.say("markers:"+JSbridge.getMarkers());
     drawMarkers(map);
-    map.addLayer(makeTileLayer(mapProvider));
+    addTileLayer(mapProvider, map);
     map.on('moveend', function(e) {
       JSbridge.exportCenterLatLon(""+map.getCenter().lat, ""+map.getCenter().lng);
       JSbridge.saveZoom(""+map.getZoom());
     } );
   }
+      
+  function addTileLayer(mapProvider,map) {
+    var s=getService(mapProvider);
+    var l=s.make(s.url);
+    if (l) map.addLayer(l);
+    addAttribution(s.attrib, s.attribsColor);
+  }
   
-  function makeTileLayer(mapProvider) {
-    var l={};
-    var urls={
-      "osm map": 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      "google hyb": 'http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
-      "google sat": 'http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+  function getService(mapProvider) {
+    var year=new Date().getFullYear();
+    var attribOsm='Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors '+year;
+    var attribOtm='Map data © <a href="https://opentopomap.org">OpenTopoMap</a> contributors '+year;
+    var attribGoogle='Imagery © CNES / Airbus, Landsat / Copernicus, Maxar Technologies, '+year+',\
+    Map data © <a href="https://maps.google.com">Google</a> '+year;
+    var services={
+      "osm map": {
+        url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', provider: "osm",
+        attrib: attribOsm, attribColor: "black",
+        make: function(url) { return new L.TileLayer(url, { minZoom: 8, maxZoom: 19 }); }
+      },
+      "opentopo map": {
+        url: 'http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', provider: "opentopo",
+        attrib: attribOtm, attribColor: "black",
+        make: function(url) { return new L.TileLayer(url, { minZoom: 8, maxZoom: 17 }); }
+      },
+      "google hyb": {
+        url: 'http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', provider: "google",
+        attrib: attribGoogle, attribColor: "#eee",
+        make: function(url) { return new L.TileLayer(url, { maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'] }); }
+      },
+      "google sat": {
+        url: 'http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', provider: "google",
+        attrib: attribGoogle, attribColor: "#fff",
+        make: function(url) { return new L.TileLayer(url, { maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'] }); }
+      },
+      "blank map": {
+        url: '', provider: "blank", attrib: "", attribColor: "black", make: function(url) { return false; }
+      }
+    
     };
     // lyrs= Hybrid: s,h; Satellite: s; Streets: m; Terrain: p;
     // https://stackoverflow.com/questions/9394190/leaflet-map-api-with-google-satellite-layer
-    var year=new Date().getFullYear();
-    var attribs={
-      "osm": 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors '+year,
-      "google": 'Imagery © CNES / Airbus, Landsat / Copernicus, Maxar Technologies, '+year+',Map data © <a href="https://maps.google.com">Google</a> '+year
-    }
-    var attribsColors={
-      "osm": "black", "google" : "#fff"
-    }
-    var provider=mapProvider.split(" ")[0];
-    if (provider == "osm") {
-      l=new L.TileLayer(urls[mapProvider], { minZoom: 8, maxZoom: 19 });
-    }
-    else if (provider == "google") {
-      l=new L.TileLayer(urls[mapProvider], { maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'] });
-    }
-    else ind.fail("Unknown provider:"+mapProvider);// throws Error
-    addAttribution(attribs[provider], attribsColors[provider]);
-    return l;
+    if (! services.hasOwnProperty(mapProvider)) throw new Error("Unknown mapProvider="+mapProvider);
+    return services[mapProvider];
   }
-  initmap();
+  
+  function getColor(type) {
+    var colors={ cell: "white", gps: "red", mark: "magenta" };
+    if (! colors.hasOwnProperty(type)) throw new Error("Unknown type="+type);
+    return colors[type];
+  }
   
   function addMark(oMap,type,lat,lon,text) {
     if (type instanceof Array && type.length == 4) {
@@ -103,8 +126,7 @@
       lat=type[1];
       type=type[0];
     }
-    var colors={ cell:"white", gps:"red", mark:"magenta" };
-    var color=colors[type];
+    var color=getColor(type);
     var center;
     if ( lat && lon) {
       center=[lat,lon];
@@ -129,6 +151,14 @@
   
   function drawMarkers(map) { wm.utils.putMarkers(map, ind, JSbridge.getMarkers(), addMark); }
   
+  function addViewTrack(map, aColor) {
+    var track=JSbridge.importViewTrackLatLonJson();
+    if (! track) return;
+    track=JSON.parse(track);
+    if (! track instanceof Array || track.length == 0 ) return;
+    L.polyline(track, {color: aColor, weight: 1}).addTo(map);
+  }
+  
   function addAttribution(html, color) {
     var leafletAttr='<a href="http://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>';
     var el=document.getElementById("attributionDiv");
@@ -136,7 +166,12 @@
     el.style.color=color;
   }
   
+  initmap();
   ind.hide();
+  
+  window.onDatareloadEvent = new Event('onDatareload');
+  window.addEventListener('onDatareload', function() { if (map) { map.off(); map.remove(); initmap(); } }, false);
+  if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();
 
   
 </script>    

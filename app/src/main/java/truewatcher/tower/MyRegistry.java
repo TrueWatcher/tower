@@ -58,7 +58,7 @@ public class MyRegistry {
   
   public String getScrambled(String key) {
     int[] transpose={2,3,5,6,8,9,13,19,25,31};
-    char[] ca=sMap.get(key).toCharArray();
+    char[] ca=sMap.get(key).trim().toCharArray();
     int l=ca.length;
     int lHalf=(int) Math.floor(l/2.);
     char c;
@@ -119,9 +119,9 @@ public class MyRegistry {
     return defs;
   }
 
-  public static final List<String> INT_KEYS = Collections.unmodifiableList(Arrays.asList(
-          new String[] {"mapZoom", "maxPoints"}
-  ));
+  public static final String[] INT_KEYS = new String[] {"mapZoom", "maxPoints"} ;
+
+  public static final String[] APIS = new String[] { "yandexMapKey","yandexLocatorKey" };
   
   public void readFromShared(Context context) {
     String k;
@@ -174,7 +174,7 @@ public class MyRegistry {
   public void syncSecrets(Context context) {
     syncSecret(context, "yandexMapKey", "_yandexmap.txt");
     syncSecret(context, "yandexLocatorKey", "_yandexlocator.txt");
-    if (noAnyKeys()) {
+    if (notAllKeys()) {
       this.set("isKeylessDistro", true);
       this.saveToShared(context, "isKeylessDistro");
       if (U.DEBUG) Log.d(U.TAG, "MyRegistry:"+"This is a distro without API keys");
@@ -182,6 +182,20 @@ public class MyRegistry {
   }
 
   public boolean noAnyKeys() {
-    return sMap.get("yandexMapKey").isEmpty() && sMap.get("yandexLocatorKey").isEmpty();
+    int i=0;
+    String k;
+    for (i=0; i < APIS.length; i+=1) {
+      if ( ! sMap.get(APIS[i]).isEmpty()) return false;
+    }
+    return true;
+  }
+
+  public boolean notAllKeys() {
+    int i=0;
+    String k;
+    for (i=0; i < APIS.length; i+=1) {
+      if (sMap.get(APIS[i]).isEmpty()) return true;
+    }
+    return false;
   }
 }

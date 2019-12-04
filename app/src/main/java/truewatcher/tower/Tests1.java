@@ -64,6 +64,7 @@ public class Tests1 extends SingleFragmentActivity {
         testCsvExport();
         //testDistancesPresentation();
         testDistances();
+        testTrackUtils();
         testGpxConversions();
         testListRotation();
         testSavedFiles();
@@ -268,6 +269,14 @@ public class Tests1 extends SingleFragmentActivity {
               "Found p2");
       th.assertEquals(8, mPl.findNearest(p8), "Failed to find p8 from itself",
               "Found p8");
+    }
+
+    private void testTrackUtils() throws TestFailure {
+      th.printlnln("Testing track infastructure -----");
+      String json1="[[1,2],[3,4],[5,6]]";
+      String json2="[[7,8],[9,10],[-1.10,1.11],[12,13]]";
+      th.printlnln(U.joinJsonArrays(json1,json2));
+      th.printlnln(U.joinJsonArrays(json2,json1));
     }
     
     private void testCsvExport() throws TestFailure {

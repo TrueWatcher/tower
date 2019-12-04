@@ -1,6 +1,5 @@
 package truewatcher.tower;
 
-import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
@@ -14,10 +13,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 //https://storiesandroid.wordpress.com/2015/10/06/android-settings-using-preference-fragments/
@@ -121,10 +116,7 @@ public class PreferencesActivity extends AppCompatActivity {
         screen.removePreference(findPreference(key));
       }
 
-      if (mRegistry.noAnyKeys()) {
-        pAlert.setSummary(getString(R.string.keyless_warning));
-        //if (U.DEBUG) Log.d(U.TAG,"PreferencesFragment"+"Warning shown");
-      }
+      //if (mRegistry.noAnyKeys()) { pAlert.setSummary(getString(R.string.keyless_warning)); }
     }
     
     public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
@@ -133,7 +125,7 @@ public class PreferencesActivity extends AppCompatActivity {
         return;
       }
       Map<String, ?> mp = prefs.getAll();
-      String checkedApi = checkApiKey(key, String.valueOf(mp.get(key)) );
+      String checkedApi = rollbackIfNoKey(key, String.valueOf(mp.get(key)) );
       if (checkedApi.isEmpty()) { pAlert.setSummary(""); }
       else { // change was denied -- no api key
         pAlert.setSummary(checkedApi);
@@ -169,15 +161,12 @@ public class PreferencesActivity extends AppCompatActivity {
       }
     }
 
-    private void _showAlert(String text) {
-      getPreferenceManager().findPreference("pAlert").setSummary(text);
-    }
-
-    private String checkApiKey(String key, String value) {
+    private String rollbackIfNoKey(String key, String value) {
       String alertTemplate="Your app has no API key for %s. You can obtain it for free at %s" +
               " and enter in the appropriate field below";
-      CheckPoint c=tryChekpoints(key,value);
+      KeyCheck c= tryCheckKeys(key,value);
       if (c == null) return "";
+      // roll back
       getPreferenceScreen().getSharedPreferences()
               .unregisterOnSharedPreferenceChangeListener(this);
       mRegistry.set(key,c.fallbackValue);
@@ -190,7 +179,7 @@ public class PreferencesActivity extends AppCompatActivity {
       return String.format(alertTemplate, c.serviceName, c.issuerUrl);
     }
 
-    private static class CheckPoint {
+    private static class KeyCheck {
       public String key;
       public String value;
       public String keyKey;
@@ -198,7 +187,7 @@ public class PreferencesActivity extends AppCompatActivity {
       public String serviceName;
       public String issuerUrl;
 
-      public CheckPoint(String aKey, String aValue, String aKeyKey, String aFallbackValue, String aServiceName, String aIssuerUrl) {
+      public KeyCheck(String aKey, String aValue, String aKeyKey, String aFallbackValue, String aServiceName, String aIssuerUrl) {
         key=aKey;
         value=aValue;
         keyKey=aKeyKey;
@@ -208,17 +197,18 @@ public class PreferencesActivity extends AppCompatActivity {
       }
     }
 
-    private CheckPoint tryChekpoints(String key, String value) {
+    private KeyCheck tryCheckKeys(String key, String value) {
       int i=0;
-      CheckPoint[] ck=new CheckPoint[2];
-      ck[0]=new CheckPoint(
+      KeyCheck[] ck=new KeyCheck[] {
+        new KeyCheck(
               "mapProvider","yandex hyb","yandexMapKey","osm map",
-              "Yandex Maps","https://developer.tech.yandex.com/" );
-      ck[1]=new CheckPoint(
+              "Yandex Maps","https://developer.tech.yandex.com/" ),
+        new KeyCheck(
               "cellResolver","yandex", "yandexLocatorKey", "mylnikov",
-              "Yandex Locator", "https://yandex.ru/dev/locator/keys/get/" );
+              "Yandex Locator", "https://yandex.ru/dev/locator/keys/get/" )
+      };
 
-      CheckPoint c;
+      KeyCheck c;
       for (i=0; i < ck.length; i+=1) {
         c=ck[i];
         if ( c.key.equals(key) && c.value.equals(value) && mRegistry.get(c.keyKey).isEmpty() ) return c;
@@ -227,9 +217,7 @@ public class PreferencesActivity extends AppCompatActivity {
     }
 
     private void adjustApiKeys(String key) {
-      final List<String> watched=new ArrayList(Arrays.asList(
-              new String[] {"yandexMapKey","yandexLocatorKey"}));
-      if ( ! mRegistry.getBool("isKeylessDistro") || ! watched.contains(key)) return;
+      if ( ! mRegistry.getBool("isKeylessDistro") || ! U.inArray(key,MyRegistry.APIS) ) return;
       getPreferenceScreen().getSharedPreferences()
               .unregisterOnSharedPreferenceChangeListener(this);
       mRegistry.set(key, mRegistry.getScrambled(key));

@@ -101,7 +101,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
     }
     catch (U.DataException e) {
       Log.e(U.TAG,e.getMessage());
-      mStatus="failure:"+e.getMessage();
+      mStatus="Failure:"+e.getMessage();
     }
 
     mPi.addProgress(mStatus);

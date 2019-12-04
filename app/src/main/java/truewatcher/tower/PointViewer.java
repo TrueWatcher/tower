@@ -72,9 +72,14 @@ public class PointViewer extends PointIndicator implements PointReceiver {
     //final String redirectPage="http://fs.posmotrel.net/jsredir.html";
     String[] pt=mapProvider.split(" ");
     if (pt.length != 2) throw new U.RunException("Wrong mapProvider="+mapProvider);
-    if (pt[0].equals("osm") || pt[0].equals("google") ) { return leafletjsPage; }
+    if ( isLeaflet(pt[0]) ) { return leafletjsPage; }
     else if (pt[0].equals("yandex")) { return yandexPage; }
     return "";
+  }
+
+  private boolean isLeaflet(String provider) {
+    final String[] known=new String[] {"osm","opentopo","blank","google"};
+    return U.inArray(provider,known);
   }
 
   private void showWallpaper() {

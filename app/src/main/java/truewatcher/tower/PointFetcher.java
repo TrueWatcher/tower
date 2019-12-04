@@ -91,8 +91,7 @@ public abstract class PointFetcher implements PermissionReceiver {
   abstract void afterLocationPermissionOk();
   
   protected void onPointavailable(Point p) {
-    mPi.addProgress("passing to View");
-    mPi.hideProgress();
+    if ( p.hasCoords() ) mPi.hideProgress();// if it's an unresolved cell - keep progress visible
     p.setCurrentTime();
     Model mm = Model.getInstance();
     if (p.getType() == "cell") mm.lastCell=p;
