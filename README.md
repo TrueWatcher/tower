@@ -11,7 +11,7 @@ for finding user location (by phone cell or GPS), viewing online maps, creating 
 * acceptable performance on slow GPRS-EDGE networks
 * may find coarse location by phone cell without GPS
 * displays and saves cell info ( MCC, MNC, LAC, CID )
-* >may create waypoints with GPS without phone and internet connections
+* may create waypoints with GPS without phone and internet connections
 * all waypoints are stored on a memory card
 * waypoint lists may be stored in any number of files (that is, be grouped by locality or in any other way)
 * waypoint lists may be exported/imported in the GPX format, compatible with many navigators and software
