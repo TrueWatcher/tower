@@ -162,7 +162,7 @@ public class PreferencesActivity extends AppCompatActivity {
     }
 
     private String rollbackIfNoKey(String key, String value) {
-      String alertTemplate="Your app has no API key for %s. You can obtain it for free at %s" +
+      String alertTemplate="Your app has no API key for %s. You can obtain it for free at %s%s" +
               " and enter in the appropriate field below";
       KeyCheck c= tryCheckKeys(key,value);
       if (c == null) return "";
@@ -176,7 +176,7 @@ public class PreferencesActivity extends AppCompatActivity {
       lp.setSummary(c.fallbackValue);
       getPreferenceScreen().getSharedPreferences()
               .registerOnSharedPreferenceChangeListener(this);
-      return String.format(alertTemplate, c.serviceName, c.issuerUrl);
+      return String.format(alertTemplate, c.serviceName, U.H, c.issuerUrl);
     }
 
     private static class KeyCheck {
@@ -202,10 +202,10 @@ public class PreferencesActivity extends AppCompatActivity {
       KeyCheck[] ck=new KeyCheck[] {
         new KeyCheck(
               "mapProvider","yandex hyb","yandexMapKey","osm map",
-              "Yandex Maps","https://developer.tech.yandex.com/" ),
+              "Yandex Maps","developer.tech.yandex.com/" ),
         new KeyCheck(
               "cellResolver","yandex", "yandexLocatorKey", "mylnikov",
-              "Yandex Locator", "https://yandex.ru/dev/locator/keys/get/" )
+              "Yandex Locator", "yandex.ru/dev/locator/keys/get/" )
       };
 
       KeyCheck c;

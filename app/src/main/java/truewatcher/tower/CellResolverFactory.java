@@ -25,8 +25,8 @@ public class CellResolverFactory {
   private static class MylnikovResolver implements CellResolver {
     
     public String makeResolverUri(JSONObject cellData) {     
-      String resolverServiceBase="https://api.mylnikov.org/geolocation/cell";
-      String resolverUri = Uri.parse(resolverServiceBase)
+      String resolverServiceBase="api.mylnikov.org/geolocation/cell";
+      String resolverUri = Uri.parse(U.H+resolverServiceBase)
         .buildUpon()
         .appendQueryParameter("v", "1.1")
         .appendQueryParameter("data", "open")
@@ -62,7 +62,7 @@ public class CellResolverFactory {
   private static class YandexResolver implements CellResolver {
     
     public String makeResolverUri(JSONObject cellData) {
-      return "https://api.lbs.yandex.net/geolocation";
+      return U.H+"api.lbs.yandex.net/geolocation";
     }
     
     public String makeResolverData(JSONObject cellData) throws U.DataException {

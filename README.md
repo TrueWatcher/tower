@@ -10,14 +10,14 @@ for finding user location (by phone cell or GPS), viewing online maps, creating 
 * may connect to several map providers
 * acceptable performance on slow GPRS-EDGE networks
 * may find coarse location by phone cell without GPS
-* displays and saves cell info ( _MCC, MNC, LAC, CID_ )
-* may create waypoints with GPS without phone and internet connections
+* displays and saves cell info ( MCC, MNC, LAC, CID )
+* >may create waypoints with GPS without phone and internet connections
 * all waypoints are stored on a memory card
 * waypoint lists may be stored in any number of files (that is, be grouped by locality or in any other way)
-* waypoint lists may be exported/imported in the GPX format, compatible with many navigators and soft like OziExplorer
+* waypoint lists may be exported/imported in the GPX format, compatible with many navigators and software
 * finds location only by explicit user's command, doesn't perform any background activities, so is very mild on the battery
 * NOT implemented: map offline caching, track recording, routing, photo and video point attachments, serving cold beer :)
-* tracks may be implemented in later versions
+* for pure open distributions, that lack API keys and access to some services, there are options to enter user's own keys
 
 ## How to use it and where to get it
 
@@ -32,6 +32,7 @@ This program uses several web APIs and loads data and javascript code, details a
 
 ## API keys
 
-The keys for web services are not included in this repo, so, if you build from it directly, some features will not work. 
-You are free to obtain your own keys for Yandex Locator and Yandex Maps; the easiest way to use them is via Gradle files as BuildConfig.yandexLocatorKey and BuildConfig.yandexMapKey ( [instruction](https://stackoverflow.com/questions/35722904/saving-the-api-key-in-gradle-properties) ).
+Some of web services, despite being free of charge, require access keys. As these keys are not to be committed to public repositories, this app may appear in two kinds of distributions: full (with keys included in the binary) and pure open (without keys). The keyless distribution is fully operational, except for concerned services, and always has slots to enter user's own keys. See [the manual](http://tower.posmotrel.net/#external-materials-and-api-keys) for details.
+
+Builders are free to provide their own keys with their distribution; the easiest way is via Gradle files as BuildConfig.yandexLocatorKey and BuildConfig.yandexMapKey ( [instruction](https://stackoverflow.com/questions/35722904/saving-the-api-key-in-gradle-properties) ).
     

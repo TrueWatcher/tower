@@ -1,8 +1,7 @@
 package truewatcher.tower;
 
 import android.content.Context;
-import java.text.SimpleDateFormat ;
-
+import java.text.SimpleDateFormat;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -17,9 +16,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.text.ParseException;
-
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -43,6 +40,8 @@ public abstract class U {
   public static void debugOn() {
     U.DEBUG = true;
   }
+
+  public static final String H = "https://";
 
   static class RunException extends RuntimeException {
     public RunException(String s) {
