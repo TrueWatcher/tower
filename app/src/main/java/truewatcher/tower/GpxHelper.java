@@ -61,7 +61,7 @@ public class GpxHelper {
     String line="";
 
     parser.require(XmlPullParser.START_TAG, ns, "gpx");
-    while (parser.next() != XmlPullParser.END_TAG) {
+    while (parser.next() != XmlPullParser.END_TAG && parser.getName() != "gpx") {
       if (parser.getEventType() != XmlPullParser.START_TAG) {
         continue;
       }
@@ -72,6 +72,7 @@ public class GpxHelper {
         if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"Got a line:"+line);
       }
       else {
+        if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"readGpx: skipping "+name);
         skip(parser);
       }
     }
@@ -95,7 +96,7 @@ public class GpxHelper {
     
     // Read nested tags
     // ele time name sym cmt desc extensions
-    while (parser.next() != XmlPullParser.END_TAG) {
+    while (parser.next() != XmlPullParser.END_TAG && parser.getName() != "wpt") {
       if (parser.getEventType() != XmlPullParser.START_TAG) {
         continue;
       }
@@ -103,7 +104,7 @@ public class GpxHelper {
       if (name.equals("type")) {
         csv.put("type",readTagText("type",parser));
       }
-      if (name.equals("ele")) {
+      else if (name.equals("ele")) {
         csv.put("alt",readTagText("ele",parser));
       }
       else if (name.equals("time")) {
@@ -126,6 +127,7 @@ public class GpxHelper {
         csv.putAll(extensions);
       }
       else {
+        if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"readWpt: skipping "+name);
         skip(parser);
       }
     }
@@ -219,6 +221,104 @@ public class GpxHelper {
       else data.add("");
     }
     return TextUtils.join(Point.SEP,data)+Point.NL;
+  }
+
+  private StringBuilder mSb=new StringBuilder("[");
+  private int mSegCount=0;
+  private int mPointCount=0;
+  private boolean isSeg0=true;
+  private boolean isPoint0=true;
+
+  public String track2latLonJson(String gpxString) throws U.DataException, IOException {
+    ByteArrayInputStream is = new ByteArrayInputStream(gpxString.getBytes(StandardCharsets.UTF_8));
+    try {
+      XmlPullParser parser = Xml.newPullParser();
+      parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+      parser.setInput(is, null);
+      parser.nextTag();
+      return readGpx2(parser);
+    }
+    catch (XmlPullParserException e) {
+      throw new U.DataException("XmlPullParserException:"+e.getMessage());
+    }
+    finally {
+      is.close();
+    }
+  }
+
+  private String readGpx2(XmlPullParser parser) throws XmlPullParserException, IOException {
+
+    parser.require(XmlPullParser.START_TAG, ns, "gpx");
+    mSb=new StringBuilder("[");
+    mSegCount=0;
+    mPointCount=0;
+    isSeg0=true;
+    isPoint0=true;
+
+    while (parser.next() != XmlPullParser.END_TAG && parser.getName() != "gpx") {
+      if (parser.getEventType() != XmlPullParser.START_TAG) {
+        continue;
+      }
+      String name = parser.getName();
+      if (name.equals("trkseg")) {
+        mSegCount+=1;
+        isPoint0=true;
+        if (isSeg0) isSeg0=false;
+        else mSb.append(",");
+        mSb.append("[");
+        readTrkseg(parser);
+        mSb.append("]");
+        if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"Done a track segment, count="+mSegCount);
+      }
+      else {
+        if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"readGpx2: skipping "+name);
+        skip(parser);
+      }
+    }
+    mSb.append("]");
+    return mSb.toString();
+  }
+
+  private void readTrkseg(XmlPullParser parser) throws XmlPullParserException, IOException {
+
+    parser.require(XmlPullParser.START_TAG, ns, "trkseg");
+    while (parser.next() != XmlPullParser.END_TAG && parser.getName() != "trkseg") {
+      if (parser.getEventType() != XmlPullParser.START_TAG) {
+        continue;
+      }
+      String name = parser.getName();
+      if (name.equals("trkpt")) {
+        readTrkpt(parser);
+        if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"Done a trackpoint,count="+mPointCount);
+      }
+      else {
+        if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"readTrkseg: skipping "+name);
+        skip(parser);
+      }
+    }
+  }
+
+  private void readTrkpt(XmlPullParser parser) throws XmlPullParserException, IOException {
+    parser.require(XmlPullParser.START_TAG, ns, "trkpt");
+
+    String lat=parser.getAttributeValue(null, "lat");
+    String lon=parser.getAttributeValue(null, "lon");
+    if (lat == null || lat.isEmpty() || lon == null || lon.isEmpty()) {
+      if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"a trackpoint without LAT or LON, skipped");
+      return;
+    }
+    mPointCount+=1;
+    if (isPoint0) isPoint0=false;
+    else mSb.append(",");
+    mSb     .append("[")
+            .append(lat)
+            .append(",")
+            .append(lon)
+            .append("]");
+    while (parser.next() != XmlPullParser.END_TAG && parser.getName() != "trkpt") {
+      //if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"readTrkpt: skipping "+parser.getName());
+      skip(parser);
+    }
   }
   
   private String mWptTemplate, mExtensionsTemplate;

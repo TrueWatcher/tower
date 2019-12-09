@@ -271,12 +271,44 @@ public class Tests1 extends SingleFragmentActivity {
               "Found p8");
     }
 
-    private void testTrackUtils() throws TestFailure {
-      th.printlnln("Testing track infastructure -----");
+    private String getTestTrack() {
+      String s="";
+      s+="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" +
+              "<gpx version=\"1.1\" xmlns=\"http://www.topografix.com/GPX/1/1\" creator=\"truewatcher.tower\" >";
+      s+="<wpt lat=\"1\" lon=\"2\"><ele>123.45</ele><time>2019-12-09T00:01:02Z</time></wpt>";
+      s+="<trkseg><trkpt lat=\"1\" lon=\"2\"><ele>123.45</ele><time>2019-12-09T00:01:02Z</time></trkpt>" +
+              "<trkpt lat=\"3\" lon=\"4\"><ele>123.45</ele><time>2019-12-09T00:01:03Z</time></trkpt>" +
+              "<trkpt lat=\"5\" lon=\"6\"><ele>123.45</ele><time>2019-12-09T00:01:04Z</time></trkpt>" +
+              "</trkseg>";
+      s+="<wpt lat=\"1\" lon=\"2\"><ele>123.45</ele><time>2019-12-09T00:01:02Z</time></wpt>";
+      s+="<trkseg><trkpt lat=\"7\" lon=\"8\"><ele>23.45</ele></trkpt>" +
+              "<trkpt lat=\"9\" lon=\"10\"><ele>23.45</ele></trkpt>" +
+              "<trkpt lat=\"-1.10\" lon=\"1.11\"><ele>23.45</ele></trkpt>" +
+              "<trkpt lat=\"12\" lon=\"13\"><ele>23.45</ele></trkpt>" +
+              "</trkseg>";
+      s+="<wpt lat=\"1\" lon=\"2\"><ele>123.45</ele><time>2019-12-09T00:01:02Z</time></wpt>";
+      s+="</gpx>";
+      return s;
+    }
+
+    private void testTrackUtils() throws TestFailure, IOException {
+      th.printlnln("Testing track infrastructure -----");
       String json1="[[1,2],[3,4],[5,6]]";
       String json2="[[7,8],[9,10],[-1.10,1.11],[12,13]]";
+      String json3="[[[1,2],[3,4],[5,6]],[[7,8],[9,10],[-1.10,1.11],[12,13]]]";
       th.printlnln(U.joinJsonArrays(json1,json2));
       th.printlnln(U.joinJsonArrays(json2,json1));
+      GpxHelper gh=new GpxHelper();
+      String latLonJson = "[]";
+      try {
+        latLonJson = gh.track2latLonJson(getTestTrack());
+        th.printlnln(latLonJson);
+        th.assertEquals(json3,latLonJson,"Wrong trackGpx to latLonJson conversion", "latLonJson OK");
+      }
+      catch (U.DataException e) {
+        th.printlnln("Error while converting:"+e.getMessage());
+      }
+      th.printlnln(U.joinJsonArrays(json3,latLonJson));
     }
     
     private void testCsvExport() throws TestFailure {

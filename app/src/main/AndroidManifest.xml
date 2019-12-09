@@ -13,6 +13,7 @@
 2.2.0  37 2.12.2019  added handling distros without API keys
 2.3.0  38 3.12.2019  added OpenTopoMaps, improved JS wrappers
 2.3.1  39 6.12.2019  updated docs; minor improvements
+2.3.2  40 9.12.2019  added track GPX parser
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
