@@ -111,7 +111,7 @@ public class StorageHelper {
       throws IOException,U.DataException {
     String buf=U.fileGetContents(mPath, targetFile);
     if (convertFrom.equals("gpx")) {
-      buf=GpxHelper.removeGpxTail(buf);
+      //buf=GpxHelper.removeGpxTail(buf);
       GpxHelper gh=new GpxHelper();        
       buf=gh.gpx2csv(buf);
     }

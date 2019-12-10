@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.tower"
-    android:versionCode="39"
-    android:versionName="2.3.1" >
+    android:versionCode="41"
+    android:versionName="2.3.3" >
 <!--
 2.0.9 31 9.11.2019 improved myRegistry, added 2 files to assets
 2.0.10 32 10.11.2019 added BuildConfig check
@@ -14,6 +14,7 @@
 2.3.0  38 3.12.2019  added OpenTopoMaps, improved JS wrappers
 2.3.1  39 6.12.2019  updated docs; minor improvements
 2.3.2  40 9.12.2019  added track GPX parser
+2.3.3  41 10.12.2019 improvements
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

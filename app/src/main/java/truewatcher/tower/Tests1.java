@@ -276,7 +276,7 @@ public class Tests1 extends SingleFragmentActivity {
       s+="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" +
               "<gpx version=\"1.1\" xmlns=\"http://www.topografix.com/GPX/1/1\" creator=\"truewatcher.tower\" >";
       s+="<wpt lat=\"1\" lon=\"2\"><ele>123.45</ele><time>2019-12-09T00:01:02Z</time></wpt>";
-      s+="<trkseg><trkpt lat=\"1\" lon=\"2\"><ele>123.45</ele><time>2019-12-09T00:01:02Z</time></trkpt>" +
+      s+="<trk><trkseg><trkpt lat=\"1\" lon=\"2\"><ele>123.45</ele><time>2019-12-09T00:01:02Z</time></trkpt>" +
               "<trkpt lat=\"3\" lon=\"4\"><ele>123.45</ele><time>2019-12-09T00:01:03Z</time></trkpt>" +
               "<trkpt lat=\"5\" lon=\"6\"><ele>123.45</ele><time>2019-12-09T00:01:04Z</time></trkpt>" +
               "</trkseg>";
@@ -285,7 +285,7 @@ public class Tests1 extends SingleFragmentActivity {
               "<trkpt lat=\"9\" lon=\"10\"><ele>23.45</ele></trkpt>" +
               "<trkpt lat=\"-1.10\" lon=\"1.11\"><ele>23.45</ele></trkpt>" +
               "<trkpt lat=\"12\" lon=\"13\"><ele>23.45</ele></trkpt>" +
-              "</trkseg>";
+              "</trkseg></trk>";
       s+="<wpt lat=\"1\" lon=\"2\"><ele>123.45</ele><time>2019-12-09T00:01:02Z</time></wpt>";
       s+="</gpx>";
       return s;
@@ -293,22 +293,52 @@ public class Tests1 extends SingleFragmentActivity {
 
     private void testTrackUtils() throws TestFailure, IOException {
       th.printlnln("Testing track infrastructure -----");
+      th.println("Joining JSON arrays");
       String json1="[[1,2],[3,4],[5,6]]";
       String json2="[[7,8],[9,10],[-1.10,1.11],[12,13]]";
       String json3="[[[1,2],[3,4],[5,6]],[[7,8],[9,10],[-1.10,1.11],[12,13]]]";
-      th.printlnln(U.joinJsonArrays(json1,json2));
-      th.printlnln(U.joinJsonArrays(json2,json1));
+      String add12=U.joinJsonArrays(json1,json2);
+      th.println(add12);
+      th.assertEquals(8, U.countEntries(add12,"["),"Wrong [ count",
+              "found [:".concat(String.valueOf(U.countEntries(add12,"["))));
+      th.assertEquals(U.countEntries(add12,"["), U.countEntries(add12,"]"),"Unequal [/] count",
+              "found ]:same");
+      String add21=U.joinJsonArrays(json2,json1);
+      th.println(add21);
+      th.assertEquals(8, U.countEntries(add21,"["),"Wrong [ count",
+              "found [:".concat(String.valueOf(U.countEntries(add21,"["))));
+      th.assertEquals(U.countEntries(add21,"["), U.countEntries(add21,"]"),"Unequal [/] count",
+              "found ]:same");
       GpxHelper gh=new GpxHelper();
       String latLonJson = "[]";
       try {
+        th.println("Parsing a test track");
         latLonJson = gh.track2latLonJson(getTestTrack());
-        th.printlnln(latLonJson);
-        th.assertEquals(json3,latLonJson,"Wrong trackGpx to latLonJson conversion", "latLonJson OK");
+        th.println(latLonJson);
+        U.Summary res=gh.getResult();
+        th.assertEquals(2,res.segments,"Wrong segment count",
+                "found segments:".concat(String.valueOf(res.segments)));
+        th.assertEquals(7,res.adopted,"Wrong point count",
+                "found points:".concat(String.valueOf(res.adopted)));
+        th.assertEquals(json3, latLonJson,"Wrong trackGpx to latLonJson conversion", "latLonJson OK");
+        th.assertEquals(2*res.adopted-1, U.countEntries(latLonJson,","),"Wrong , count",
+                "found commas:".concat(String.valueOf(res.adopted)));
+        th.assertEquals(1+res.segments+res.adopted, U.countEntries(latLonJson,"["),"Wrong [ count",
+                "found [:".concat(String.valueOf(U.countEntries(latLonJson,"["))));
+        th.assertEquals(U.countEntries(latLonJson,"["),U.countEntries(latLonJson,"]"),"Unequal [/] count",
+                "found ]:same");
       }
       catch (U.DataException e) {
-        th.printlnln("Error while converting:"+e.getMessage());
+        th.println("Error while converting:"+e.getMessage());
       }
-      th.printlnln(U.joinJsonArrays(json3,latLonJson));
+      String added=U.joinJsonArrays(json3,latLonJson);
+      th.println(added);
+      th.assertEquals(27, U.countEntries(added,","),"Wrong , count",
+              "found commas:".concat(String.valueOf(27)));
+      th.assertEquals(1+4+14, U.countEntries(added,"["),"Wrong [ count",
+              "found [:".concat(String.valueOf(U.countEntries(added,"["))));
+      th.assertEquals(U.countEntries(added,"["),U.countEntries(added,"]"),"Unequal [/] count",
+              "found ]:same");
     }
     
     private void testCsvExport() throws TestFailure {

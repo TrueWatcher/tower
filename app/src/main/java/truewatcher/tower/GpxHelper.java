@@ -19,7 +19,7 @@ public class GpxHelper {
 
   private final String ns = null;
     
-  public static String removeGpxTail(String buf) {
+  public static String _removeGpxTail(String buf) {
     String closingTag="</gpx>";
     int tailPos=buf.indexOf(closingTag);
     if (tailPos < 0) {
@@ -256,10 +256,9 @@ public class GpxHelper {
     isPoint0=true;
 
     while (parser.next() != XmlPullParser.END_TAG && parser.getName() != "gpx") {
-      if (parser.getEventType() != XmlPullParser.START_TAG) {
-        continue;
-      }
+      if (parser.getEventType() != XmlPullParser.START_TAG) { continue; }
       String name = parser.getName();
+      if (name.equals("trk")) { continue; }
       if (name.equals("trkseg")) {
         mSegCount+=1;
         isPoint0=true;
@@ -319,6 +318,14 @@ public class GpxHelper {
       //if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"readTrkpt: skipping "+parser.getName());
       skip(parser);
     }
+  }
+
+  public U.Summary getResult() {
+    String outcome="";
+    if (mSegCount == 0) outcome="No tracks found";
+    else if (mPointCount == 0) outcome="No trackpoints found";
+    else outcome="loaded";
+    return new U.Summary(outcome, mPointCount,mPointCount,"",mSegCount);
   }
   
   private String mWptTemplate, mExtensionsTemplate;

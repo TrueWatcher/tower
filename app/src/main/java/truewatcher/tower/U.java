@@ -199,12 +199,18 @@ public abstract class U {
     public String act;
     public int found;
     public int adopted;
+    public int segments=0;
 
     public Summary(String aAct, int aFound, int aAdopted, String file) {
       fileName = file;
       act = aAct;
       found = aFound;
       adopted = aAdopted;
+    }
+
+    public Summary(String aAct, int aFound, int aAdopted, String file,int aSegments) {
+      this(aAct, aFound, aAdopted, file);
+      segments = aSegments;
     }
   }
 
@@ -434,5 +440,9 @@ public abstract class U {
 
   public static boolean inArray(String needle, String[] haystack) {
     return Arrays.asList(haystack).contains(needle);
+  }
+
+  public static int countEntries(String haystack, String needle) {
+    return (haystack.length() - haystack.replace(needle, "").length()) / needle.length();
   }
 }
