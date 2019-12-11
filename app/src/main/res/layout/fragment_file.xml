@@ -42,6 +42,12 @@
             android:text="@string/action_export" />
 
         <RadioButton
+            android:id="@+id/rbViewTrack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/action_view_track" />
+
+        <RadioButton
             android:id="@+id/rbDelete"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

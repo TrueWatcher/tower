@@ -133,13 +133,15 @@ public class EditPointActivity extends SingleFragmentActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
       int id = item.getItemId();
       if (id == R.id.action_center) {
-        if (mPoint != null && mPoint.hasCoords()) {
-          JSbridge jsb=mModel.getJSbridge();
-          jsb.exportLatLon(mPoint.lat,mPoint.lon);
-          jsb.setDirty();
-          Point p2=(Point) mPoint.clone();
-          mPointList.setProximityOrigin(p2);
+        if (mPoint == null || ! mPoint.hasCoords()) {
+          tvAlert.setText("No coordinates");
+          return true;
         }
+        JSbridge jsb=mModel.getJSbridge();
+        jsb.exportLatLon(mPoint.lat,mPoint.lon);
+        jsb.setDirty();
+        Point p2=(Point) mPoint.clone();
+        mPointList.setProximityOrigin(p2);
         return true;
       }
       if (id == R.id.action_map) {

@@ -299,6 +299,7 @@ public class PointList {
     Point p;
 
     while ((p=iterate()) != null) {
+      if ( ! p.hasCoords()) continue;
       sqDistance=U.sqDistance(p, cursor, cosLat);
       if (sqDistance < minSqDistance) {
         minSqDistance=sqDistance;

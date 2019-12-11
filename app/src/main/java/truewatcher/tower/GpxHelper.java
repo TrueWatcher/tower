@@ -197,6 +197,7 @@ public class GpxHelper {
   }
 
   private void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
+    if (parser.getName() == null) { return; } // caused by <extensions><... /></extensions>
     if (parser.getEventType() != XmlPullParser.START_TAG) {
       throw new IllegalStateException();
     }
@@ -267,7 +268,8 @@ public class GpxHelper {
         mSb.append("[");
         readTrkseg(parser);
         mSb.append("]");
-        if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"Done a track segment, count="+mSegCount);
+        if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"Done a track segment," +
+                " segments="+mSegCount+", points="+mPointCount);
       }
       else {
         if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"readGpx2: skipping "+name);
@@ -288,7 +290,7 @@ public class GpxHelper {
       String name = parser.getName();
       if (name.equals("trkpt")) {
         readTrkpt(parser);
-        if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"Done a trackpoint,count="+mPointCount);
+        //if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"Done a trackpoint,count="+mPointCount);
       }
       else {
         if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"readTrkseg: skipping "+name);

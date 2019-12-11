@@ -162,7 +162,9 @@ public class MainActivity extends SingleFragmentActivity {
       }
       String[] latLon=TextUtils.split(ll,",");
       Point cursor=new Point("mark",latLon[0],latLon[1]);
-      return mPointList.findNearest(cursor);
+      int found=mPointList.findNearest(cursor);
+      if (found < 0) throw new U.DataException("No stored points with coords");
+      return found;
     }
     
     @TargetApi(23)

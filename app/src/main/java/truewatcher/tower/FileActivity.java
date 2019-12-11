@@ -133,7 +133,10 @@ public class FileActivity extends SingleFragmentActivity {
     }
     
     private void adjustVisibility(String act) {
-      if (act.equals("Open") || act.equals("Load") || act.equals("Delete")) {
+      final String[] hideExportControls=new  String[] {
+              "Open","Load","Delete","View track"
+      };
+      if (U.inArray(act, hideExportControls)) {
         etExportFile.setVisibility(View.GONE);
         lExport.setVisibility(View.GONE);
         ckRemoveExported.setVisibility(View.GONE);
@@ -156,6 +159,12 @@ public class FileActivity extends SingleFragmentActivity {
         rgMode.check(R.id.rbCsv);
         mMode="csv";
         adjustSpinnerVisibility(mMode);        
+      }
+      else if (act.equals("View track")) {
+        rgMode.setVisibility(View.GONE);
+        rgMode.check(R.id.rbGpx);
+        mMode="gpx";
+        adjustSpinnerVisibility(mMode);
       }
       else {
         rgMode.setVisibility(View.VISIBLE);
@@ -200,9 +209,7 @@ public class FileActivity extends SingleFragmentActivity {
       int id = item.getItemId();
       if (id == R.id.action_go) {
         String r="";
-        try {
-          r=go();
-        }
+        try { r=go(); }
         catch (Exception e) {
           tvAlert.setText(e.getMessage());
           e.printStackTrace();
@@ -221,6 +228,7 @@ public class FileActivity extends SingleFragmentActivity {
     private String go() throws U.DataException, U.FileException, IOException {
       String myFile=MyRegistry.getInstance().get("myFile");
       String objFile;
+      String resTemplate="";
       U.Summary s;
       
       tvAlert.setText(mAct+" "+mSelectedFile);
@@ -235,20 +243,37 @@ public class FileActivity extends SingleFragmentActivity {
         mStorageHelper.checkPointCount(objFile, mPointList);
         setRegistryMyFile(objFile);
         s=mPointList.clearAndLoad();
-        tvAlert.setText(s.act+" "+s.adopted+" points (of "+s.found+") from "+s.fileName);
+        resTemplate="%s %s points (of %s) from %s";
+        tvAlert.setText(String.format(resTemplate, s.act, s.adopted,s.found, s.fileName));
         return "Ok";
       }
       else if (mAct.equals("Load")) {
         // adb push ~/Desktop/myRoute.gpx /sdcard/Android/data/truewatcher.tower/files
         objFile=assureExists(mSelectedFile,mMode);
         s=mStorageHelper.readPoints(mPointList, objFile, mPointList.getSize(), mMode);
-        String outcome=s.act+" "+s.adopted+" points (of "+s.found+") from "+s.fileName;
-        outcome += " to "+myFile;
-        tvAlert.setText(outcome);
+        resTemplate="%s %s points (of %s) from %s to %s";
+        tvAlert.setText(String.format(resTemplate, s.act, s.adopted,s.found, s.fileName, myFile));
         if (s.adopted > 0) { 
           mPointList.save();
           mPointList.setDirty();
         }
+        return "Ok";
+      }
+      else if (mAct.equals("View track")) {
+        objFile=assureExists(mSelectedFile,mMode);
+        GpxHelper gh=new GpxHelper();
+        String latLonJson = "[]";
+        latLonJson = gh.track2latLonJson(U.fileGetContents(mStorageHelper.getMyDir(),mSelectedFile));
+        U.Summary res = gh.getResult();
+        if (! res.act.equals("loaded")) {
+          tvAlert.setText(res.act);
+          return "fail";
+        }
+        resTemplate="%s %s trackpoints (%s segment) from %s";
+        tvAlert.setText(String.format(resTemplate, res.act, res.adopted, res.segments, mSelectedFile));
+        JSbridge jsb=Model.getInstance().getJSbridge();
+        jsb.addViewTrackLatLonJson(latLonJson);
+        jsb.setDirty();
         return "Ok";
       }
       else if (mAct.equals("Export")) {

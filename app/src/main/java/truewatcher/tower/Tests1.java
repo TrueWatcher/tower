@@ -9,11 +9,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-
 import truewatcher.tower.TestHelper.TestFailure;
 
 public class Tests1 extends SingleFragmentActivity {
@@ -245,8 +243,8 @@ public class Tests1 extends SingleFragmentActivity {
       return mPl;
     }
     
-    private void testDistances() throws TestFailure {
-      th.printlnln("Testing distances -----");
+    private void testDistances() throws TestFailure, U.DataException {
+      th.printlnln("Testing distances and findNearest -----");
       Point p1=mPl.getById(1);
       Point p2=mPl.getById(2);
       Point p8=mPl.getById(8);
@@ -269,7 +267,20 @@ public class Tests1 extends SingleFragmentActivity {
               "Found p2");
       th.assertEquals(8, mPl.findNearest(p8), "Failed to find p8 from itself",
               "Found p8");
+      PointList pl2=new PointList(5);
+      th.assertEquals(-1, pl2.findNearest(p8), "Wrong result on empty pointlist",
+              "Empty pointlist gives -1");
+      String uncell="9;cell;unresolved;;;;;;2019-02-05 06:28;{\"type\":\"WCDMA\",\"MCC\":250,\"MNC\":99,\"LAC\":14782,\"CID\":15258};;";
+      Point puc=new Point();
+      puc.fromCsv(uncell);
+      pl2.addAndShiftNext(puc);
+      th.assertEquals(1, pl2.getSize(), "Wrong size of one unresolved cell",
+              "one unresolved cell: size=1");
+      th.assertEquals(-1, pl2.findNearest(p8), "Wrong result on one unresolved cell",
+              "one unresolved cell gives -1");
     }
+
+
 
     private String getTestTrack() {
       String s="";

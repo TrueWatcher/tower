@@ -25,6 +25,7 @@
     <string name="action_open">Open</string>
     <string name="action_load">Load</string>
     <string name="action_export">Export</string>
+    <string name="action_view_track">View track</string>
     <string name="action_back">Back</string>
     <string name="rbMapCenter">Current map center</string>
     <string name="rbWaypoint">New waypoint</string>
