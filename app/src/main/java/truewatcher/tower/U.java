@@ -142,7 +142,7 @@ public abstract class U {
 
   // calculates distance in meters from coords (assumed spherical, aka haversine)
   public static double proximityM(Point p, Point center) {
-    if (!p.hasCoords()) return FAR;
+    if ( ! p.hasCoords()) return FAR;
     double earthRadius = 6371000;
     double deg2rad = 0.0174532925199433;
 
@@ -174,6 +174,7 @@ public abstract class U {
   }
 
   public static double sqDistance(Point p, Point center, double cosLat) {
+    if ( ! p.hasCoords()) return FAR*FAR;
     double dLat = (Double.parseDouble(center.lat) - Double.parseDouble(p.lat));
     double dLon = (Double.parseDouble(center.lon) - Double.parseDouble(p.lon));
     double dx = dLon * cosLat;
