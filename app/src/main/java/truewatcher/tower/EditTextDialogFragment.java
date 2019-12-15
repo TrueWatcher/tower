@@ -53,7 +53,7 @@ public class EditTextDialogFragment extends DialogFragment {
     mId=Integer.valueOf(this.getArguments().getString("actionId"));
     mStringId=Integer.valueOf(this.getArguments().getString("actionStringId"));
     mText=this.getArguments().getString("text");
-    if (mId == 0 || mStringId == 0 || mText == "") throw new U.RunException("EditTextDialogFragment:Missing arguments");
+    if (mId == 0 || mStringId == 0 || mText == null || mText.isEmpty()) throw new U.RunException("EditTextDialogFragment:Missing arguments");
 
     AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(getActivity());
     builder.setMessage(mStringId);

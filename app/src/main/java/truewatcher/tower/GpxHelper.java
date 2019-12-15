@@ -146,7 +146,7 @@ public class GpxHelper {
   private Map<String,String> postProcess(Map<String,String> csv) {
     String type=csv.get("type");
     //if (U.DEBUG) Log.d(U.TAG,"GpxHelper:","type="+type);
-    if (type == null || type.equals("")) {
+    if (type == null || type.isEmpty()) {
       if (csv.get("cellData") != null) csv.put("type","cell");
       else if (csv.get("alt") != null) csv.put("type","gps");
       else csv.put("type","mark");    

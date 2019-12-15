@@ -226,7 +226,7 @@ public class FileActivity extends SingleFragmentActivity {
           e.printStackTrace();
           return true;
         }
-        if (r == "quit") getActivity().finish(); 
+        if (r.equals("quit")) getActivity().finish();
         return true;
       }
       if (id == R.id.action_list_from_file) {

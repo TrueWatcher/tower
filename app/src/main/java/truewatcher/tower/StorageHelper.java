@@ -38,14 +38,16 @@ public class StorageHelper {
     int id;
     U.Summary outcome;
     String buf=mHeader+Point.NL;
+    StringBuilder sb=new StringBuilder(buf);
     while ((p=pl.iterate()) != null) {
       fullCount+=1;
       id=p.getId();
       if (id >= from && (until < 0 || id <= until)) {
-        buf += p.toCsv()+Point.NL;
+        sb.append(p.toCsv()).append(Point.NL);
         count+=1;
       }
     }
+    buf=sb.toString();
     if (convertTo.equals("gpx")) {
       GpxHelper gh=new GpxHelper();        
       buf=gh.csv2gpx(buf);

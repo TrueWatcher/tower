@@ -234,22 +234,19 @@ public class AddPointActivity  extends SingleFragmentActivity {
           lat=etLat.getText().toString();
           lon=etLon.getText().toString();
           if (lat.isEmpty() || lon.isEmpty()) return null;
-          latLon=new String[]{lat, lon};
-          return latLon;
+          return new String[]{lat, lon};
         }      
         if (aType.equals("gps")) {
           if (mModel.lastGps == null) return null;
           p=mModel.lastGps;
-          latLon=new String[]{p.lat, p.lon};
-          return latLon;
+          return new String[]{p.lat, p.lon};
         }
         if (aType.equals("cell")) {
           if (mModel.lastCell == null) return null;
           p=mModel.lastCell;          
           if (p.cellData == null || p.cellData.isEmpty()) return null;
-          if (p.lat == null || p.lon == null || p.lat.isEmpty() || p.lon.isEmpty()) return new String[]{"",""};
-          latLon=new String[]{p.lat, p.lon};
-          return latLon;
+          if ( ! p.hasCoords()) return new String[]{"",""};
+          return new String[]{p.lat, p.lon};
         }
         return null;
       }
@@ -304,15 +301,15 @@ public class AddPointActivity  extends SingleFragmentActivity {
         }
         String s="";
         String location="";
-        if (p.cellData != null && p.cellData != "") s+=JsonHelper.filterQuotes(p.cellData);
+        if (p.cellData != null && ! p.cellData.isEmpty()) s+=JsonHelper.filterQuotes(p.cellData);
         if (p.lat != null && p.lon != null) location+="lat="+truncate(p.lat,10)+",lon="+truncate(p.lon,10);
         if (p.alt != null) location+=",alt="+truncate(p.alt,6);
-        if (location != "" && p.range != null) location+=",Accuracy:"+floor(p.range);
-        if (location != "") {
-          if (s != "") s+="\n";
+        if ( ! location.isEmpty() && p.range != null) location+=",Accuracy:"+floor(p.range);
+        if ( ! location.isEmpty()) {
+          if ( ! s.isEmpty()) s+="\n";
           s+=location;  
         }
-        if (s != "") { showData(s); }
+        if ( ! s.isEmpty()) { showData(s); }
       }
 
       @Override

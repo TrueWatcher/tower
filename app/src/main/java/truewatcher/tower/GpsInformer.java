@@ -26,7 +26,7 @@ public class GpsInformer extends PointFetcher {
   /* mock gps location seems to be off limits now :(
   @Override
   protected boolean tryGiveMockLocation() {
-    if (mStatus == "enabled") { 
+    if (mStatus.equals("enabled")) {
       giveMockLocation();
       return true;
     }

@@ -94,8 +94,8 @@ public abstract class PointFetcher implements PermissionReceiver {
     if ( p.hasCoords() ) mPi.hideProgress();// if it's an unresolved cell - keep progress visible
     p.setCurrentTime();
     Model mm = Model.getInstance();
-    if (p.getType() == "cell") mm.lastCell=p;
-    else if (p.getType() == "gps") mm.lastGps=p;
+    if (p.getType().equals("cell")) mm.lastCell=p;
+    else if (p.getType().equals("gps")) mm.lastGps=p;
     if (mToUpdateLocation && p.hasCoords()) {
       mm.lastPosition=p;
       mm.getPointList().setProximityOrigin(p);

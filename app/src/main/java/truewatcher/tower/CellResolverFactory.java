@@ -96,7 +96,7 @@ public class CellResolverFactory {
       try {
         rd=new JSONObject(response);
         String error=rd.optString("error");
-        if (error != "") { throw new U.DataException("Resolver failure, error="+error); }
+        if (error != null && ! error.isEmpty()) { throw new U.DataException("Resolver failure, error="+error); }
         rd=rd.getJSONObject("position");
       }
       catch (JSONException e) { throw new U.DataException("Unparseble response"); }
@@ -107,7 +107,7 @@ public class CellResolverFactory {
       try {
         res.put("lat",lat);
         res.put("lon",lon);
-        if (range != "") res.put("range",range);
+        if ( range != null && ! range.isEmpty()) res.put("range",range);
       }
       catch (JSONException e) { throw new U.DataException("Unrecodable response"); }
       return res;

@@ -43,7 +43,7 @@ public class PointViewer extends PointIndicator implements PointReceiver {
   
   public void showMap() {
     mPage=choosePage(mRegistry.get("mapProvider"));
-    if (mPage == "") {
+    if (mPage.isEmpty()) {
       addProgress("Wrong mapProvider");
       return;
     }
