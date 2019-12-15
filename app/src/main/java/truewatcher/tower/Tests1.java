@@ -212,13 +212,15 @@ public class Tests1 extends SingleFragmentActivity {
       int maxPointCount=3;
       mPl=new PointList(maxPointCount, mSh);
       String[] dir=U.getCatalog(mSh.getMyDir(), extCsv);
-      th.assertTrue(U.arrayContains(dir,testNameCsv), "Missing test csv file from directory","The test csv is visible");
+      th.assertTrue(U.arrayContains(dir,testNameCsv), "Missing test csv file from directory",
+              "The test csv is visible");
       int tryCount=mSh.getPointCount(testNameCsv);
       //th.println("found points:"+tryCount);
       th.assertEquals(3, tryCount, "Wrong point count of the test csv", "Point count Ok ("+tryCount+")");
       
       U.Summary loaded=mPl.load();
-      th.assertEquals(tryCount, loaded.adopted, "Wrong loaded point count", "Loaded point count Ok (".concat(String.valueOf(loaded.adopted)).concat(")"));
+      th.assertEquals(tryCount, loaded.adopted, "Wrong loaded point count",
+              "Loaded point count Ok (".concat(String.valueOf(loaded.adopted)).concat(")"));
       Point p1=mPl.getById(1);
       th.assertEquals("cell", p1.getType(), "Wrong point 1 type", "Point 1:"+p1.getType());
       th.assertEquals("Москва", p1.getComment(), "Wrong point 1 name", "Point 1:"+p1.getComment());
@@ -271,8 +273,7 @@ public class Tests1 extends SingleFragmentActivity {
       th.assertEquals(-1, pl2.findNearest(p8), "Wrong result on empty pointlist",
               "Empty pointlist gives -1");
       String uncell="9;cell;unresolved;;;;;;2019-02-05 06:28;{\"type\":\"WCDMA\",\"MCC\":250,\"MNC\":99,\"LAC\":14782,\"CID\":15258};;";
-      Point puc=new Point();
-      puc.fromCsv(uncell);
+      Point puc=(new Point()).fromCsv(uncell);
       pl2.addAndShiftNext(puc);
       th.assertEquals(1, pl2.getSize(), "Wrong size of one unresolved cell",
               "one unresolved cell: size=1");
@@ -398,11 +399,13 @@ public class Tests1 extends SingleFragmentActivity {
       th.printlnln("Testing list rotation -----");
       String trashFile="trash.csv";
       if (null != U.fileExists(mPath, trashFile, "csv")) { U.unlink(mPath, trashFile); }
-      th.assertTrue(null == U.fileExists(mPath, trashFile, "csv"), "Trash file still present", "No more trash file");
+      th.assertTrue(null == U.fileExists(mPath, trashFile, "csv"), "Trash file still present",
+              "No more trash file");
       mPl.forceUseTrash();
       th.assertEquals(3, mPl.getMax(), "Wrong MAXCOUNT="+mPl.getMax(),"MAXCOUNT Ok");
       th.assertEquals(mPl.getMax(), mPl.getSize(), "Wrong SIZE="+mPl.getMax(),"SIZE Ok");
-      th.assertEqualsList(Arrays.asList("1","2","8"), mPl.getIndices(), "Wrong index list", "Point list Ok: 1 2 8");
+      th.assertEqualsList(Arrays.asList("1","2","8"), mPl.getIndices(), "Wrong index list",
+              "Point list Ok: 1 2 8");
       th.assertTrue( ! mPl.isDirty(), "DIRTY is set", "DIRTY is false");
       int sizeBeforeAdd=mPl.getSize();
       
@@ -410,8 +413,7 @@ public class Tests1 extends SingleFragmentActivity {
       Point edge1=mPl.getEdge();
       int eid1=mPl.getEdge().getId();
       th.assertEquals(1, eid1, "Wrong edge point="+eid1, "About to remove:"+eid1);
-      Point p9=new Point();
-      p9.fromCsv(getTestCsv2(1));
+      Point p9=(new Point()).fromCsv(getTestCsv2(1));
       mPl.addAsNext(p9);
       th.assertEquals(sizeBeforeAdd, mPl.getSize(), "Wrong SIZE="+mPl.getMax(),"SIZE same");
       th.assertTrue(mPl.isDirty(), "DIRTY is not set", "DIRTY is set");
@@ -419,46 +421,57 @@ public class Tests1 extends SingleFragmentActivity {
       th.assertEquals("СПб",p9back.getComment(),"Wrong added COMMENT","Added:"+p9back.getComment());
       th.print("9:");
       th.csvLineDiff(getTestCsv2(1), p9back.toCsv(), Point.SEP);
-      th.assertTrue(null == mPl.getById(edge1.getId()), "Edge point not removed","Edge point removed");
-      th.assertEqualsList(Arrays.asList("2","8","9"), mPl.getIndices(), "Wrong index list", "Removed #1, added #9");
+      th.assertTrue(null == mPl.getById(edge1.getId()), "Edge point not removed",
+              "Edge point removed");
+      th.assertEqualsList(Arrays.asList("2","8","9"), mPl.getIndices(), "Wrong index list",
+              "Removed #1, added #9");
       
       th.println("Adding over a protected point, expecting replacement of another unprotected");
       Point edge2=mPl.getEdge();// #2 is protected, next is #8
       int eid2=mPl.getEdge().getId();
       th.assertEquals(8, eid2, "Wrong edge point="+eid2, "About to remove:"+eid2);
-      Point p11=new Point();
-      p11.fromCsv(getTestCsv2(2));
+      Point p11=(new Point()).fromCsv(getTestCsv2(2));
       mPl.addAndShiftNext(p11);
-      th.assertEqualsList(Arrays.asList("2","9","11"), mPl.getIndices(), "Wrong index list", "Removed #8, added #11");
+      th.assertEqualsList(Arrays.asList("2","9","11"), mPl.getIndices(), "Wrong index list",
+              "Removed #8, added #11");
       
       th.println("Adding over all protected points, expecting exception");
-      th.assertTrue( ! p11.isProtected(), "Point is wrongly protected", "Point "+p11.getId()+" is not protected");
+      th.assertTrue( ! p11.isProtected(), "Point is wrongly protected",
+              "Point "+p11.getId()+" is not protected");
       mPl.getById(11).protect();
-      th.assertTrue(mPl.getById(11).isProtected(), "Point is not set protected", "Point "+p11.getId()+" is set to protected");
-      Point p12=new Point();
-      p12.fromCsv(getTestCsv2(3));
+      th.assertTrue(mPl.getById(11).isProtected(), "Point is not set protected",
+              "Point "+p11.getId()+" is set to protected");
+      Point p12=(new Point()).fromCsv(getTestCsv2(3));
       String exceptionThrown="";
       try { mPl.addAndShiftNext(p12); } catch (U.DataException e) { exceptionThrown=e.getMessage(); }
-      th.assertContains("No room",exceptionThrown,"No or wrong exception on all protected","Exception on all protected");
-      th.assertEqualsList(Arrays.asList("2","9","11"), mPl.getIndices(), "Wrong index list", "Point list unchanged");
+      th.assertContains("No room",exceptionThrown,"No or wrong exception on all protected",
+              "Exception on all protected");
+      th.assertEqualsList(Arrays.asList("2","9","11"), mPl.getIndices(), "Wrong index list",
+              "Point list unchanged");
       
       th.println("Unprotecting one point and adding over it");
       mPl.getById(2).unprotect();
-      th.assertTrue( ! mPl.getById(2).isProtected(), "Point is not set unprotected", "Point "+"2"+" is set to unprotected");
+      th.assertTrue( ! mPl.getById(2).isProtected(), "Point is not set unprotected",
+              "Point "+"2"+" is set to unprotected");
       int eid3=mPl.getEdge().getId();
       th.assertEquals(2, eid3, "Wrong edge point="+eid3, "About to remove:"+eid3);
       mPl.addAndShiftNext(p12);
-      th.assertEqualsList(Arrays.asList("9","11","12"), mPl.getIndices(), "Wrong index list", "Added #12, removed #2");
-      th.assertEquals("МосВок",mPl.getById(12).getComment(),"Wrong added COMMENT","Added:"+mPl.getById(12).getComment());
+      th.assertEqualsList(Arrays.asList("9","11","12"), mPl.getIndices(), "Wrong index list",
+              "Added #12, removed #2");
+      th.assertEquals("МосВок",mPl.getById(12).getComment(),"Wrong added COMMENT",
+              "Added:"+mPl.getById(12).getComment());
       
       th.println("Trying to low-level remove a protected point, expecting failure");
       mPl.moveUnprotectedToTrash(11);// it is protected
-      th.assertEqualsList(Arrays.asList("9","11","12"), mPl.getIndices(), "Wrong index list", "Protected point not removed");
+      th.assertEqualsList(Arrays.asList("9","11","12"), mPl.getIndices(), "Wrong index list",
+              "Protected point not removed");
       
       th.println("Renumber points from 1");
       mPl.renumber();
-      th.assertEqualsList(Arrays.asList("1","2","3"), mPl.getIndices(), "Wrong index list", "Point list Ok after renumbering");
-      th.assertEquals("МосВок",mPl.getById(3).getComment(),"Wrong added COMMENT","Name is same after renumbering");      
+      th.assertEqualsList(Arrays.asList("1","2","3"), mPl.getIndices(), "Wrong index list",
+              "Point list Ok after renumbering");
+      th.assertEquals("МосВок",mPl.getById(3).getComment(),"Wrong added COMMENT",
+              "Name is same after renumbering");
     }
     
     private void testSavedFiles()
@@ -466,19 +479,22 @@ public class Tests1 extends SingleFragmentActivity {
       th.printlnln("Testing saved points and trash -----");
       mPl.save();
       th.assertTrue( ! mPl.isDirty(), "DIRTY is set", "DIRTY is cleared on save");
-      th.assertEqualsList(Arrays.asList("1","2","3"), mPl.getIndices(), "Wrong index list", "Point list Ok");
+      th.assertEqualsList(Arrays.asList("1","2","3"), mPl.getIndices(), "Wrong index list",
+              "Point list Ok");
       
       th.println("Trying to open csv with more than MAXCOUNT lines, expecting exception");
       int maxPointCount=2;// deliberately too small
       PointList newPl=new PointList(maxPointCount, mSh);
       String exceptionThrown="";
       try { U.Summary loaded0=newPl.load(); } catch (U.DataException e) { exceptionThrown=e.getMessage(); }
-      th.assertContains("Set max point count",exceptionThrown,"No or wrong exception on too large csv file", "Exception on too large csv Ok");
+      th.assertContains("Set max point count",exceptionThrown,"No or wrong exception on too large csv file",
+              "Exception on too large csv Ok");
       
       th.println("Load into a fresh PointList and verify");
       newPl.adoptMax(mPl.getSize());
       newPl.load();
-      th.assertEqualsList(Arrays.asList("1","2","3"), newPl.getIndices(), "Wrong index list", "Point list Ok");
+      th.assertEqualsList(Arrays.asList("1","2","3"), newPl.getIndices(), "Wrong index list",
+              "Point list Ok");
       th.print(newPl.getById(1).getComment()+" : ");
       th.csvLineDiff(getTestCsv2(1), newPl.getById(1).toCsv(), Point.SEP);
       th.print(newPl.getById(2).getComment()+" : ");
@@ -493,7 +509,8 @@ public class Tests1 extends SingleFragmentActivity {
       newPl.forceNotUseTrash();
       mSh.trySetMyFile("trash.csv");
       newPl.clearAndLoad();
-      th.assertEqualsList(Arrays.asList("1","8","9"), newPl.getIndices(), "Wrong index list", "Point list Ok");
+      th.assertEqualsList(Arrays.asList("1","8","9"), newPl.getIndices(), "Wrong index list",
+              "Point list Ok");
       th.print(newPl.getById(1).getComment()+" : ");
       th.csvLineDiff(getTestCsv1(1), newPl.getById(1).toCsv(), Point.SEP);
       th.print(newPl.getById(8).getComment()+" : ");
@@ -517,8 +534,10 @@ public class Tests1 extends SingleFragmentActivity {
       mSh.trySetMyFile(testName2Csv);
       mPl.forceNotUseTrash();
       mPl.clearAndLoad();
-      th.assertTrue(null == mPl.getById(2), "Protected point not removed","Protected point removed on File-open");
-      th.assertEqualsList(Arrays.asList("1"), mPl.getIndices(), "Wrong index list", "Point list Ok, count starts from 1");
+      th.assertTrue(null == mPl.getById(2), "Protected point not removed",
+              "Protected point removed on File-open");
+      th.assertEqualsList(Arrays.asList("1"), mPl.getIndices(), "Wrong index list",
+              "Point list Ok, count starts from 1");
       th.print(mPl.getById(1).getComment()+" : ");
       th.csvLineDiff(getTestCsv3(1), mPl.getById(1).toCsv(), Point.SEP);
       String next=mPl.getNextS();
@@ -526,14 +545,17 @@ public class Tests1 extends SingleFragmentActivity {
       U.unlink(mPath, testName2Csv);
       
       th.println("Testing GPX import");
-      th.assertTrue(null != mGpxBuffer,"No GPX string, make sure testGpxConversions was run","Preparing GPX");
+      th.assertTrue(null != mGpxBuffer,"No GPX string, make sure testGpxConversions was run",
+              "Preparing GPX");
       String extGpx="gpx";
       String testName2Gpx=testName2+"."+extGpx;
       U.filePutContents(mPath, testName2Gpx, mGpxBuffer, false);
       mPl.adoptMax(5);
       U.Summary imported=mSh.readPoints(mPl, testName2Gpx, mPl.getSize(), "gpx");      
-      th.assertEquals(3, imported.adopted, "Gpx import failed", "Imported "+imported.adopted+" points from GPX");
-      th.assertEqualsList(Arrays.asList("1","2","3","8"), mPl.getIndices(), "Wrong index list", "Point list Ok");
+      th.assertEquals(3, imported.adopted, "Gpx import failed",
+              "Imported "+imported.adopted+" points from GPX");
+      th.assertEqualsList(Arrays.asList("1","2","3","8"), mPl.getIndices(), "Wrong index list",
+              "Point list Ok");
       next=mPl.getNextS();
       th.assertEquals("9", next, "Wrong NEXT="+next, "NEXT is Ok:"+next);
       th.assertTrue(null == mPl.getEdge(), "Non-empty EDGE", "EDGE is null");
@@ -550,11 +572,13 @@ public class Tests1 extends SingleFragmentActivity {
       String testName3="test3_".concat(Point.getDate());
       String testName3Csv=testName3+"."+extCsv;
       U.Summary exported=mSh.writePoints(mPl, testName3Csv, 2, 3, "csv");
-      th.assertEquals(2, exported.adopted, "Partial csv export failed", "Exported "+exported.adopted+" points as CSV");
+      th.assertEquals(2, exported.adopted, "Partial csv export failed",
+              "Exported "+exported.adopted+" points as CSV");
       String csvReadback=U.fileGetContents(mPath, testName3Csv);
       U.unlink(mPath, testName3Csv);
       String[] lines=TextUtils.split(csvReadback, Point.NL);
-      th.assertEquals(4, lines.length, "Wrong exported lines count="+lines.length, "Exported lines count Ok");
+      th.assertEquals(4, lines.length, "Wrong exported lines count="+lines.length,
+              "Exported lines count Ok");
       th.print(mPl.getById(2).getComment()+" : ");
       th.csvLineDiff(lines[1], getTestCsv1(1), Point.SEP);
       th.print(mPl.getById(3).getComment()+" : ");

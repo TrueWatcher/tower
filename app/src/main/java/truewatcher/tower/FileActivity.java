@@ -136,11 +136,17 @@ public class FileActivity extends SingleFragmentActivity {
       final String[] hideExportControls=new  String[] {
               "Open","Load","Delete","View track"
       };
-      if (U.inArray(act, hideExportControls)) {
+      if (U.arrayContains( hideExportControls, act)) {
         etExportFile.setVisibility(View.GONE);
         lExport.setVisibility(View.GONE);
         ckRemoveExported.setVisibility(View.GONE);
         adjustSpinnerVisibility(mMode);
+      }
+      else if (act.equals("New")) {
+        etExportFile.setVisibility(View.VISIBLE);
+        lExport.setVisibility(View.GONE);
+        ckRemoveExported.setVisibility(View.GONE);
+        adjustSpinnerVisibility("off");
       }
       else if (act.equals("Export")) {
         etExportFile.setVisibility(View.VISIBLE);
@@ -159,6 +165,11 @@ public class FileActivity extends SingleFragmentActivity {
         rgMode.check(R.id.rbCsv);
         mMode="csv";
         adjustSpinnerVisibility(mMode);        
+      }
+      else if (act.equals("New")) {
+        rgMode.setVisibility(View.GONE);
+        rgMode.check(R.id.rbCsv);
+        mMode="csv";
       }
       else if (act.equals("View track")) {
         rgMode.setVisibility(View.GONE);
@@ -227,30 +238,41 @@ public class FileActivity extends SingleFragmentActivity {
     
     private String go() throws U.DataException, U.FileException, IOException {
       String myFile=MyRegistry.getInstance().get("myFile");
-      String objFile;
+      String targetFile;
       String resTemplate="";
       U.Summary s;
       
       tvAlert.setText(mAct+" "+mSelectedFile);
       if (U.DEBUG) Log.d(U.TAG, "FileFragment_go:"+"act="+mAct+", file="+mSelectedFile);
       if (mAct.equals("Open")) {
-        objFile=assureExists(mSelectedFile,"csv");
-        mStorageHelper.trySetMyFile(objFile);
-        if (objFile.equals("trash.csv")) {
+        targetFile=assureExists(mSelectedFile,"csv");
+        mStorageHelper.trySetMyFile(targetFile);
+        if (targetFile.equals("trash.csv")) {
           boolean useTrash=MyRegistry.getInstance().getBool("useTrash");
-          if (useTrash) { throw new U.FileException("To open "+objFile+", disable Use Trash in Settings"); }
+          if (useTrash) { throw new U.FileException("To open "+targetFile+", disable Use Trash in Settings"); }
         }
-        mStorageHelper.checkPointCount(objFile, mPointList);
-        setRegistryMyFile(objFile);
+        mStorageHelper.checkPointCount(targetFile, mPointList);
+        setRegistryMyFile(targetFile);
         s=mPointList.clearAndLoad();
         resTemplate="%s %s points (of %s) from %s";
         tvAlert.setText(String.format(resTemplate, s.act, s.adopted,s.found, s.fileName));
         return "Ok";
       }
+      else if (mAct.equals("New")) {
+        targetFile=etExportFile.getText().toString();
+        targetFile=assureNotExists(targetFile,mMode);
+        s=mStorageHelper.writePoints(mPointList, targetFile, 0, 0, mMode);
+        mStorageHelper.trySetMyFile(targetFile);
+        setRegistryMyFile(targetFile);
+        mPointList.fastClear();
+        resTemplate="New empty file %s is now current";
+        tvAlert.setText(String.format(resTemplate, targetFile));
+        return "Ok";
+      }
       else if (mAct.equals("Load")) {
         // adb push ~/Desktop/myRoute.gpx /sdcard/Android/data/truewatcher.tower/files
-        objFile=assureExists(mSelectedFile,mMode);
-        s=mStorageHelper.readPoints(mPointList, objFile, mPointList.getSize(), mMode);
+        targetFile=assureExists(mSelectedFile,mMode);
+        s=mStorageHelper.readPoints(mPointList, targetFile, mPointList.getSize(), mMode);
         resTemplate="%s %s points (of %s) from %s to %s";
         tvAlert.setText(String.format(resTemplate, s.act, s.adopted,s.found, s.fileName, myFile));
         if (s.adopted > 0) { 
@@ -260,7 +282,7 @@ public class FileActivity extends SingleFragmentActivity {
         return "Ok";
       }
       else if (mAct.equals("View track")) {
-        objFile=assureExists(mSelectedFile,mMode);
+        targetFile=assureExists(mSelectedFile,mMode);
         GpxHelper gh=new GpxHelper();
         String latLonJson = "[]";
         latLonJson = gh.track2latLonJson(U.fileGetContents(mStorageHelper.getMyDir(),mSelectedFile));
@@ -277,7 +299,7 @@ public class FileActivity extends SingleFragmentActivity {
         return "Ok";
       }
       else if (mAct.equals("Export")) {
-        String targetFile=etExportFile.getText().toString();
+        targetFile=etExportFile.getText().toString();
         if (targetFile.length() == 0) { throw new U.FileException("Empty file name"); }
         targetFile=U.assureExtension(targetFile,mMode);
         int from=Integer.valueOf(etExportFrom.getText().toString());
@@ -301,9 +323,9 @@ public class FileActivity extends SingleFragmentActivity {
         return "Ok";
       }
       else if (mAct.equals("Delete")) {
-        objFile=assureExists(mSelectedFile,mMode);
-        if (objFile.equals(myFile)) { throw new U.FileException("File "+objFile+" is open now"); }
-        s=U.unlink(mStorageHelper.getMyDir(), objFile);
+        targetFile=assureExists(mSelectedFile,mMode);
+        if (targetFile.equals(myFile)) { throw new U.FileException("File "+targetFile+" is open now"); }
+        s=U.unlink(mStorageHelper.getMyDir(), targetFile);
         tvAlert.setText(s.act+" "+s.fileName);
         adoptCatalog();
         return "Ok";
@@ -315,8 +337,16 @@ public class FileActivity extends SingleFragmentActivity {
     private String assureExists(String f, String ext) throws U.FileException {
       if (f == null || f.isEmpty()) { throw new U.FileException("Choose the file"); }
       String ff=U.assureExtension(f, ext);
-      boolean rr=(null != U.fileExists(mStorageHelper.getMyDir(), ff, ext));
-      if (rr == false) { throw new U.FileException("Wrong file name:"+ff); }
+      boolean exists=(null != U.fileExists(mStorageHelper.getMyDir(), ff, ext));
+      if (exists == false) { throw new U.FileException("Wrong file name:"+ff); }
+      return ff;
+    }
+
+    private String assureNotExists(String f, String ext) throws U.FileException {
+      if (f == null || f.isEmpty()) { throw new U.FileException("Enter the file name"); }
+      String ff=U.assureExtension(f, ext);
+      boolean exists=(null != U.fileExists(mStorageHelper.getMyDir(), ff, ext));
+      if (exists == true) { throw new U.FileException("File "+ff+" already exists, delete it or choose another name"); }
       return ff;
     }
     

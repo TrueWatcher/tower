@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.tower"
-    android:versionCode="43"
-    android:versionName="2.4.0" >
+    android:versionCode="44"
+    android:versionName="2.4.1" >
 <!--
 2.0.9 31 9.11.2019 improved myRegistry, added 2 files to assets
 2.0.10 32 10.11.2019 added BuildConfig check
@@ -17,6 +17,7 @@
 2.3.3  41 10.12.2019 improvements
 2.3.4  42 11.12.2019 fixed crash on U.sqDistance of unresolved cell
 2.4.0  43 11.12.2019 added files-view track
+2.4.1  44 15.12.2019 added files-new; code improvements and bugfixes
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

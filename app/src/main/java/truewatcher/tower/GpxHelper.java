@@ -19,26 +19,6 @@ public class GpxHelper {
 
   private final String ns = null;
     
-  public static String _removeGpxTail(String buf) {
-    String closingTag="</gpx>";
-    int tailPos=buf.indexOf(closingTag);
-    if (tailPos < 0) {
-      Log.w(U.TAG,"GpxHelper:"+"No closing gpx tag!");
-      return buf+closingTag;
-    }
-    int theEnd=tailPos+closingTag.length();
-    if (buf.length() < theEnd) {
-      Log.e(U.TAG,"GpxHelper:"+"Possibly wrong closing gpx tag!");
-      return buf;
-    }
-    if (buf.length() == theEnd) {
-      if (U.DEBUG) Log.d(U.TAG,"GpxHelper:"+"Just right closing gpx tag");
-      return buf;
-    }
-    Log.w(U.TAG,"GpxHelper:"+"Some data found after closing gpx tag, truncated");
-    return buf.substring(0, theEnd);    
-  }
-    
   public String gpx2csv(String gpxString) throws U.DataException, IOException {
       ByteArrayInputStream is = new ByteArrayInputStream(gpxString.getBytes(StandardCharsets.UTF_8));
     try {
@@ -61,7 +41,7 @@ public class GpxHelper {
     String line="";
 
     parser.require(XmlPullParser.START_TAG, ns, "gpx");
-    while (parser.next() != XmlPullParser.END_TAG && parser.getName() != "gpx") {
+    while ( ! (parser.next() == XmlPullParser.END_TAG && parser.getName().equals("gpx"))) {
       if (parser.getEventType() != XmlPullParser.START_TAG) {
         continue;
       }
@@ -96,7 +76,7 @@ public class GpxHelper {
     
     // Read nested tags
     // ele time name sym cmt desc extensions
-    while (parser.next() != XmlPullParser.END_TAG && parser.getName() != "wpt") {
+    while ( ! (parser.next() == XmlPullParser.END_TAG && parser.getName().equals("wpt"))) {
       if (parser.getEventType() != XmlPullParser.START_TAG) {
         continue;
       }
@@ -256,7 +236,7 @@ public class GpxHelper {
     isSeg0=true;
     isPoint0=true;
 
-    while (parser.next() != XmlPullParser.END_TAG && parser.getName() != "gpx") {
+    while ( ! (parser.next() == XmlPullParser.END_TAG && parser.getName().equals("gpx"))) {
       if (parser.getEventType() != XmlPullParser.START_TAG) { continue; }
       String name = parser.getName();
       if (name.equals("trk")) { continue; }
@@ -283,7 +263,7 @@ public class GpxHelper {
   private void readTrkseg(XmlPullParser parser) throws XmlPullParserException, IOException {
 
     parser.require(XmlPullParser.START_TAG, ns, "trkseg");
-    while (parser.next() != XmlPullParser.END_TAG && parser.getName() != "trkseg") {
+    while ( ! (parser.next() == XmlPullParser.END_TAG && parser.getName().equals("trkseg"))) {
       if (parser.getEventType() != XmlPullParser.START_TAG) {
         continue;
       }
@@ -316,8 +296,14 @@ public class GpxHelper {
             .append(",")
             .append(lon)
             .append("]");
-    while (parser.next() != XmlPullParser.END_TAG && parser.getName() != "trkpt") {
+    while ( ! (parser.next() == XmlPullParser.END_TAG && parser.getName().equals("trkpt"))) {
       //if (U.DEBUG) Log.d(U.TAG, "GpxHelper:"+"readTrkpt: skipping "+parser.getName());
+      /*if (parser.getEventType() == XmlPullParser.START_TAG) {
+        Log.d(U.TAG, "GpxHelper:"+"readTrkpt: starttag "+parser.getName());
+      }
+      if (parser.getEventType() == XmlPullParser.END_TAG) {
+        Log.d(U.TAG, "GpxHelper:"+"readTrkpt: endtag "+parser.getName());
+      }*/
       skip(parser);
     }
   }

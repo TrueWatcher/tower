@@ -133,7 +133,7 @@ public class Point implements Cloneable {
     return s;
   }
   
-  public void fromCsv(String s) throws U.DataException {
+  public Point fromCsv(String s) throws U.DataException {
     s=s.trim();
     String[] ls=TextUtils.split(s, Point.SEP);
     if (ls.length != Point.FIELDS.size()) {
@@ -154,6 +154,7 @@ public class Point implements Cloneable {
     cellData=ls[9];
     mNote=ls[10];
     mSym=ls[11];
+    return this;
   }
   
   private int eInt(String s) {

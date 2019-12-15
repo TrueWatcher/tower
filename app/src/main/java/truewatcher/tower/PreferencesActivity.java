@@ -217,7 +217,7 @@ public class PreferencesActivity extends AppCompatActivity {
     }
 
     private void adjustApiKeys(String key) {
-      if ( ! mRegistry.getBool("isKeylessDistro") || ! U.inArray(key,MyRegistry.APIS) ) return;
+      if ( ! mRegistry.getBool("isKeylessDistro") || ! U.arrayContains(MyRegistry.APIS, key) ) return;
       getPreferenceScreen().getSharedPreferences()
               .unregisterOnSharedPreferenceChangeListener(this);
       mRegistry.set(key, mRegistry.getScrambled(key));

@@ -23,14 +23,20 @@
         android:layout_height="wrap_content" >
 
         <RadioButton
-            android:id="@+id/rbLoad"
+            android:id="@+id/rbOpen"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
             android:text="@string/action_open" />
 
         <RadioButton
-            android:id="@+id/rbImport"
+            android:id="@+id/rbNew"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/action_new" />
+
+        <RadioButton
+            android:id="@+id/rbLoad"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/action_load" />

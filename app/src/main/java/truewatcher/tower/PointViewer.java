@@ -79,7 +79,7 @@ public class PointViewer extends PointIndicator implements PointReceiver {
 
   private boolean isLeaflet(String provider) {
     final String[] known=new String[] {"osm","opentopo","blank","google"};
-    return U.inArray(provider,known);
+    return U.arrayContains(known,provider);
   }
 
   private void showWallpaper() {

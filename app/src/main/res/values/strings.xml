@@ -22,6 +22,7 @@
     <string name="action_renumber">Renumber from 1</string>
     <string name="action_wipe">Delete ALL points</string>
     <string name="action_center">As center</string>
+    <string name="action_new">New</string>
     <string name="action_open">Open</string>
     <string name="action_load">Load</string>
     <string name="action_export">Export</string>

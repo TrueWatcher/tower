@@ -439,10 +439,6 @@ public abstract class U {
     return res;
   }
 
-  public static boolean inArray(String needle, String[] haystack) {
-    return Arrays.asList(haystack).contains(needle);
-  }
-
   public static int countEntries(String haystack, String needle) {
     return (haystack.length() - haystack.replace(needle, "").length()) / needle.length();
   }

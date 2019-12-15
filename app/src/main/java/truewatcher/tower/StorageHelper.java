@@ -130,8 +130,7 @@ public class StorageHelper {
     for (; i < l; i+=1) {
       line=lines[i].trim();
       if (line.isEmpty()) continue;
-      p=new Point();
-      p.fromCsv(line);
+      p=(new Point()).fromCsv(line);
       if (U.DEBUG) Log.d(U.TAG,"StorageHelper:"+"About to add point "+p.getId());
       if (p.getId() == pl.getNext()) { pl.addAsNext(p); }
       else { pl.addAndShiftNext(p); }
