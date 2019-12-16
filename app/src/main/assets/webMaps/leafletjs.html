@@ -30,7 +30,7 @@
   //alert(scrInfo.width+"/"+scrInfo.height);
   var mapDiv=document.getElementById("mapDiv");
   var w=""+Math.min(scrInfo.width,1200);// no exact limit known
-  var h=""+Math.min(scrInfo.height-2*scrInfo.emPx, 800);
+  var h=""+Math.min(scrInfo.height-3*scrInfo.emPx, 800);
   //alert(w+"/"+h);
   mapDiv.style.width=w+"px";
   mapDiv.style.height=h+"px";  
@@ -164,6 +164,8 @@
     var el=document.getElementById("attributionDiv");
     el.innerHTML=leafletAttr+"<br />"+html;
     el.style.color=color;
+    // disable scrolling <body> through this element 
+    el.addEventListener('touchmove', function(e) { e.preventDefault(); }, false);
   }
   
   initmap();
