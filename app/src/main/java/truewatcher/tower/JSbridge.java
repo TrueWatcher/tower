@@ -12,6 +12,7 @@ public class JSbridge {
   private PointList mPointList;
   private boolean mDirty=false;
   private String mViewTrackLatLonJson="[]";
+  private String mCurrentTrackLatLonJson="[]";
   
   @android.webkit.JavascriptInterface
   public String importLonLat() { return mCenterLon+","+mCenterLat; }
@@ -85,6 +86,19 @@ public class JSbridge {
   public void addViewTrackLatLonJson(String json) {
     mViewTrackLatLonJson=U.joinJsonArrays(mViewTrackLatLonJson,json);
   }
+
+  @android.webkit.JavascriptInterface
+  public String importCurrentTrackLatLonJson() { return mCurrentTrackLatLonJson; }
+
+  public void replaceCurrentTrackLatLonJson(String json) {
+    mCurrentTrackLatLonJson=json;
+  }
+
+  @android.webkit.JavascriptInterface
+  public boolean importViewCurrentTrack() { return true; }
+
+  @android.webkit.JavascriptInterface
+  public boolean importFollowCurrentTrack() { return true; }
   
   public void setPointList(PointList pl) { mPointList=pl; }
   

@@ -171,12 +171,12 @@ public class FileActivity extends SingleFragmentActivity {
         rgMode.check(R.id.rbCsv);
         mMode="csv";
       }
-      else if (act.equals("View track")) {
-        rgMode.setVisibility(View.GONE);
-        rgMode.check(R.id.rbGpx);
-        mMode="gpx";
-        adjustSpinnerVisibility(mMode);
-      }
+      //else if (act.equals("View track")) {
+        //rgMode.setVisibility(View.GONE);
+        //rgMode.check(R.id.rbGpx);
+        //mMode="gpx";
+        //adjustSpinnerVisibility(mMode);
+      //}
       else {
         rgMode.setVisibility(View.VISIBLE);
       }
@@ -281,7 +281,7 @@ public class FileActivity extends SingleFragmentActivity {
         }
         return "Ok";
       }
-      else if (mAct.equals("View track")) {
+      else if (mAct.equals("View track") && mMode.equals("gpx")) {
         targetFile=assureExists(mSelectedFile,mMode);
         GpxHelper gh=new GpxHelper();
         String latLonJson = "[]";
@@ -295,6 +295,14 @@ public class FileActivity extends SingleFragmentActivity {
         tvAlert.setText(String.format(resTemplate, res.act, res.adopted, res.segments, mSelectedFile));
         JSbridge jsb=Model.getInstance().getJSbridge();
         jsb.addViewTrackLatLonJson(latLonJson);
+        jsb.setDirty();
+        return "Ok";
+      }
+      else if (mAct.equals("View track") && mMode.equals("csv")) {
+        String buf=mStorageHelper.trackCsv2LatLonString();
+        tvAlert.setText("Read "+buf.length()+" chars from currentTrack.csv");
+        JSbridge jsb=Model.getInstance().getJSbridge();
+        jsb.replaceCurrentTrackLatLonJson(buf);
         jsb.setDirty();
         return "Ok";
       }

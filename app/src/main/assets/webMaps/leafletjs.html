@@ -30,7 +30,7 @@
   //alert(scrInfo.width+"/"+scrInfo.height);
   var mapDiv=document.getElementById("mapDiv");
   var w=""+Math.min(scrInfo.width,1200);// no exact limit known
-  var h=""+Math.min(scrInfo.height-3*scrInfo.emPx, 800);
+  var h=""+Math.min(scrInfo.height-2*scrInfo.emPx, 800);
   //alert(w+"/"+h);
   mapDiv.style.width=w+"px";
   mapDiv.style.height=h+"px";  
@@ -53,11 +53,13 @@
   var lon=lls[1];
   
   var map;
+  var currentTrack=false;
 
   function initmap() {
     map = new L.Map('mapDiv');
     map.setView(new L.LatLng(lat,lon),zoom);
     addViewTrack(map, getColor("mark"));
+    replaceCurrentTrack(map, getColor("gps"));
     drawNamelessMarker(map);
     ind.say("markers:"+JSbridge.getMarkers());
     drawMarkers(map);
@@ -159,6 +161,25 @@
     L.polyline(track, {color: aColor, weight: 1}).addTo(map);
   }
   
+  function replaceCurrentTrack(map, aColor) {
+    if ( ! JSbridge.importViewCurrentTrack()) return;
+    if (currentTrack) { currentTrack.remove(); currentTrack=false; }
+    var track=JSbridge.importCurrentTrackLatLonJson();
+    if (! track) return;
+    track=JSON.parse(track);
+    if (! track instanceof Array || track.length == 0 ) return;
+    currentTrack=L.polyline(track, {color: aColor, weight: 1}).addTo(map);
+  }
+  
+  function updateCenter(map) {
+    if ( ! JSbridge.importFollowCurrentTrack) return;
+    var ll=JSbridge.importLatLon();
+    var lls=ll.split(",");
+    var lat=lls[0];
+    var lon=lls[1];
+    map.panTo(new L.LatLng(lat,lon));
+  }
+  
   function addAttribution(html, color) {
     var leafletAttr='<a href="http://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>';
     var el=document.getElementById("attributionDiv");
@@ -173,6 +194,10 @@
   
   window.onDatareloadEvent = new Event('onDatareload');
   window.addEventListener('onDatareload', function() { if (map) { map.off(); map.remove(); initmap(); } }, false);
+  
+  window.onTrackreloadEvent = new Event('onTrackreload');
+  window.addEventListener('onTrackreload', function() { if (map) { updateCenter(map); replaceCurrentTrack(map, "#0f0"); } }, false);
+  
   if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();
 
   

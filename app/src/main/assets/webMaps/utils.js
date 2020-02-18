@@ -87,6 +87,12 @@ wm.utils.MockJSbridge=function(provider,ind) {
     [[55.7904,37.7760],[55.791,37.777],[55.792,37.778],[55.793,37.779]],\
     [[55.791,37.778],[55.792,37.779],[55.793,37.780]]\
   ]'; };
+  this.importCurrentTrackLatLonJson=function() { return '[\
+    [[55.7906,37.7760],[55.7912,37.777],[55.7922,37.778],[55.7932,37.779]],\
+    [[55.7912,37.778],[55.7922,37.779],[55.7932,37.780]]\
+  ]'; };
+  this.importViewCurrentTrack=function() { return true; }
+  this.importFollowCurrentTrack=function() { return true; }
   this.moveLatLon=function() {
     _lat=(parseFloat(_lat)-0.001).toString();
     _lon=(parseFloat(_lon)-0.001).toString();
@@ -96,7 +102,7 @@ wm.utils.MockJSbridge=function(provider,ind) {
       console.log("keyup:"+e.code);
       if (e.code != "Space") return false;
       _this.moveLatLon();
-      (function() { window.dispatchEvent(onDatareloadEvent); }) ();
+      (function() { window.dispatchEvent(onTrackreloadEvent); }) ();// onDatareloadEvent onTrackreloadEvent
       return false;
     }    
   };

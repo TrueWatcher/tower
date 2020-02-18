@@ -37,6 +37,7 @@
   ll=JSbridge.importLatLon();
   zoom=JSbridge.importZoom();
   ind.say(ll+",z="+zoom);
+  var currentTrack=[];
   
   var myMap = {};
   //var global={}; global.myMap={};
@@ -53,6 +54,8 @@
   // further initializations are inside yainit
   window.onDatareloadEvent = new Event('onDatareload');
   window.addEventListener('onDatareload', function() { if (myMap) { myMap.destroy(); yainit(); } }, false);
+  window.onTrackreloadEvent = new Event('onTrackreload');
+  window.addEventListener('onTrackreload', function() { if (myMap) { updateCenter(myMap); replaceCurrentTrack(myMap,"#0f0"); } }, false);
   if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();
   
   
@@ -71,6 +74,7 @@
     catch (e) { ind.fail("API failed: "+e); return; };
     
     addViewTrack(myMap, "#ff00ff");
+    replaceCurrentTrack(myMap, "#ff0000");
     drawNamelessMarker(myMap, JSbridge.getNamelessMarker(), addMark);
     ind.say("markers:"+JSbridge.getMarkers());
     drawMarkers(myMap);
@@ -112,6 +116,45 @@
       oMap.geoObjects.add(seg);
       //console.log("added a segment");
     }
+  }
+  
+  function replaceCurrentTrack(oMap, aColor) {
+    if ( ! JSbridge.importViewCurrentTrack()) return;
+    if (currentTrack instanceof Array) {
+      currentTrack.forEach(function(seg) {
+        if (typeof seg == "object") {
+          oMap.geoObjects.remove(seg);
+          seg=null;
+        }
+      }); 
+      currentTrack=[];
+    }  
+    var track=JSbridge.importCurrentTrackLatLonJson();
+    if (! track) return;
+    track=JSON.parse(track);
+    if (! track instanceof Array || track.length == 0 ) return;
+    track.forEach(function(segment) {
+      seg=new ymaps.Polyline(segment,{},{strokeColor: aColor});
+      oMap.geoObjects.add(seg);
+      currentTrack.push(seg);
+    });
+    //var segCount=track.length;
+    //var i=0,seg;
+    //for (;i < segCount; i+=1) {
+    //  seg=new ymaps.Polyline(track[i],{},{strokeColor: aColor});
+    //  oMap.geoObjects.add(seg);
+    //  currentTrack.push(seg);
+    //  //console.log("added a segment");
+    //}
+  }
+  
+  function updateCenter(oMap) {
+    if ( ! JSbridge.importFollowCurrentTrack) return;
+    var ll=JSbridge.importLatLon();
+    var lls=ll.split(",");
+    var lat=lls[0];
+    var lon=lls[1];
+    oMap.setCenter([lat,lon]);
   }
   
   function addMark(oMap,markData) {
