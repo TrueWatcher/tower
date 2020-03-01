@@ -38,6 +38,7 @@
   zoom=JSbridge.importZoom();
   ind.say(ll+",z="+zoom);
   var currentTrack=[];
+  var trackThicknessPx=2;
   
   var myMap = {};
   //var global={}; global.myMap={};
@@ -112,7 +113,7 @@
     var segCount=track.length;
     var i=0,seg;
     for (;i < segCount; i+=1) {
-      seg=new ymaps.Polyline(track[i],{},{strokeColor: aColor});
+      seg=new ymaps.Polyline(track[i],{},{strokeColor: aColor, strokeWidth: trackThicknessPx});
       oMap.geoObjects.add(seg);
       //console.log("added a segment");
     }
@@ -134,18 +135,10 @@
     track=JSON.parse(track);
     if (! track instanceof Array || track.length == 0 ) return;
     track.forEach(function(segment) {
-      seg=new ymaps.Polyline(segment,{},{strokeColor: aColor});
+      seg=new ymaps.Polyline(segment,{},{strokeColor: aColor, strokeWidth: trackThicknessPx});
       oMap.geoObjects.add(seg);
       currentTrack.push(seg);
     });
-    //var segCount=track.length;
-    //var i=0,seg;
-    //for (;i < segCount; i+=1) {
-    //  seg=new ymaps.Polyline(track[i],{},{strokeColor: aColor});
-    //  oMap.geoObjects.add(seg);
-    //  currentTrack.push(seg);
-    //  //console.log("added a segment");
-    //}
   }
   
   function updateCenter(oMap) {

@@ -54,6 +54,7 @@
   
   var map;
   var currentTrack=false;
+  var trackThicknessPx=2;
 
   function initmap() {
     map = new L.Map('mapDiv');
@@ -158,7 +159,7 @@
     if (! track) return;
     track=JSON.parse(track);
     if (! track instanceof Array || track.length == 0 ) return;
-    L.polyline(track, {color: aColor, weight: 1}).addTo(map);
+    L.polyline(track, {color: aColor, weight: trackThicknessPx}).addTo(map);
   }
   
   function replaceCurrentTrack(map, aColor) {
@@ -168,7 +169,7 @@
     if (! track) return;
     track=JSON.parse(track);
     if (! track instanceof Array || track.length == 0 ) return;
-    currentTrack=L.polyline(track, {color: aColor, weight: 1}).addTo(map);
+    currentTrack=L.polyline(track, {color: aColor, weight: trackThicknessPx}).addTo(map);
   }
   
   function updateCenter(map) {
