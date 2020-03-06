@@ -197,7 +197,7 @@
   window.addEventListener('onDatareload', function() { if (map) { map.off(); map.remove(); initmap(); } }, false);
   
   window.onTrackreloadEvent = new Event('onTrackreload');
-  window.addEventListener('onTrackreload', function() { if (map) { updateCenter(map); replaceCurrentTrack(map, "#0f0"); } }, false);
+  window.addEventListener('onTrackreload', function() { if (map) { updateCenter(map); replaceCurrentTrack(map, "#f00"); } }, false);
   
   if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();
 

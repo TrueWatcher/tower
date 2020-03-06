@@ -59,8 +59,8 @@ public class TrackStorage {
     return mTargetPath + mMyFileExt;
   }
 
-  public void simplySave(Trackpoint p) {
-    if ( ! mRg.getBool("enableTrackDisplayWrite")) return;
+  public Trackpoint simplySave(Trackpoint p) {
+    if ( ! mRg.getBool("enableTrackDisplayWrite")) return null;
     if ( ( mShouldStartNewSegment || mTotalPointCount == 0 ) && p.getType().equals("T")) {
       p.setNewSegment();
       mShouldStartNewSegment = false;
@@ -73,6 +73,7 @@ public class TrackStorage {
       throw new U.RunException("IOException" + e.getMessage());
     }
     if (p.getType().equals("T")) mTotalPointCount += 1;
+    return p;
   }
 
   //adb pull /sdcard/Android/data/truewatcher.trackwriter/files/currentTrack.csv

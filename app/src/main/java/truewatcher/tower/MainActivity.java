@@ -52,7 +52,8 @@ public class MainActivity extends SingleFragmentActivity {
   }
 
   @TargetApi(23) 
-  public static class MainPageFragment extends Fragment implements PermissionChecker {
+  public static class MainPageFragment extends Fragment
+          implements PermissionChecker, TrackListener.TrackPointListener {
     private MyRegistry mRegistry=MyRegistry.getInstance();
     private TextView mTwA;
     private TextView mTwB;    
@@ -65,6 +66,7 @@ public class MainActivity extends SingleFragmentActivity {
     private GpsInformer mGpsInformer = mModel.getGpsInformer();;
     private PointList mPointList = mModel.getPointList();
     private JSbridge mJSbridge = mModel.getJSbridge();
+    private TrackListener mTrackListener = mModel.getTrackListener();
     private U.Summary mReadPoints=null;
 
     @Override
@@ -79,6 +81,7 @@ public class MainActivity extends SingleFragmentActivity {
       mRegistry.syncSecrets(getActivity());
       mPointList.adoptMax(mRegistry.getInt("maxPoints"));
       loadStoredPoints();
+      loadCurrentTrack();
       mCellInformer.setFragment(this);
       mGpsInformer.setFragment(this);
     }
@@ -90,6 +93,18 @@ public class MainActivity extends SingleFragmentActivity {
       try {
         mReadPoints=mPointList.load();
         if (U.DEBUG) Log.d(U.TAG,"MainPageFragment:"+ "Loaded "+mReadPoints.adopted+" points");
+      }
+      catch (Exception e) {
+        Log.e(U.TAG,"MainPageFragment:"+e.getMessage());
+      }
+    }
+
+    private void loadCurrentTrack() {
+      if ( ! mRegistry.getBool("enableTrackDisplayWrite")) return;
+      try {
+        String buf=mModel.getStorageHelper().trackCsv2LatLonString();
+        mJSbridge.replaceCurrentTrackLatLonJson(buf);
+        mJSbridge.setDirty();
       }
       catch (Exception e) {
         Log.e(U.TAG,"MainPageFragment:"+e.getMessage());
@@ -108,6 +123,14 @@ public class MainActivity extends SingleFragmentActivity {
       mPv=new PointViewer(mTwA, mTwB, mWebView);      
       mPv.redraw();
       return v;
+    }
+
+    @Override
+    public void onTrackpointAvailable(Trackpoint p) {
+      if ( ! mRegistry.getBool("enableTrackDisplayWrite")) return;
+      // reload track in the active Webview
+      String reloadTrack="(function() { window.dispatchEvent(onTrackreloadEvent); })();";
+      mWebView.evaluateJavascript(reloadTrack,null);
     }
     
     @Override
@@ -206,6 +229,13 @@ public class MainActivity extends SingleFragmentActivity {
         mPv.redraw();
         mModel.getJSbridge().clearDirty();
       }
+      mTrackListener.attachListener(this);
+    }
+
+    @Override
+    public void onPause() {
+      super.onPause();
+      mTrackListener.removeListener(this);
     }
     
     @Override

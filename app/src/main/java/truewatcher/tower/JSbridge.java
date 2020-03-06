@@ -24,6 +24,12 @@ public class JSbridge {
     mCenterLon=lon;
     mCenterLat=lat;
   }
+
+  public void exportLatLon(LatLon p) {
+    if ( ! p.hasCoords()) return;
+    mCenterLon=p.lon;
+    mCenterLat=p.lat;
+  }
   
   @android.webkit.JavascriptInterface
   public void exportCenterLatLon(String lat,String lon) { 
@@ -94,11 +100,24 @@ public class JSbridge {
     mCurrentTrackLatLonJson=json;
   }
 
-  @android.webkit.JavascriptInterface
-  public boolean importViewCurrentTrack() { return true; }
+  public void consumeTrackpoint(Trackpoint p) {
+    if ( ! mRegistry.getBool("enableTrackDisplayWrite")) return;
+    if (p == null || ! p.getType().equals("T")) return;
+    String ll=p.makeJsonPresentation().toString();
+    if (U.DEBUG) Log.d(U.TAG, "consumeTrackpoint:" + "Adding:" + ll);
+    mCurrentTrackLatLonJson = StorageHelper.append2LatLonString(ll, p.isNewSegment(), mCurrentTrackLatLonJson);
+    //Log.d(U.TAG, "consumeTrackpoint:" + "Result:" + mCurrentTrackLatLonJson);
+    if (mRegistry.getBool("shouldCenterMapOnTrack")) {
+      exportLatLon(p);
+    }
+    mDirty=true;
+  }
 
   @android.webkit.JavascriptInterface
-  public boolean importFollowCurrentTrack() { return true; }
+  public boolean importViewCurrentTrack() { return mRegistry.getBool("enableTrackDisplayWrite"); }
+
+  @android.webkit.JavascriptInterface
+  public boolean importFollowCurrentTrack() { return mRegistry.getBool("shouldCenterMapOnTrack"); }
   
   public void setPointList(PointList pl) { mPointList=pl; }
   

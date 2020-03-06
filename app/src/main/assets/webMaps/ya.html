@@ -56,7 +56,7 @@
   window.onDatareloadEvent = new Event('onDatareload');
   window.addEventListener('onDatareload', function() { if (myMap) { myMap.destroy(); yainit(); } }, false);
   window.onTrackreloadEvent = new Event('onTrackreload');
-  window.addEventListener('onTrackreload', function() { if (myMap) { updateCenter(myMap); replaceCurrentTrack(myMap,"#0f0"); } }, false);
+  window.addEventListener('onTrackreload', function() { if (myMap) { updateCenter(myMap); replaceCurrentTrack(myMap,"#f00"); } }, false);
   if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();
   
   

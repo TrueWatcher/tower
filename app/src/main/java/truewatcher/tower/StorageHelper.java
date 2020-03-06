@@ -216,5 +216,17 @@ public class StorageHelper {
     return false;
   }
 
+  public static String append2LatLonString(String unit, boolean isNewSeg, String lls) {
+    StringBuilder buf;
+    if (null == lls || lls.length() < 4) {
+      return "[["+unit+"]]";
+    }
+    if (isNewSeg) unit="],["+unit;
+    else unit=","+unit;
+    String cutEnding=lls.substring(0, lls.length()-2);// minus "]]"
+    buf=new StringBuilder(cutEnding).append(unit).append("]]");
+    return buf.toString();
+  }
+
   public String getMyDir() { return mPath; }
 }

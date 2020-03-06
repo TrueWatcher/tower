@@ -19,6 +19,7 @@ public class TrackListener implements LocationListener {
   //private Model.LocationReceiver mLocationReceiver = new Model.LocationReceiver();
   private MyRegistry mRg = MyRegistry.getInstance();
   private TrackStorage mTrackStorage=null;//=Model.getInstance().getTrackStorage(); causes loop
+  private TrackPointListener mListener=null;
 
   public TrackListener(TrackStorage aTrackStorage) {
     mTrackStorage=aTrackStorage;
@@ -79,7 +80,22 @@ public class TrackListener implements LocationListener {
   public void onProviderDisabled(String provider) {}
 
   private void onPointavailable(Location loc) {
-    mTrackStorage.simplySave(new Trackpoint(loc));
+    Trackpoint p=new Trackpoint(loc);
+    p=mTrackStorage.simplySave(p);// may set newSegment
+    Model.getInstance().getJSbridge().consumeTrackpoint(p);
+    if (null != mListener) mListener.onTrackpointAvailable(p);
   }
 
+  public static interface TrackPointListener {
+    public void onTrackpointAvailable(Trackpoint p);
+  }
+
+  public void attachListener(TrackPointListener l) { mListener=l; }
+
+  public void removeListener(TrackPointListener l) {
+    mListener=null;
+    //if (mListener == null) return;
+    //if (mListener != l) throw new U.RunException("Unregistering of unknown listener");
+    //mListener=null;
+  }
 }
