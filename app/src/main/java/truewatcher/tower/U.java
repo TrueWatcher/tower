@@ -29,6 +29,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public abstract class U {
@@ -60,6 +61,18 @@ public abstract class U {
       super(s);
     }
   }
+
+  static class UserException extends Exception {
+    public UserException(String s) {
+      super(s);
+    }
+  }
+
+  public static long getTimeStamp() {
+    return (long) TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+  }
+
+  public static final int minFixDelayS=5;
 
   // Gets integer part of a number, represented as string
   public static String str2int(String value) {
@@ -141,7 +154,7 @@ public abstract class U {
   public static final double FAR = 1e8;
 
   // calculates distance in meters from coords (assumed spherical, aka haversine)
-  public static double proximityM(Point p, Point center) {
+  public static double proximityM(LatLon p, LatLon center) {
     if ( ! p.hasCoords()) return FAR;
     double earthRadius = 6371000;
     double deg2rad = 0.0174532925199433;
@@ -213,6 +226,18 @@ public abstract class U {
       this(aAct, aFound, aAdopted, file);
       segments = aSegments;
     }
+  }
+
+  static class Summary2 extends Summary {
+    public String segMap="";
+    public long away=0;
+
+    public Summary2(String aAct, int aFound, int aAdopted, String file,int aSegments, String aSegMap, long aAway) {
+      super(aAct, aFound, aAdopted, file, aSegments);
+      segMap=aSegMap;
+      away=aAway;
+    }
+
   }
 
   // deletes a file

@@ -36,4 +36,11 @@
         android:title="@string/action_list"
         android:icon="@drawable/ic_format_list_bulleted_white_24dp" />
 
+    <item
+        android:id="@+id/action_track"
+        android:orderInCategory="6"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_track"
+         />
+
 </menu>

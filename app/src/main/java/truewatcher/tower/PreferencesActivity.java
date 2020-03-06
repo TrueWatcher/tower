@@ -93,20 +93,13 @@ public class PreferencesActivity extends AppCompatActivity {
       else { lpMapProvider.setValue(mRegistry.get(key)); }
       lpMapProvider.setSummary(mRegistry.get(key));
 
-      key="mapZoom";
-      EditTextPreference etpMapZoom = (EditTextPreference) findPreference(key);
-      etpMapZoom.setText(mRegistry.get(key));
-      etpMapZoom.setSummary(mRegistry.get(key));
-
-      key="maxPoints";
-      EditTextPreference etpMaxPoints = (EditTextPreference) findPreference(key);
-      //((TextView) etpMapZoom).setInputType(InputType.TYPE_CLASS_NUMBER);
-      etpMaxPoints.setText(mRegistry.get(key));
-      etpMaxPoints.setSummary(mRegistry.get(key));
-
-      key="useTrash";
-      SwitchPreferenceCompat swUseTrash = (SwitchPreferenceCompat) findPreference(key);
-      swUseTrash.setChecked(mRegistry.getBool(key));
+      prepareEditTextPref("mapZoom");
+      prepareEditTextPref("maxPoints");
+      prepareSwitchPref("useTrash");
+      prepareSwitchPref("enableTrackDisplayWrite");
+      prepareSwitchPref("shouldCenterMapOnTrack");
+      prepareEditTextPref("gpsMinDistance");
+      prepareEditTextPref("gpsMinDelayS");
 
       if ( ! mRegistry.getBool("isKeylessDistro")) {
         PreferenceScreen screen = getPreferenceScreen();
@@ -117,6 +110,19 @@ public class PreferencesActivity extends AppCompatActivity {
       }
 
       //if (mRegistry.noAnyKeys()) { pAlert.setSummary(getString(R.string.keyless_warning)); }
+    }
+
+    private EditTextPreference prepareEditTextPref(String key) {
+      EditTextPreference etp = (EditTextPreference) findPreference(key);
+      etp.setText(mRegistry.get(key));
+      etp.setSummary(mRegistry.get(key));
+      return etp;
+    }
+
+    private SwitchPreferenceCompat prepareSwitchPref(String key) {
+      SwitchPreferenceCompat swp = (SwitchPreferenceCompat) findPreference(key);
+      swp.setChecked(mRegistry.getBool(key));
+      return swp;
     }
     
     public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {

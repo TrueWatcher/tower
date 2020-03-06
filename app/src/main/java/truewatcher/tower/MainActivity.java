@@ -149,6 +149,11 @@ public class MainActivity extends SingleFragmentActivity {
         startActivity(si);
         return true;
       }
+      if (id == R.id.action_track) {
+        Intent si=new Intent(this.getActivity(), TrackActivity.class);
+        startActivity(si);
+        return true;
+      }
       return super.onOptionsItemSelected(item);
     }
 
@@ -178,7 +183,7 @@ public class MainActivity extends SingleFragmentActivity {
     public void onRequestPermissionsResult(int reqCode, String[] permissions, int[] grantResults) {
       boolean isGranted = ( grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED );
       if (U.DEBUG) Log.d(U.TAG,"grantResults length="+grantResults.length);
-      mPermissionReceivers.get(reqCode).receivePermission(isGranted);
+      mPermissionReceivers.get(reqCode).receivePermission(reqCode,isGranted);
     }
 
     @Override

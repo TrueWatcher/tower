@@ -4,11 +4,10 @@ import android.annotation.TargetApi;
 import android.content.pm.PackageManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 interface PermissionReceiver {
-  public void receivePermission(boolean isGranted);
+  public void receivePermission(int reqCode, boolean isGranted);
 }
 
 interface PointReceiver {
@@ -77,7 +76,7 @@ public abstract class PointFetcher implements PermissionReceiver {
     ((PermissionChecker) mFragm).genericRequestPermission(getPermissionType(), getPermissionCode(), this);    
   } 
   
-  public void receivePermission(boolean isGranted) {
+  public void receivePermission(int reqCode, boolean isGranted) {
     if ( ! isGranted) {
       if (U.DEBUG) Log.d(U.TAG, "denied");
       mPi.addProgress("denied");

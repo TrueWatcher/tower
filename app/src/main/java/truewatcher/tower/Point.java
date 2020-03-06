@@ -12,13 +12,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public class Point implements Cloneable {
+public class Point extends LatLon implements Cloneable {
   private String mType;
   private static final Set<String> TYPES = new HashSet<String>(Arrays.asList(
     new String[] {"cell","gps","mark"}
   ));
-  public String lat;
-  public String lon;
   public String alt;
   public String range;
   public String cellData;
@@ -92,12 +90,6 @@ public class Point implements Cloneable {
   }
   
   public void setCurrentTime() { this.time=Point.getDate(); }
-  
-  public boolean hasCoords() {
-    if (this.lat == null || this.lon == null) return false;
-    if (this.lat.isEmpty() || this.lon.isEmpty()) return false;
-    return true;
-  }
   
   public boolean isProtected() { return mProtect; }
   public void protect() { mProtect=true; }

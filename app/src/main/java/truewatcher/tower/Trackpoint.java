@@ -12,14 +12,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public class Trackpoint implements Cloneable {
+public class Trackpoint extends LatLon implements Cloneable {
   private int mId=0;
   private String mType="T";
   private static final Set<String> TYPES = new HashSet<String>(Arrays.asList(
           new String[] {"T","note"}
   ));
-  public String lat="";
-  public String lon="";
   public String alt="";
   public String range="";
   public String time=getDate();
@@ -73,8 +71,6 @@ public class Trackpoint implements Cloneable {
     String fd = df.format(Calendar.getInstance().getTime());
     return fd;
   }
-
-  public boolean hasCoords() { return ( ! lat.isEmpty() && ! lon.isEmpty() ); }
 
   public JSONArray makeJsonPresentation() {
     JSONArray ja=new JSONArray();

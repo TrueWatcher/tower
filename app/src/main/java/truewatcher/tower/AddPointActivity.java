@@ -284,7 +284,7 @@ public class AddPointActivity  extends SingleFragmentActivity {
     public void onRequestPermissionsResult(int reqCode, String[] permissions, int[] grantResults) {
       boolean isGranted = ( grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED );
       if (U.DEBUG) Log.d(U.TAG,"onRequestPermissionsResult:"+"grantResults length="+grantResults.length);
-      mPermissionReceivers.get(reqCode).receivePermission(isGranted);
+      mPermissionReceivers.get(reqCode).receivePermission(reqCode,isGranted);
     }      
 
     private class PointRenderer extends PointIndicator implements PointReceiver {

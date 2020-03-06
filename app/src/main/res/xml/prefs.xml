@@ -36,6 +36,22 @@
       app:key="useTrash"
       app:title="@string/useTrash" />
 
+  <SwitchPreferenceCompat
+      app:key="enableTrackDisplayWrite"
+      app:title="@string/enableTrackDisplayWrite" />
+
+  <SwitchPreferenceCompat
+      app:key="shouldCenterMapOnTrack"
+      app:title="@string/shouldCenterMapOnTrack" />
+
+  <EditTextPreference
+      app:key="gpsMinDistance"
+      app:title="@string/gpsMinDistance" />
+
+  <EditTextPreference
+      app:key="gpsMinDelayS"
+      app:title="@string/gpsMinDelayS" />
+
   <EditTextPreference
       app:key="yandexMapKey"
       app:title="@string/yandexMapKey" />

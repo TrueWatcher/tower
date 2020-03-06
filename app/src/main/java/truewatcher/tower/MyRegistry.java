@@ -114,12 +114,15 @@ public class MyRegistry {
     String defs="{\"cellResolver\":\"mylnikov\",\"mapProvider\":\"osm map\",\"mapZoom\":\"17\",\"maxPoints\":\"30\","
     + "\"useTrash\":\"false\",\"gpsAcceptableAccuracy\":\"8\",\"gpsMaxFixCount\":\"10\","
     + "\"myFile\":\"current.csv\","    
-    + "\"yandexMapKey\":\"\", \"yandexLocatorKey\":\"\", \"isKeylessDistro\":\"false\""
+    + "\"yandexMapKey\":\"\", \"yandexLocatorKey\":\"\", \"isKeylessDistro\":\"false\","
+    + "\"gpsMinDistance\":\"12\",\"gpsMinDelayS\":\"10\",\"gpsTimeoutS\":\"120\","
+    + "\"enableTrackDisplayWrite\":\"true\",\"shouldCenterMapOnTrack\":\"false\",\"useTowerFolder\":\"false\""
     + "}";
     return defs;
   }
 
-  public static final String[] INT_KEYS = new String[] {"mapZoom", "maxPoints"} ;
+  public static final String[] INT_KEYS = new String[] {
+          "mapZoom", "maxPoints", "gpsMinDistance", "gpsMinDelayS"} ;
 
   public static final String[] APIS = new String[] { "yandexMapKey","yandexLocatorKey" };
   

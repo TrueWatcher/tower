@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.tower"
-    android:versionCode="48"
-    android:versionName="2.5.1" >
+    android:versionCode="49"
+    android:versionName="2.6.0" >
 <!--
 2.0.9 31 9.11.2019 improved myRegistry, added 2 files to assets
 2.0.10 32 10.11.2019 added BuildConfig check
@@ -22,11 +22,13 @@
 2.4.3  46 16.12.2019 fixed scrolling issue
 2.5.0  47 18.02.2020 Added reading csv tracks
 2.5.1  48 01.03.2020 improvements
+2.6.0  49 06.03.2020 merged with TrackWriter
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <uses-feature android:name="android.hardware.location.gps" />
 
@@ -43,18 +45,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".AddPointActivity" >
-        </activity>
-        <activity android:name=".ListActivity" >
-        </activity>
-        <activity android:name=".FileActivity" >
-        </activity>
-        <activity android:name=".EditPointActivity" >
-        </activity>
-        <activity android:name=".PreferencesActivity" >
-        </activity>
-        <activity android:name=".Tests1" android:exported="true">
-        </activity>
+        <activity android:name=".AddPointActivity" ></activity>
+        <activity android:name=".ListActivity" ></activity>
+        <activity android:name=".FileActivity" ></activity>
+        <activity android:name=".EditPointActivity" ></activity>
+        <activity android:name=".TrackActivity" ></activity>
+        <activity android:name=".PreferencesActivity" ></activity>
+        <activity android:name=".Tests1" android:exported="true"></activity>
+        <service android:name=".ForegroundService" android:exported="true" android:enabled="true"/>
     </application>
 
 </manifest>
