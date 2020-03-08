@@ -14,8 +14,7 @@ public class StorageHelper {
   private String mHeader=TextUtils.join(Point.SEP, Point.FIELDS);
   private String mPath;
   private String mMyTrashFile="trash.csv";
-  private String mCurrentTrackFile="currentTrack.csv";
-  
+
   public void init(Context context, String myFile) {
     mPath = context.getExternalFilesDir(null).getPath();
     mMyFile=U.assureExtension(myFile, mMyExt);
@@ -147,73 +146,6 @@ public class StorageHelper {
     }
     if (count > 0) pl.setDirty();
     return new U.Summary("loaded", l-2, count, targetFile);
-  }
-
-  public String trackCsv2LatLonString() throws U.FileException, DataException, IOException {
-    String[] fields;
-    StringBuilder outBuf = new StringBuilder();
-    Map<String, String> csv;
-    int count = 0;
-    int segments=1;
-    int countInSegment=0;
-
-    if (null == U.fileExists(mPath, mCurrentTrackFile, "csv")) {
-      throw new U.FileException("Missing file "+mCurrentTrackFile);
-    }
-    String buf = U.fileGetContents(mPath, mCurrentTrackFile);
-    String[] lines = splitTrackCsv(buf);
-    String[] values;
-    int l = lines.length;
-    int records = l - 2;
-    outBuf.append("[[");
-    for (int i = 1; i < l; i += 1) {
-      if (U.DEBUG) Log.d(U.TAG, "trackCsv2LatLonString:" + "Got a line:" + lines[i]);
-      if (lines[i].length() < 2) continue;
-      values = TextUtils.split(lines[i], Point.SEP);
-      csv = U.arrayCombine(Trackpoint.FIELDS, values);
-      if ( ! csv.get("type").equals("T")) continue;
-
-      if (isExtraSegment(csv,count)) {
-        outBuf.append("],[");
-        segments += 1;
-        countInSegment=0;
-      }
-      if (countInSegment > 0) outBuf  .append(",");
-      outBuf  .append("[")
-              .append(csv.get("lat"))
-              .append(",")
-              .append(csv.get("lon"))
-              .append("]");
-
-      count += 1;
-      countInSegment += 1;
-    }
-    outBuf.append("]]");
-    //Log.d(U.TAG, outBuf.toString());
-    if (count == 0) return "[]";
-    return outBuf.toString();
-    //if (count > 0) {
-    //  return new U.Summary("exported", mRecords, mCount, targetFileExt, mSegments);
-    //}
-    //return new U.Summary("failed to import", mRecords, mCount, targetFileExt);
-  }
-
-  private String[] splitTrackCsv(String buf) throws DataException {
-    String[] lines=TextUtils.split(buf, Point.NL);
-    int l=lines.length;
-    if (l == 0) throw new U.DataException("The file has no header line");
-    String trackHeader=TextUtils.join(Point.SEP, Trackpoint.FIELDS);
-    if ( ! lines[0].equals(trackHeader)) {
-      if (lines[0].equals(mHeader)) throw new U.DataException("The file is a waypoint list");
-      throw new U.DataException("The file has wrong header");
-    }
-    return lines;
-  }
-
-  private boolean isExtraSegment(Map<String, String> content, int count) {
-    if (count == 0) return false; // first <trkseg> is already in mTrkHeader
-    if (!content.get("new_track").isEmpty()) return true;
-    return false;
   }
 
   public static String append2LatLonString(String unit, boolean isNewSeg, String lls) {

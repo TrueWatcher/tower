@@ -1,10 +1,8 @@
 package truewatcher.tower;
 
 import android.content.Context;
-import android.support.v4.util.ArrayMap;
 import android.text.TextUtils;
 import android.util.Log;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,11 +11,13 @@ import java.util.Map;
 
 public class TrackStorage {
   private String mTargetPath;
-  private String mMyFileExt = "currentTrack.csv";
+  private String mCurrentTrackFile = "currentTrack.csv";
   private boolean mShouldStartNewSegment = false;
   private long mTotalPointCount =0;
   public Trackpoint latestStoredTrackpoint = null;
   private MyRegistry mRg = MyRegistry.getInstance();
+
+  public String getMyFile() { return mCurrentTrackFile; }
 
   public void demandNewSegment() {
     mShouldStartNewSegment = true;
@@ -40,9 +40,9 @@ public class TrackStorage {
   }
 
   private void initMyFile() throws IOException {
-    if (null == U.fileExists(mTargetPath, mMyFileExt, "csv")) {
+    if (null == U.fileExists(mTargetPath, mCurrentTrackFile, "csv")) {
       String headerNl = TextUtils.join(Trackpoint.SEP, Trackpoint.FIELDS).concat(Trackpoint.NL);
-      U.filePutContents(mTargetPath, mMyFileExt, headerNl, false);
+      U.filePutContents(mTargetPath, mCurrentTrackFile, headerNl, false);
       demandNewSegment();
     }
   }
@@ -55,8 +55,8 @@ public class TrackStorage {
 
 
   public String getWorkingFileFull() {
-    if (null == mTargetPath) return mMyFileExt;
-    return mTargetPath + mMyFileExt;
+    if (null == mTargetPath) return mCurrentTrackFile;
+    return mTargetPath + mCurrentTrackFile;
   }
 
   public Trackpoint simplySave(Trackpoint p) {
@@ -67,7 +67,7 @@ public class TrackStorage {
     }
     String line = p.toCsv().concat(Trackpoint.NL);
     try {
-      U.filePutContents(mTargetPath, mMyFileExt, line, true);
+      U.filePutContents(mTargetPath, mCurrentTrackFile, line, true);
     }
     catch (IOException e) {
       throw new U.RunException("IOException" + e.getMessage());
@@ -199,10 +199,10 @@ public class TrackStorage {
   }
 
   public U.Summary2 visitStored(Visitor visitor) throws U.FileException, IOException, U.DataException {
-    if (null == U.fileExists(mTargetPath, mMyFileExt, "csv")) {
+    if (null == U.fileExists(mTargetPath, mCurrentTrackFile, "csv")) {
       throw new U.FileException("Missing my good file");
     }
-    String buf = U.fileGetContents(mTargetPath, mMyFileExt);
+    String buf = U.fileGetContents(mTargetPath, mCurrentTrackFile);
     String[] lines = splitCsv(buf);
     int l = lines.length;
     if (l < 2) throw new U.DataException("Wrong content");
@@ -224,7 +224,7 @@ public class TrackStorage {
     }
     visitor.onEnd(i,j,p,lines);
     String map = visitor.presentResult();
-    return new U.Summary2("storage", l, found, mMyFileExt, j, map, 0);
+    return new U.Summary2("storage", l, found, mCurrentTrackFile, j, map, 0);
   }
 
   private String[] splitCsv(String buf) throws U.DataException {
@@ -240,10 +240,10 @@ public class TrackStorage {
   public void deleteLastSegment() throws U.FileException, U.DataException, IOException {
     int lastSegmentMark = -1, i = 0;
     String[] fields;
-    if (null == U.fileExists(mTargetPath, mMyFileExt, "csv")) {
+    if (null == U.fileExists(mTargetPath, mCurrentTrackFile, "csv")) {
       throw new U.FileException("Missing my good file");
     }
-    String buf = U.fileGetContents(mTargetPath, mMyFileExt);
+    String buf = U.fileGetContents(mTargetPath, mCurrentTrackFile);
     String[] lines = splitCsv(buf);
     int l = lines.length;
     int typeColumn = Trackpoint.FIELDS.indexOf("type");
@@ -263,8 +263,84 @@ public class TrackStorage {
     if (lastSegmentMark <= 0) return;// no segments found - nothing to write
     buf = TextUtils.join(Point.NL, lines);
     buf = buf.trim().concat(Point.NL);
-    U.filePutContents(mTargetPath, mMyFileExt, buf, false);
+    U.filePutContents(mTargetPath, mCurrentTrackFile, buf, false);
     mShouldStartNewSegment = true;
+  }
+
+  public void deleteAll() {
+    if (null == U.fileExists(mTargetPath, mCurrentTrackFile, "csv")) {
+      return;
+    }
+    U.unlink(mTargetPath, mCurrentTrackFile);
+  }
+
+  public String trackCsv2LatLonString() throws U.DataException, IOException, U.FileException {
+    return (new Track2LatLonJSON()).trackCsv2LatLonJSON(mCurrentTrackFile);
+  }
+
+  public class Track2LatLonJSON {
+    private int mPointCount=0;
+    private int mSegCount=1;
+    private int mRecordCount=0;
+    private String mTargetFile=mCurrentTrackFile;
+
+    public String trackCsv2LatLonJSON(String aTargetFileExt)
+            throws U.FileException, U.DataException, IOException {
+      StringBuilder outBuf = new StringBuilder();
+      Map<String, String> csv;
+      int countInSegment = 0;
+
+      if (aTargetFileExt.length() > 1) mTargetFile = aTargetFileExt;
+      mTargetFile = U.assureExtension(mTargetFile, "csv");
+      if (null == U.fileExists(mTargetPath, mTargetFile, "csv")) {
+        throw new U.FileException("Missing file " + mTargetFile);
+      }
+      String buf = U.fileGetContents(mTargetPath, mTargetFile);
+      String[] lines = splitCsv(buf);
+      String[] values;
+      int l = lines.length;
+      mRecordCount = l - 2;
+      outBuf.append("[[");
+      for (int i = 1; i < l; i += 1) {
+        if (U.DEBUG) Log.d(U.TAG, "trackCsv2LatLonString:" + "Got a line:" + lines[i]);
+        if (lines[i].length() < 2) continue;
+        values = TextUtils.split(lines[i], Point.SEP);
+        csv = U.arrayCombine(Trackpoint.FIELDS, values);
+        if (!csv.get("type").equals("T")) continue;
+
+        if (isExtraSegment(csv, mPointCount)) {
+          outBuf.append("],[");
+          mSegCount += 1;
+          countInSegment = 0;
+        }
+        if (countInSegment > 0) outBuf.append(",");
+        outBuf.append("[")
+                .append(csv.get("lat"))
+                .append(",")
+                .append(csv.get("lon"))
+                .append("]");
+
+        mPointCount += 1;
+        countInSegment += 1;
+      }
+      outBuf.append("]]");
+      //Log.d(U.TAG, outBuf.toString());
+      if (mPointCount == 0) return "[]";
+      return outBuf.toString();
+    }
+
+    public U.Summary getResults() {
+      if (mPointCount > 0) {
+        return new U.Summary("loaded", mRecordCount, mPointCount, mTargetFile, mSegCount);
+      }
+      return new U.Summary("failed to load", mRecordCount, mPointCount, mTargetFile);
+    }
+  }
+
+  private boolean isExtraSegment(Map<String, String> content, int count) {
+    if (count == 0) return false; // first <trkseg> is already in template
+    if ( ! content.get("new_track").isEmpty()) return true;
+    return false;
   }
 
   public U.Summary trackCsv2Gpx(String targetFileExt) throws U.FileException, U.DataException, IOException {
@@ -286,10 +362,10 @@ public class TrackStorage {
     }
 
     public U.Summary trackCsv2Gpx(String targetFileExt) throws U.FileException, U.DataException, IOException {
-      if (null == U.fileExists(mTargetPath, mMyFileExt, "csv")) {
+      if (null == U.fileExists(mTargetPath, mCurrentTrackFile, "csv")) {
         throw new U.FileException("Missing my good file");
       }
-      String buf = U.fileGetContents(mTargetPath, mMyFileExt);
+      String buf = U.fileGetContents(mTargetPath, mCurrentTrackFile);
       buf = csv2gpx(targetFileExt, buf);
       if (mCount == 0) { return new U.Summary("failed to export", mRecords, mCount, targetFileExt); }
       targetFileExt = U.assureExtension(targetFileExt, "gpx");
@@ -317,10 +393,10 @@ public class TrackStorage {
         if (U.DEBUG) Log.d(U.TAG, "GpxHelper:" + "Got a line:" + lines[i]);
         if (lines[i].length() < 2) continue;
         values = TextUtils.split(lines[i], Point.SEP);
-        csv = U.arrayCombine(Point.FIELDS, values);
+        csv = U.arrayCombine(Trackpoint.FIELDS, values);
         if ( ! csv.get("type").equals("T")) continue;
         trkpt = makeTrkpt(csv);
-        if (isExtraSegment(csv)) {
+        if (isExtraSegment(csv, mCount)) {
           outBuf.append(mTrkChangeSegment);
           mSegments += 1;
         }
@@ -362,12 +438,6 @@ public class TrackStorage {
       String entry = String.format(mTrkptTemplate, content.get("lat"), content.get("lon"),
               ele, time, cmt);
       return entry;
-    }
-
-    private boolean isExtraSegment(Map<String, String> content) {
-      if (mCount == 0) return false; // first <trkseg> is already in mTrkHeader
-      if ( ! content.get("new_track").isEmpty()) return true;
-      return false;
     }
 
   }// end private class TrackToGpx

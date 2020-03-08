@@ -9,9 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.RequiresApi;
-import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -25,17 +23,9 @@ import java.io.IOException;
 
 public class TrackActivity extends SingleFragmentActivity {
 
-  @Override
-  public void onRequestPermissionsResult(int reqCode, String[] permissions, int[] grantResults) {
-    Log.d(U.TAG, "Calling super.onResult from the activity");
-    super.onRequestPermissionsResult(reqCode, permissions, grantResults);
-  }
+  public static class TrackPageFragment extends PermissionAwareFragment
+          implements PermissionReceiver {
 
-  public static class TrackPageFragment extends Fragment
-          implements PermissionChecker, PermissionReceiver {
-
-    private SparseArray<PermissionReceiver> mPermissionReceivers =
-            new SparseArray<PermissionReceiver>();
     private MyRegistry mRg=MyRegistry.getInstance();
     private TrackStorage mTrackStorage=Model.getInstance().getTrackStorage();
     private TrackListener mTrackListener=Model.getInstance().getTrackListener();
@@ -43,20 +33,6 @@ public class TrackActivity extends SingleFragmentActivity {
     private Button bRefresh, bOn, bOnSegm, bOff, bSettings;
     private TableLayout tlTable1;
     private DataWatcher mDataWatcher=new DataWatcher();
-
-    //@TargetApi(23)
-    public void genericRequestPermission(String permCode, int reqCode, PermissionReceiver receiver) {
-      mPermissionReceivers.put(reqCode, receiver);
-      Log.d(U.TAG, "Requesting user...");
-      requestPermissions(new String[]{permCode}, reqCode);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int reqCode, String[] permissions, int[] grantResults) {
-      boolean isGranted = ( grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED );
-      Log.d(U.TAG,"grantResults length="+grantResults.length);
-      mPermissionReceivers.get(reqCode).receivePermission(reqCode,isGranted);
-    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -75,10 +51,10 @@ public class TrackActivity extends SingleFragmentActivity {
         deleteLastSegment();
         return true;
       }
-      if (id == R.id.action_export_gpx) {
-        exportGpx();
-        return true;
-      }
+      //if (id == R.id.action_export_gpx) {
+      //  exportGpx();
+      //  return true;
+      //}
       if (id == R.id.action_settings) {
         Intent si=new Intent(getActivity(),PreferencesActivity.class);
         startActivity(si);
@@ -192,7 +168,7 @@ public class TrackActivity extends SingleFragmentActivity {
         }
         checkGps();
         startMyService();
-        mTrackStorage.initTargetDir(getActivity());
+        //mTrackStorage.initTargetDir(getActivity());// see MainPageFragment.loadCurrentTrack
         String storageIbfo=displayStorageStat(mTrackStorage.statStored());
         mTrackListener.clearCounter();
         mTrackListener.startListening(getActivity());
@@ -281,7 +257,6 @@ public class TrackActivity extends SingleFragmentActivity {
       mDataWatcher.stop();
       adjustVisibility(false);
       printStorageInfo();
-      //tvState.setText(tvState.getText().toString().concat("\nIDLE"));
     }
 
     private void stopMyService() {

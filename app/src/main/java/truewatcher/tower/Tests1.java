@@ -327,7 +327,7 @@ public class Tests1 extends SingleFragmentActivity {
         th.println("Parsing a test track");
         latLonJson = gh.track2latLonJson(getTestTrack());
         th.println(latLonJson);
-        U.Summary res=gh.getResult();
+        U.Summary res=gh.getResults();
         th.assertEquals(2,res.segments,"Wrong segment count",
                 "found segments:".concat(String.valueOf(res.segments)));
         th.assertEquals(7,res.adopted,"Wrong point count",

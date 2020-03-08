@@ -2,13 +2,8 @@ package truewatcher.tower;
 
 import android.annotation.TargetApi;
 import android.content.pm.PackageManager;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-
-interface PermissionReceiver {
-  public void receivePermission(int reqCode, boolean isGranted);
-}
 
 interface PointReceiver {
   public void onPointavailable(Point p);
@@ -16,7 +11,7 @@ interface PointReceiver {
 
 public abstract class PointFetcher implements PermissionReceiver {
   protected FragmentActivity mActivity;
-  protected android.support.v4.app.Fragment mFragm;
+  protected PermissionAwareFragment mFragm;
   protected PointIndicator mPi;
   protected PointReceiver mPointReceiver;
   protected String mStatus="not run";
@@ -30,7 +25,7 @@ public abstract class PointFetcher implements PermissionReceiver {
   
   public Point getPoint() { return mPoint; }
   
-  public void setFragment(Fragment f) { 
+  public void setFragment(PermissionAwareFragment f) {
     mFragm=f;
     mActivity=f.getActivity();
   }
@@ -73,7 +68,7 @@ public abstract class PointFetcher implements PermissionReceiver {
   }
   
   private void requestPermission() {
-    ((PermissionChecker) mFragm).genericRequestPermission(getPermissionType(), getPermissionCode(), this);    
+    mFragm.genericRequestPermission(getPermissionType(), getPermissionCode(), this);
   } 
   
   public void receivePermission(int reqCode, boolean isGranted) {

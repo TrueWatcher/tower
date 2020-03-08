@@ -1,12 +1,9 @@
 package truewatcher.tower;
 
-import android.annotation.TargetApi;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -46,15 +43,8 @@ public class AddPointActivity  extends SingleFragmentActivity {
     }
     return super.onOptionsItemSelected(item);
   }
-  
-  @Override
-  public void onRequestPermissionsResult(int reqCode, String[] permissions, int[] grantResults) {
-    if (U.DEBUG) Log.d(U.TAG, "onRequestPermissionsResult:"+"Calling super.onResult from the activity");
-    super.onRequestPermissionsResult(reqCode, permissions, grantResults);
-  }
 
-  @TargetApi(23)
-  public static class AddPointFragment extends android.support.v4.app.Fragment implements PermissionChecker {
+  public static class AddPointFragment extends PermissionAwareFragment {
     
     private LinearLayout mLTop;
     private TextView tvCenter, tvGpsStatus, tvGpsData, tvCellStatus, tvCellData, tvNumber, tvAlert;
@@ -68,7 +58,6 @@ public class AddPointActivity  extends SingleFragmentActivity {
     private JSbridge mJSbridge;
     private PointRenderer mCellRenderer;
     private PointRenderer mGpsRenderer;
-    private SparseArray<PermissionReceiver> mPermissionReceivers = new SparseArray<PermissionReceiver>();
     private Model mModel=Model.getInstance();
     private Fragment mFragment;
     private DeeperRadioGroup mRGroup;
@@ -272,20 +261,6 @@ public class AddPointActivity  extends SingleFragmentActivity {
       }
       return super.onOptionsItemSelected(item);
     }
-
-    @TargetApi(23)
-    public void genericRequestPermission(String permCode, int reqCode, PermissionReceiver receiver) {
-      mPermissionReceivers.put(reqCode, receiver);
-      if (U.DEBUG) Log.d(U.TAG, "Requesting user...");
-      requestPermissions(new String[]{permCode}, reqCode);   
-    }
-    
-    @Override
-    public void onRequestPermissionsResult(int reqCode, String[] permissions, int[] grantResults) {
-      boolean isGranted = ( grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED );
-      if (U.DEBUG) Log.d(U.TAG,"onRequestPermissionsResult:"+"grantResults length="+grantResults.length);
-      mPermissionReceivers.get(reqCode).receivePermission(reqCode,isGranted);
-    }      
 
     private class PointRenderer extends PointIndicator implements PointReceiver {
       

@@ -1,13 +1,9 @@
 package truewatcher.tower;
 
-import android.annotation.TargetApi;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,10 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.TextView;
-
-interface PermissionChecker {
-  public void genericRequestPermission(String permCode, int reqCode, PermissionReceiver receiver);
-}
 
 public class MainActivity extends SingleFragmentActivity {
 
@@ -44,23 +36,14 @@ public class MainActivity extends SingleFragmentActivity {
     }
     return super.onOptionsItemSelected(item);
   }
-  
-  @Override
-  public void onRequestPermissionsResult(int reqCode, String[] permissions, int[] grantResults) {
-    if (U.DEBUG) Log.d(U.TAG, "Calling super.onResult from the activity");
-    super.onRequestPermissionsResult(reqCode, permissions, grantResults);
-  }
 
-  @TargetApi(23) 
-  public static class MainPageFragment extends Fragment
-          implements PermissionChecker, TrackListener.TrackPointListener {
+  public static class MainPageFragment extends PermissionAwareFragment
+          implements TrackListener.TrackPointListener {
     private MyRegistry mRegistry=MyRegistry.getInstance();
     private TextView mTwA;
     private TextView mTwB;    
     private WebView mWebView;
     private PointViewer mPv;
-    private SparseArray<PermissionReceiver> mPermissionReceivers =
-            new SparseArray<PermissionReceiver>();
     private Model mModel = Model.getInstance();
     private CellInformer mCellInformer = mModel.getCellInformer();;
     private GpsInformer mGpsInformer = mModel.getGpsInformer();;
@@ -100,9 +83,11 @@ public class MainActivity extends SingleFragmentActivity {
     }
 
     private void loadCurrentTrack() {
-      if ( ! mRegistry.getBool("enableTrackDisplayWrite")) return;
       try {
-        String buf=mModel.getStorageHelper().trackCsv2LatLonString();
+        TrackStorage ts=mModel.getTrackStorage();
+        ts.initTargetDir(getActivity());
+        if ( ! mRegistry.getBool("enableTrackDisplayWrite")) return;
+        String buf=ts.trackCsv2LatLonString();
         mJSbridge.replaceCurrentTrackLatLonJson(buf);
         mJSbridge.setDirty();
       }
@@ -193,20 +178,6 @@ public class MainActivity extends SingleFragmentActivity {
       int found=mPointList.findNearest(cursor);
       if (found < 0) throw new U.DataException("No stored points with coords");
       return found;
-    }
-    
-    @TargetApi(23)
-    public void genericRequestPermission(String permCode, int reqCode, PermissionReceiver receiver) {
-      mPermissionReceivers.put(reqCode, receiver);
-      if (U.DEBUG) Log.d(U.TAG, "Requesting user...");
-      requestPermissions(new String[]{permCode}, reqCode);   
-    }
-    
-    @Override
-    public void onRequestPermissionsResult(int reqCode, String[] permissions, int[] grantResults) {
-      boolean isGranted = ( grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED );
-      if (U.DEBUG) Log.d(U.TAG,"grantResults length="+grantResults.length);
-      mPermissionReceivers.get(reqCode).receivePermission(reqCode,isGranted);
     }
 
     @Override

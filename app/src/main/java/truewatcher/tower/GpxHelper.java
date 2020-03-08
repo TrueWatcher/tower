@@ -308,7 +308,7 @@ public class GpxHelper {
     }
   }
 
-  public U.Summary getResult() {
+  public U.Summary getResults() {
     String outcome="";
     if (mSegCount == 0) outcome="No tracks found";
     else if (mPointCount == 0) outcome="No trackpoints found";
