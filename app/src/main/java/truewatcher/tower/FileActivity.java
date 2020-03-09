@@ -303,7 +303,7 @@ public class FileActivity extends SingleFragmentActivity {
         }
         else if (mMode.equals("csv")) {
           TrackStorage.Track2LatLonJSON csvReader = mTrackStorage.new Track2LatLonJSON();
-          latLonJson = csvReader.trackCsv2LatLonJSON(mSelectedFile);
+          latLonJson = csvReader.file2LatLonJSON(mSelectedFile);
           s = csvReader.getResults();
         }
         else throw new U.RunException("Not to get here");
@@ -315,7 +315,6 @@ public class FileActivity extends SingleFragmentActivity {
         tvAlert.setText(String.format(resTemplate, s.act, s.adopted, s.segments, mSelectedFile));
         JSbridge jsb=Model.getInstance().getJSbridge();
         jsb.addViewTrackLatLonJson(latLonJson);
-        jsb.setDirty();
         return "Ok";
       }
       else if (mAct.equals(getString(R.string.action_export))) {
@@ -343,6 +342,7 @@ public class FileActivity extends SingleFragmentActivity {
         return "Ok";
       }
       else if (mAct.equals(getString(R.string.action_export_track))) {
+        if (mModel.getTrackListener().isOn()) throw new U.FileException("Stop recording first");
         targetFile=etExportFile.getText().toString();
         if (targetFile.length() == 0) {
           throw new U.FileException("Empty file name");

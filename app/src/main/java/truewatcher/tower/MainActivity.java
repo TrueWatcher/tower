@@ -89,7 +89,6 @@ public class MainActivity extends SingleFragmentActivity {
         if ( ! mRegistry.getBool("enableTrackDisplayWrite")) return;
         String buf=ts.trackCsv2LatLonString();
         mJSbridge.replaceCurrentTrackLatLonJson(buf);
-        mJSbridge.setDirty();
       }
       catch (Exception e) {
         Log.e(U.TAG,"MainPageFragment:"+e.getMessage());
@@ -106,16 +105,16 @@ public class MainActivity extends SingleFragmentActivity {
       mTwB.setText("");
       mWebView = (WebView) v.findViewById(R.id.wvWebView);
       mPv=new PointViewer(mTwA, mTwB, mWebView);      
-      mPv.redraw();
+      //mPv.redraw(); causes empty webView
+      mPv.hideIndicator();
+      mPv.showMap();
       return v;
     }
 
     @Override
     public void onTrackpointAvailable(Trackpoint p) {
       if ( ! mRegistry.getBool("enableTrackDisplayWrite")) return;
-      // reload track in the active Webview
-      String reloadTrack="(function() { window.dispatchEvent(onTrackreloadEvent); })();";
-      mWebView.evaluateJavascript(reloadTrack,null);
+      mPv.redraw();
     }
     
     @Override
@@ -188,17 +187,17 @@ public class MainActivity extends SingleFragmentActivity {
       mGpsInformer.setFragment(this);
       mTwA.setText("");
       mTwB.setText("");
-      if (mModel.getJSbridge().importLatLon().contains("null") && mRegistry.noAnyKeys()) {
+      if (mModel.getJSbridge().isDirty() > 0) {
+        mPv.hideIndicator();
+        mPv.redraw();
+      }
+      if (mModel.getJSbridge().hasNoCenter() && mRegistry.noAnyKeys()) {
         mPv.addProgress(getString(R.string.keyless_warning),"\n");
       }
       if (mReadPoints != null) {
         mPv.addProgress(mReadPoints.act+" "+mReadPoints.adopted+" points (of "+mReadPoints.found+") from "
           +mReadPoints.fileName, "\n");
         mReadPoints=null;
-      }
-      if (mModel.getJSbridge().isDirty()) {
-        mPv.redraw();
-        mModel.getJSbridge().clearDirty();
       }
       mTrackListener.attachListener(this);
     }

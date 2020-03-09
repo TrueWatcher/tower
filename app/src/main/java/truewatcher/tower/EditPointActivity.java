@@ -137,19 +137,13 @@ public class EditPointActivity extends SingleFragmentActivity {
           tvAlert.setText("No coordinates");
           return true;
         }
-        JSbridge jsb=mModel.getJSbridge();
-        jsb.exportLatLon(mPoint.lat,mPoint.lon);
-        jsb.setDirty();
+        mModel.getJSbridge().consumeLocation(mPoint);
         Point p2=(Point) mPoint.clone();
         mPointList.setProximityOrigin(p2);
         return true;
       }
       if (id == R.id.action_map) {
-        if (mPoint != null && mPoint.hasCoords()) {
-          JSbridge jsb=mModel.getJSbridge();
-          jsb.exportLatLon(mPoint.lat,mPoint.lon);
-          jsb.setDirty();
-        }
+        mModel.getJSbridge().consumeLocation(mPoint);
         exit(ListActivity.ListPointsFragment.FLUSH);
         return true;
       }
@@ -296,7 +290,7 @@ public class EditPointActivity extends SingleFragmentActivity {
           return false;
         }
         mPointList.moveUnprotectedToTrash(p.getId());
-        mModel.getJSbridge().setDirty();
+        mModel.getJSbridge().setDirty(2);
         return true;
       }
       
@@ -315,7 +309,7 @@ public class EditPointActivity extends SingleFragmentActivity {
       public void updateComment(String s) {
         p.setComment(s);
         mPointList.update(p);
-        mModel.getJSbridge().setDirty();
+        mModel.getJSbridge().setDirty(2);
         fillForm();
       }
       
@@ -332,7 +326,7 @@ public class EditPointActivity extends SingleFragmentActivity {
         tvNull.setVisibility(View.GONE);
         tvAlert.setVisibility(View.VISIBLE);
         mPointList.update(p);
-        mModel.getJSbridge().setDirty();
+        mModel.getJSbridge().setDirty(2);
         fillForm(p);
       }
       

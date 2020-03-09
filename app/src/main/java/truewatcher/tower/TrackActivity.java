@@ -49,12 +49,9 @@ public class TrackActivity extends SingleFragmentActivity {
       }
       if (id == R.id.action_delete_last_segment) {
         deleteLastSegment();
+        Model.getInstance().getJSbridge().setDirty(1);
         return true;
       }
-      //if (id == R.id.action_export_gpx) {
-      //  exportGpx();
-      //  return true;
-      //}
       if (id == R.id.action_settings) {
         Intent si=new Intent(getActivity(),PreferencesActivity.class);
         startActivity(si);
@@ -274,33 +271,6 @@ public class TrackActivity extends SingleFragmentActivity {
         String storageIbfo=displayStorageStat(mTrackStorage.statStored());
         tvState.setText("IDLE");
         tvData.setText(storageIbfo);
-      }
-      catch (IOException e) {
-        tvState.setText("IOException:"+e.getMessage());
-        Log.e(U.TAG, "IOException:"+e.getMessage());
-      }
-      catch (U.DataException e) {
-        tvState.setText("DataException:"+e.getMessage());
-        Log.e(U.TAG, "DataException:"+e.getMessage());
-      }
-      catch (U.FileException e) {
-        tvState.setText("FileException:"+e.getMessage());
-        Log.e(U.TAG, "FileException:"+e.getMessage());
-      }
-    }
-
-    private void exportGpx() {
-      if (mTrackListener.isOn()) {
-        tvState.setText("Stop recording first");
-        return;
-      }
-      try {
-        String name=Trackpoint.getDate().replace(' ','_').replace(':','-');
-        U.Summary res=mTrackStorage.trackCsv2Gpx(name);
-        String info=String.format("%s %d points (of %d, %d segment) to %s",
-                res.act, res.adopted, res.found, res.segments, res.fileName);
-        tvState.setText("IDLE");
-        tvData.setText(info);
       }
       catch (IOException e) {
         tvState.setText("IOException:"+e.getMessage());

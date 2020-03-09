@@ -211,7 +211,7 @@ public class ListActivity extends SingleFragmentActivity {
       mAdapter.changeObjects(mList);
       if (mList.isEmpty()) tvAlert.setText("No stored points");
       if (mPointList.isDirty()) {
-        Model.getInstance().getJSbridge().setDirty();
+        Model.getInstance().getJSbridge().setDirty(2);
       }
       trySavePoints();
     }

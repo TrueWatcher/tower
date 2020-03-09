@@ -10,7 +10,8 @@ public class PointViewer extends PointIndicator implements PointReceiver {
 
   private MyRegistry mRegistry=MyRegistry.getInstance();
   private WebView wvWebView;
-  private String mPage;
+  private String mPageURI;
+  private JSbridge mJSbridge = Model.getInstance().getJSbridge();
   
   public PointViewer(TextView twP, TextView twD, WebView wvW) {    
     super(twP, twD);
@@ -30,51 +31,58 @@ public class PointViewer extends PointIndicator implements PointReceiver {
   
   @Override
   public void onPointavailable(Point p) { 
-    showMap(p);
+    redraw();
   }
-  
-  public void showMap(Point p) {
-    if( ! p.hasCoords()) {
-      if (U.DEBUG) Log.d(U.TAG,"PointViewer:"+"empty point, no map shown");
-      return;
-    }
-    showMap();
+
+  public void hideIndicator() {
+    hideProgress();
+    hideData();
   }
-  
-  public void showMap() {
-    mPage=choosePage(mRegistry.get("mapProvider"));
-    if (mPage.isEmpty()) {
-      addProgress("Wrong mapProvider");
-      return;
-    }
-    JSbridge jsb=Model.getInstance().getJSbridge();
-    wvWebView.addJavascriptInterface(jsb, "JSbridge");
-    wvWebView.loadUrl(mPage);
-  }
-  
+
   public void redraw() {
-    JSbridge jsb=Model.getInstance().getJSbridge();
-    if (jsb.importLatLon().contains("null")) {// no map center
+    if (mJSbridge.hasNoCenter()) {
+      if (U.DEBUG) Log.d(U.TAG,"Show wallpaper from redraw");
       showWallpaper();
       return;
     }
-    hideProgress();
-    hideData();
-    //addData("redraw");
-    // mPage is re-created with this object
-    showMap();
+    int c=mJSbridge.isDirty();
+    switch (c) {
+      case 3:
+        showMap();
+        break;
+      case 2:
+        reloadData();
+        break;
+      case 1:
+        reloadTrack();
+        break;
+      case 0:
+        break;
+      default:
+        throw new U.RunException("Unknown JSbribge dirty="+Integer.toString(c));
+    }
+  }
+
+  public void showMap() {
+    if (mJSbridge.hasNoCenter()) {
+      if (U.DEBUG) Log.d(U.TAG,"Show wallpaper from showMap");
+      showWallpaper();
+      return;
+    }
+    mPageURI=choosePage(mRegistry.get("mapProvider"));
+    wvWebView.addJavascriptInterface(mJSbridge, "JSbridge");
+    wvWebView.loadUrl(mPageURI);
+    mJSbridge.clearDirty();
   }
   
   private String choosePage(String mapProvider) {
     final String yandexPage="file:///android_asset/webMaps/ya.html";
-    //final String yastaticPage="file:///android_asset/webMaps/yastatic.html";;
     final String leafletjsPage="file:///android_asset/webMaps/leafletjs.html";
-    //final String redirectPage="http://fs.posmotrel.net/jsredir.html";
     String[] pt=mapProvider.split(" ");
     if (pt.length != 2) throw new U.RunException("Wrong mapProvider="+mapProvider);
     if ( isLeaflet(pt[0]) ) { return leafletjsPage; }
     else if (pt[0].equals("yandex")) { return yandexPage; }
-    return "";
+    throw new U.RunException("Wrong mapProvider="+mapProvider);
   }
 
   private boolean isLeaflet(String provider) {
@@ -86,4 +94,17 @@ public class PointViewer extends PointIndicator implements PointReceiver {
     final String wallpaperPage="file:///android_asset/webMaps/wallpaper.html";
     wvWebView.loadUrl(wallpaperPage);
   }
+
+  private void reloadTrack() {
+    String reloadTrack="(function() { window.dispatchEvent(onTrackreloadEvent); })();";
+    wvWebView.evaluateJavascript(reloadTrack,null);
+    mJSbridge.clearDirty();
+  }
+
+  private void reloadData() {
+    String reloadData="(function() { window.dispatchEvent(onDatareloadEvent); })();";
+    wvWebView.evaluateJavascript(reloadData,null);
+    mJSbridge.clearDirty();
+  }
+
 }

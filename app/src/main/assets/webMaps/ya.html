@@ -120,7 +120,6 @@
   }
   
   function replaceCurrentTrack(oMap, aColor) {
-    if ( ! JSbridge.importViewCurrentTrack()) return;
     if (currentTrack instanceof Array) {
       currentTrack.forEach(function(seg) {
         if (typeof seg == "object") {
@@ -129,7 +128,8 @@
         }
       }); 
       currentTrack=[];
-    }  
+    }
+    if ( ! JSbridge.importViewCurrentTrack()) return;
     var track=JSbridge.importCurrentTrackLatLonJson();
     if (! track) return;
     track=JSON.parse(track);

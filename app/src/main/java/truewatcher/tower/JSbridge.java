@@ -10,7 +10,8 @@ public class JSbridge {
   private String mCenterLon;
   private String mCenterLat;
   private PointList mPointList;
-  private boolean mDirty=false;
+  private int mDirty=0;
+  private boolean mNew=true;
   private String mViewTrackLatLonJson="[]";
   private String mCurrentTrackLatLonJson="[]";
   
@@ -51,7 +52,10 @@ public class JSbridge {
   @android.webkit.JavascriptInterface
   public void saveZoom(String z) { mZoom=z; }
   
-  public void exportZoom(String z) { mZoom=z; }
+  public void exportZoom(String z) {
+    mZoom=z;
+    setDirty(2);
+  }
   
   @android.webkit.JavascriptInterface
   public String importMapType() { 
@@ -91,6 +95,7 @@ public class JSbridge {
 
   public void addViewTrackLatLonJson(String json) {
     mViewTrackLatLonJson=U.joinJsonArrays(mViewTrackLatLonJson,json);
+    setDirty(2);
   }
 
   @android.webkit.JavascriptInterface
@@ -98,6 +103,13 @@ public class JSbridge {
 
   public void replaceCurrentTrackLatLonJson(String json) {
     mCurrentTrackLatLonJson=json;
+    setDirty(1);
+  }
+
+  public void consumeLocation(Point p) {
+    if (p == null || ! p.hasCoords()) return;
+    exportLatLon(p.lat,p.lon);
+    setDirty(2);
   }
 
   public void consumeTrackpoint(Trackpoint p) {
@@ -110,7 +122,7 @@ public class JSbridge {
     if (mRegistry.getBool("shouldCenterMapOnTrack")) {
       exportLatLon(p);
     }
-    mDirty=true;
+    setDirty(1);
   }
 
   @android.webkit.JavascriptInterface
@@ -120,14 +132,28 @@ public class JSbridge {
   public boolean importFollowCurrentTrack() { return mRegistry.getBool("shouldCenterMapOnTrack"); }
   
   public void setPointList(PointList pl) { mPointList=pl; }
+
+  public void onPoinlistmodified() { setDirty(2); }
   
   @android.webkit.JavascriptInterface
   public String getMarkers() { 
     return mPointList.makeJsonPresentation();
   }
   
-  public boolean isDirty() { return mDirty; }
-  public void setDirty() { mDirty=true; }
-  public void clearDirty() { mDirty=false; }
-  
+  public int isDirty() { return mDirty; }
+
+  public void setDirty(int level) {
+    // 0 - clean, 1 - track, 2 - data, 3 - URI
+    if (isNew()) {
+      mDirty=3;
+      mNew=false;
+      return;
+    }
+    if (level > mDirty) mDirty=level;
+  }
+  public void clearDirty() { mDirty=0; }
+
+  public boolean hasNoCenter() { return ( mCenterLat == null || mCenterLat.isEmpty() ); }
+  public boolean isNew() { return mNew; }
+
 }

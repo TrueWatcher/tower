@@ -275,7 +275,7 @@ public class TrackStorage {
   }
 
   public String trackCsv2LatLonString() throws U.DataException, IOException, U.FileException {
-    return (new Track2LatLonJSON()).trackCsv2LatLonJSON(mCurrentTrackFile);
+    return (new Track2LatLonJSON()).file2LatLonJSON(mCurrentTrackFile);
   }
 
   public class Track2LatLonJSON {
@@ -284,18 +284,22 @@ public class TrackStorage {
     private int mRecordCount=0;
     private String mTargetFile=mCurrentTrackFile;
 
-    public String trackCsv2LatLonJSON(String aTargetFileExt)
-            throws U.FileException, U.DataException, IOException {
-      StringBuilder outBuf = new StringBuilder();
-      Map<String, String> csv;
-      int countInSegment = 0;
-
+    public String file2LatLonJSON(String aTargetFileExt)
+            throws U.FileException, IOException, U.DataException {
       if (aTargetFileExt.length() > 1) mTargetFile = aTargetFileExt;
       mTargetFile = U.assureExtension(mTargetFile, "csv");
       if (null == U.fileExists(mTargetPath, mTargetFile, "csv")) {
         throw new U.FileException("Missing file " + mTargetFile);
       }
       String buf = U.fileGetContents(mTargetPath, mTargetFile);
+      return csv2LatLonJSON(buf);
+    }
+
+    public String csv2LatLonJSON(String buf) throws U.DataException {
+      StringBuilder outBuf = new StringBuilder();
+      Map<String, String> csv;
+      int countInSegment = 0;
+
       String[] lines = splitCsv(buf);
       String[] values;
       int l = lines.length;

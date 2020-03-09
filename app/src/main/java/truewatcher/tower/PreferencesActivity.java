@@ -162,8 +162,11 @@ public class PreferencesActivity extends AppCompatActivity {
       if (key.equals("mapZoom")) {
         Model.getInstance().getJSbridge().exportZoom(mRegistry.get(key));
       }
-      if (key.equals("mapProvider") || key.equals("mapZoom")) {
-        Model.getInstance().getJSbridge().setDirty();// to redraw map
+      if (key.equals("mapProvider")) {
+        Model.getInstance().getJSbridge().setDirty(3);// to redraw map
+      }
+      if (key.equals("enableTrackDisplayWrite")) {
+        syncCurrentTrack(mRegistry.getBool(key));
       }
     }
 
@@ -231,6 +234,19 @@ public class PreferencesActivity extends AppCompatActivity {
       getPreferenceManager().findPreference(key).setSummary("[obfuscated]");
       getPreferenceScreen().getSharedPreferences()
               .registerOnSharedPreferenceChangeListener(this);
+    }
+
+    private void syncCurrentTrack(boolean isEnabled) {
+      String buf="[[]]";
+      if (isEnabled) {
+        try {
+          buf = Model.getInstance().getTrackStorage().trackCsv2LatLonString();
+        }
+        catch (Exception e) {
+          pAlert.setSummary("Error:" + e.getMessage());
+        }
+      }
+      Model.getInstance().getJSbridge().replaceCurrentTrackLatLonJson(buf);
     }
 
   }// end fragment

@@ -44,19 +44,19 @@
     JSbridge=new wm.utils.MockJSbridge("opentopo map",ind);//"google hyb"//"osm map"//"google sat"
     JSbridge.moveLatLon();
   }
-  ll=JSbridge.importLatLon();
-  zoom=JSbridge.importZoom();
-  mapProvider=JSbridge.importMapType();
-  ind.say(ll+",z="+zoom);
-  var lls=ll.split(",");
-  var lat=lls[0];
-  var lon=lls[1];
-  
+
   var map;
   var currentTrack=false;
   var trackThicknessPx=2;
 
   function initmap() {
+    ll=JSbridge.importLatLon();
+    zoom=JSbridge.importZoom();
+    mapProvider=JSbridge.importMapType();
+    ind.say(ll+",z="+zoom);
+    var lls=ll.split(",");
+    var lat=lls[0];
+    var lon=lls[1];
     map = new L.Map('mapDiv');
     map.setView(new L.LatLng(lat,lon),zoom);
     addViewTrack(map, getColor("mark"));
@@ -163,8 +163,8 @@
   }
   
   function replaceCurrentTrack(map, aColor) {
-    if ( ! JSbridge.importViewCurrentTrack()) return;
     if (currentTrack) { currentTrack.remove(); currentTrack=false; }
+    if ( ! JSbridge.importViewCurrentTrack()) return;
     var track=JSbridge.importCurrentTrackLatLonJson();
     if (! track) return;
     track=JSON.parse(track);
@@ -194,10 +194,18 @@
   ind.hide();
   
   window.onDatareloadEvent = new Event('onDatareload');
-  window.addEventListener('onDatareload', function() { if (map) { map.off(); map.remove(); initmap(); } }, false);
+  window.addEventListener('onDatareload', function() {
+    if (map) {
+      ind.init(); map.off(); map.remove(); initmap(); ind.hide();
+    } },
+    false);
   
   window.onTrackreloadEvent = new Event('onTrackreload');
-  window.addEventListener('onTrackreload', function() { if (map) { updateCenter(map); replaceCurrentTrack(map, "#f00"); } }, false);
+  window.addEventListener('onTrackreload', function() {
+    if (map) {
+      updateCenter(map); replaceCurrentTrack(map, "#f00");
+    } },
+    false);
   
   if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();
 

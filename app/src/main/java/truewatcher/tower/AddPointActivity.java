@@ -158,7 +158,7 @@ public class AddPointActivity  extends SingleFragmentActivity {
         p=preparePoint(aType, latLon, cbAsCenter.isChecked(), cbProtect.isChecked());
         try {
           removed=mPointList.addAsNext(p);
-          mJSbridge.setDirty();
+          mJSbridge.setDirty(2);
           outcome="added:"+p.getId()+","+p.getType()+","+p.getComment();
           outcome+="; "+removed;
         }
@@ -190,8 +190,7 @@ public class AddPointActivity  extends SingleFragmentActivity {
         if (protect) p.protect();
         if (asCenter) {
           mPointList.setProximityOrigin((Point) p.clone());
-          mJSbridge.exportLatLon(p.lat,p.lon);
-          mJSbridge.setDirty();
+          mJSbridge.consumeLocation(p);
         }
         return p;
       }

@@ -93,9 +93,7 @@ public abstract class PointFetcher implements PermissionReceiver {
     if (mToUpdateLocation && p.hasCoords()) {
       mm.lastPosition=p;
       mm.getPointList().setProximityOrigin(p);
-      JSbridge jsb=mm.getJSbridge();
-      jsb.exportLatLon(p.lat,p.lon);
-      jsb.setDirty();
+      mm.getJSbridge().consumeLocation(p);
     }
     mPointReceiver.onPointavailable(p);
   }

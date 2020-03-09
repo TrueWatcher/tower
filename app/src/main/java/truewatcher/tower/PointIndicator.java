@@ -34,8 +34,8 @@ public class PointIndicator {
   public void addProgress(String p, String separator) {
     String t = (String) twProgress.getText();
     if (t.length() > 0) t=t+separator;
-    twProgress.setText(t+p);
     twProgress.setVisibility(View.VISIBLE);
+    twProgress.setText(t+p);
   }
 
   public void hideProgress() { 
