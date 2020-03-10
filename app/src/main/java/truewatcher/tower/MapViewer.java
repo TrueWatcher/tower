@@ -6,14 +6,14 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-public class PointViewer extends PointIndicator implements PointReceiver {
+public class MapViewer extends PointIndicator implements PointReceiver {
 
   private MyRegistry mRegistry=MyRegistry.getInstance();
   private WebView wvWebView;
   private String mPageURI;
   private JSbridge mJSbridge = Model.getInstance().getJSbridge();
   
-  public PointViewer(TextView twP, TextView twD, WebView wvW) {    
+  public MapViewer(TextView twP, TextView twD, WebView wvW) {
     super(twP, twD);
     wvWebView=wvW;
     wvWebView.setWebViewClient(new WebViewClient() {
@@ -72,7 +72,7 @@ public class PointViewer extends PointIndicator implements PointReceiver {
     mPageURI=choosePage(mRegistry.get("mapProvider"));
     wvWebView.addJavascriptInterface(mJSbridge, "JSbridge");
     wvWebView.loadUrl(mPageURI);
-    mJSbridge.clearDirty();
+    mJSbridge.clearDirty(3);
   }
   
   private String choosePage(String mapProvider) {
@@ -98,13 +98,13 @@ public class PointViewer extends PointIndicator implements PointReceiver {
   private void reloadTrack() {
     String reloadTrack="(function() { window.dispatchEvent(onTrackreloadEvent); })();";
     wvWebView.evaluateJavascript(reloadTrack,null);
-    mJSbridge.clearDirty();
+    mJSbridge.clearDirty(1);
   }
 
   private void reloadData() {
     String reloadData="(function() { window.dispatchEvent(onDatareloadEvent); })();";
     wvWebView.evaluateJavascript(reloadData,null);
-    mJSbridge.clearDirty();
+    mJSbridge.clearDirty(2);
   }
 
 }

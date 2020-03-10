@@ -158,7 +158,7 @@ public class AddPointActivity  extends SingleFragmentActivity {
         p=preparePoint(aType, latLon, cbAsCenter.isChecked(), cbProtect.isChecked());
         try {
           removed=mPointList.addAsNext(p);
-          mJSbridge.setDirty(2);
+          mJSbridge.onPoinlistmodified();
           outcome="added:"+p.getId()+","+p.getType()+","+p.getComment();
           outcome+="; "+removed;
         }

@@ -57,7 +57,7 @@
     <string name="action_track">Track</string>
     <string name="gpsMinDistance">Minimal track leg, m</string>
     <string name="gpsMinDelayS">Minimal GPS fix interval, s</string>
-    <string name="enableTrackDisplayWrite">Enable to display and write current track</string>
+    <string name="enableTrack">Display current track</string>
     <string name="shouldCenterMapOnTrack">Always center map on latest trackpoint</string>
     <string name="useTowerFolder">Use Tower folder</string>
     <string name="workingFileFull">Working file:</string>

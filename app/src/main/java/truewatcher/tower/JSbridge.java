@@ -10,8 +10,7 @@ public class JSbridge {
   private String mCenterLon;
   private String mCenterLat;
   private PointList mPointList;
-  private int mDirty=0;
-  private boolean mNew=true;
+  private int mDirty=3;// load map on first use
   private String mViewTrackLatLonJson="[]";
   private String mCurrentTrackLatLonJson="[]";
   
@@ -113,7 +112,7 @@ public class JSbridge {
   }
 
   public void consumeTrackpoint(Trackpoint p) {
-    if ( ! mRegistry.getBool("enableTrackDisplayWrite")) return;
+    if ( ! mRegistry.getBool("enableTrack")) return;
     if (p == null || ! p.getType().equals("T")) return;
     String ll=p.makeJsonPresentation().toString();
     if (U.DEBUG) Log.d(U.TAG, "consumeTrackpoint:" + "Adding:" + ll);
@@ -126,7 +125,7 @@ public class JSbridge {
   }
 
   @android.webkit.JavascriptInterface
-  public boolean importViewCurrentTrack() { return mRegistry.getBool("enableTrackDisplayWrite"); }
+  public boolean importViewCurrentTrack() { return mRegistry.getBool("enableTrack"); }
 
   @android.webkit.JavascriptInterface
   public boolean importFollowCurrentTrack() { return mRegistry.getBool("shouldCenterMapOnTrack"); }
@@ -144,16 +143,13 @@ public class JSbridge {
 
   public void setDirty(int level) {
     // 0 - clean, 1 - track, 2 - data, 3 - URI
-    if (isNew()) {
-      mDirty=3;
-      mNew=false;
-      return;
-    }
     if (level > mDirty) mDirty=level;
   }
-  public void clearDirty() { mDirty=0; }
+  public void clearDirty(int level) {
+    if (level < mDirty) throw new U.RunException("Wrong clearDirty level="+level+", required="+mDirty);
+    mDirty=0;
+  }
 
   public boolean hasNoCenter() { return ( mCenterLat == null || mCenterLat.isEmpty() ); }
-  public boolean isNew() { return mNew; }
 
 }

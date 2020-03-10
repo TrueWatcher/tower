@@ -290,7 +290,7 @@ public class EditPointActivity extends SingleFragmentActivity {
           return false;
         }
         mPointList.moveUnprotectedToTrash(p.getId());
-        mModel.getJSbridge().setDirty(2);
+        mModel.getJSbridge().onPoinlistmodified();
         return true;
       }
       
@@ -309,7 +309,7 @@ public class EditPointActivity extends SingleFragmentActivity {
       public void updateComment(String s) {
         p.setComment(s);
         mPointList.update(p);
-        mModel.getJSbridge().setDirty(2);
+        mModel.getJSbridge().onPoinlistmodified();
         fillForm();
       }
       
@@ -326,7 +326,7 @@ public class EditPointActivity extends SingleFragmentActivity {
         tvNull.setVisibility(View.GONE);
         tvAlert.setVisibility(View.VISIBLE);
         mPointList.update(p);
-        mModel.getJSbridge().setDirty(2);
+        mModel.getJSbridge().onPoinlistmodified();
         fillForm(p);
       }
       

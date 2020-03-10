@@ -96,7 +96,7 @@ public class PreferencesActivity extends AppCompatActivity {
       prepareEditTextPref("mapZoom");
       prepareEditTextPref("maxPoints");
       prepareSwitchPref("useTrash");
-      prepareSwitchPref("enableTrackDisplayWrite");
+      prepareSwitchPref("enableTrack");
       prepareSwitchPref("shouldCenterMapOnTrack");
       prepareEditTextPref("gpsMinDistance");
       prepareEditTextPref("gpsMinDelayS");
@@ -165,7 +165,7 @@ public class PreferencesActivity extends AppCompatActivity {
       if (key.equals("mapProvider")) {
         Model.getInstance().getJSbridge().setDirty(3);// to redraw map
       }
-      if (key.equals("enableTrackDisplayWrite")) {
+      if (key.equals("enableTrack")) {
         syncCurrentTrack(mRegistry.getBool(key));
       }
     }

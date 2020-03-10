@@ -60,7 +60,7 @@ public class TrackStorage {
   }
 
   public Trackpoint simplySave(Trackpoint p) {
-    if ( ! mRg.getBool("enableTrackDisplayWrite")) return null;
+    //if ( ! mRg.getBool("enableTrack")) return null;
     if ( ( mShouldStartNewSegment || mTotalPointCount == 0 ) && p.getType().equals("T")) {
       p.setNewSegment();
       mShouldStartNewSegment = false;

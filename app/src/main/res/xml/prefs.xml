@@ -37,8 +37,8 @@
       app:title="@string/useTrash" />
 
   <SwitchPreferenceCompat
-      app:key="enableTrackDisplayWrite"
-      app:title="@string/enableTrackDisplayWrite" />
+      app:key="enableTrack"
+      app:title="@string/enableTrack" />
 
   <SwitchPreferenceCompat
       app:key="shouldCenterMapOnTrack"

@@ -43,7 +43,7 @@ public class MainActivity extends SingleFragmentActivity {
     private TextView mTwA;
     private TextView mTwB;    
     private WebView mWebView;
-    private PointViewer mPv;
+    private MapViewer mMapViewer;
     private Model mModel = Model.getInstance();
     private CellInformer mCellInformer = mModel.getCellInformer();;
     private GpsInformer mGpsInformer = mModel.getGpsInformer();;
@@ -86,7 +86,7 @@ public class MainActivity extends SingleFragmentActivity {
       try {
         TrackStorage ts=mModel.getTrackStorage();
         ts.initTargetDir(getActivity());
-        if ( ! mRegistry.getBool("enableTrackDisplayWrite")) return;
+        if ( ! mRegistry.getBool("enableTrack")) return;
         String buf=ts.trackCsv2LatLonString();
         mJSbridge.replaceCurrentTrackLatLonJson(buf);
       }
@@ -104,17 +104,17 @@ public class MainActivity extends SingleFragmentActivity {
       mTwB = (TextView) v.findViewById(R.id.twB);
       mTwB.setText("");
       mWebView = (WebView) v.findViewById(R.id.wvWebView);
-      mPv=new PointViewer(mTwA, mTwB, mWebView);      
-      //mPv.redraw(); causes empty webView
-      mPv.hideIndicator();
-      mPv.showMap();
+      mMapViewer =new MapViewer(mTwA, mTwB, mWebView);
+      //mMapViewer.redraw(); causes empty webView
+      mMapViewer.hideIndicator();
+      mMapViewer.showMap();
       return v;
     }
 
     @Override
     public void onTrackpointAvailable(Trackpoint p) {
-      if ( ! mRegistry.getBool("enableTrackDisplayWrite")) return;
-      mPv.redraw();
+      if ( ! mRegistry.getBool("enableTrack")) return;
+      mMapViewer.redraw();
     }
     
     @Override
@@ -126,11 +126,11 @@ public class MainActivity extends SingleFragmentActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
       int id = item.getItemId();
       if (id == R.id.action_cell) {
-        mCellInformer.go(mPv,mPv);
+        mCellInformer.go(mMapViewer, mMapViewer);
         return true;
       }
       if (id == R.id.action_gps) {
-        mGpsInformer.go(mPv,mPv);
+        mGpsInformer.go(mMapViewer, mMapViewer);
         return true;
       }
       if (id == R.id.action_add) {
@@ -188,14 +188,14 @@ public class MainActivity extends SingleFragmentActivity {
       mTwA.setText("");
       mTwB.setText("");
       if (mModel.getJSbridge().isDirty() > 0) {
-        mPv.hideIndicator();
-        mPv.redraw();
+        mMapViewer.hideIndicator();
+        mMapViewer.redraw();
       }
       if (mModel.getJSbridge().hasNoCenter() && mRegistry.noAnyKeys()) {
-        mPv.addProgress(getString(R.string.keyless_warning),"\n");
+        mMapViewer.addProgress(getString(R.string.keyless_warning),"\n");
       }
       if (mReadPoints != null) {
-        mPv.addProgress(mReadPoints.act+" "+mReadPoints.adopted+" points (of "+mReadPoints.found+") from "
+        mMapViewer.addProgress(mReadPoints.act+" "+mReadPoints.adopted+" points (of "+mReadPoints.found+") from "
           +mReadPoints.fileName, "\n");
         mReadPoints=null;
       }

@@ -116,7 +116,7 @@ public class MyRegistry {
     + "\"myFile\":\"current.csv\","    
     + "\"yandexMapKey\":\"\", \"yandexLocatorKey\":\"\", \"isKeylessDistro\":\"false\","
     + "\"gpsMinDistance\":\"12\",\"gpsMinDelayS\":\"10\",\"gpsTimeoutS\":\"120\","
-    + "\"enableTrackDisplayWrite\":\"true\",\"shouldCenterMapOnTrack\":\"false\",\"useTowerFolder\":\"false\""
+    + "\"enableTrack\":\"true\",\"shouldCenterMapOnTrack\":\"false\",\"useTowerFolder\":\"false\""
     + "}";
     return defs;
   }
