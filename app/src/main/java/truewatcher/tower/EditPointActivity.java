@@ -70,14 +70,10 @@ public class EditPointActivity extends SingleFragmentActivity {
     private Model mModel;
     private PointList mPointList;
     private android.support.v4.app.Fragment mFragment;
-    private Editor mEd;
+    private EditPointFragment.Editor mEd;
+    private EditPointFragment.Viewer mV;
     private Point mPoint;
 
-    private TextView tvAlert, tvType, tvProtect, tvId, tvComment, tvLatLon, tvDate, tvRange,
-            tvRangeLabel, tvAlt, tvAltLabel, tvCellData, tvNull;
-    private EditText etNote;
-    private ImageButton bNoteOk;
-    
     @Override
     public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
@@ -91,32 +87,11 @@ public class EditPointActivity extends SingleFragmentActivity {
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
       View v = inflater.inflate(R.layout.fragment_edit_point, container, false);
-      tvAlert = (TextView) v.findViewById(R.id.tvAlert);
-      tvType=(TextView) v.findViewById(R.id.tvType);
-      tvProtect=(TextView) v.findViewById(R.id.tvProtect);
-      tvId=(TextView) v.findViewById(R.id.tvId);
-      tvLatLon=(TextView) v.findViewById(R.id.tvLatLon);
-      tvDate=(TextView) v.findViewById(R.id.tvDate);
-      tvRange=(TextView) v.findViewById(R.id.tvRange);
-      tvRangeLabel=(TextView) v.findViewById(R.id.tvRangeLabel);
-      tvAlt=(TextView) v.findViewById(R.id.tvAlt);
-      tvAltLabel=(TextView) v.findViewById(R.id.tvAltLabel);
-      tvCellData=(TextView) v.findViewById(R.id.tvCellData);
-      tvNull=(TextView) v.findViewById(R.id.tvNull);
-      tvComment=(TextView) v.findViewById(R.id.tvComment);
-      etNote=(EditText) v.findViewById(R.id.etNote);
-      bNoteOk=(ImageButton) v.findViewById(R.id.bNoteOk);
-      
-      bNoteOk.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          mEd.updateNote();
-        }
-      });
-            
+      mV=new Viewer(v);
+      mV.setListeners(mEd);
+
       mEd.adoptPoint(extractId());
       mPoint=mEd.getPoint();
-      U.enlargeFont(getActivity(), new TextView[] {tvId, tvType, tvComment} );
       return v;
     }
     
@@ -134,7 +109,7 @@ public class EditPointActivity extends SingleFragmentActivity {
       int id = item.getItemId();
       if (id == R.id.action_center) {
         if (mPoint == null || ! mPoint.hasCoords()) {
-          tvAlert.setText("No coordinates");
+          mV.alert("No coordinates");
           return true;
         }
         mModel.getJSbridge().consumeLocation(mPoint);
@@ -160,7 +135,7 @@ public class EditPointActivity extends SingleFragmentActivity {
         return true;
       }
       if (id == R.id.action_delete) {
-        if (mPoint.isProtected()) { tvAlert.setText("This point is protected"); }
+        if (mPoint.isProtected()) { mV.alert("This point is protected"); }
         else { requestConfirmation(R.id.action_delete, R.string.action_delete); }
         return true;
       }
@@ -239,16 +214,123 @@ public class EditPointActivity extends SingleFragmentActivity {
       public void adoptPoint(int iid) {
         p = mPointList.getById(iid);
         if (p == null) {
-          tvAlert.setText("No point with id="+iid);
+          mV.alert("No point with id="+iid);
           return;
         }
-        fillForm();
+        mV.fillForm(p);
       }
       
       public Point getPoint() { return p; }
       
-      private void fillForm() { fillForm(p); }
+      public void _fillForm(Point p) {
+        mV.fillForm(p);
+      }
       
+      public void toggleProtect() {
+        if (p.isProtected()) p.unprotect();
+        else p.protect();
+        mPointList.update(p);
+        mV.fillForm(p);
+      }
+      
+      public boolean die() {
+        if (p.isProtected()) {
+          mV.alert("Cannot delete a protected point");
+          return false;
+        }
+        mPointList.moveUnprotectedToTrash(p.getId());
+        mModel.getJSbridge().onPoinlistmodified();
+        return true;
+      }
+      
+      public void findCoords() {
+        //tvAlert.setText("Sorry, not implemented in the free version");
+        if ( ! p.getType().equals("cell") || p.cellData == null || p.cellData.length() < 10) {
+          mV.alert("This point is not a cell");
+          return;
+        }
+        ResolverWrapper rw=new ResolverWrapper(mV.getTvAlert(), mV.getTvNull());
+        CellInformer ci=new CellInformer();
+        //ci.setFragment(mFragment);
+        ci.onlyResolve(rw, mEd, mEd.getPoint());
+      }
+      
+      public void updateComment(String s) {
+        p.setComment(s);
+        mPointList.update(p);
+        mModel.getJSbridge().onPoinlistmodified();
+        mV.fillForm(p);
+      }
+      
+      public void updateNote() {
+        p.setNote(mV.getNote());
+        mPointList.update(p);
+        mV.fillForm(p);
+      }
+      
+      @Override
+      public void onPointavailable(Point p) { 
+      // callback after resolving cell to coords
+        mV.adjustVisibility();
+        mPointList.update(p);
+        mModel.getJSbridge().onPoinlistmodified();
+        mV.fillForm(p);
+      }
+      
+      private String ne(String s) {
+        if (s == null || s.isEmpty()) return "";
+        return s;
+      }
+      
+      private String ne(int i) {
+        if (i <= 0) return "";
+        return String.valueOf(i);
+      }
+    }
+    
+    private class ResolverWrapper extends PointIndicator {
+      public ResolverWrapper(TextView twP, TextView twD) {
+        super(twP, twD);
+      }      
+    }
+
+    private class Viewer {
+      private TextView tvAlert, tvType, tvProtect, tvId, tvComment, tvLatLon, tvDate, tvRange,
+              tvRangeLabel, tvAlt, tvAltLabel, tvCellData, tvNull;
+      private EditText etNote;
+      private ImageButton bNoteOk;
+
+      public Viewer(View v) {
+        tvAlert = (TextView) v.findViewById(R.id.tvAlert);
+        tvType=(TextView) v.findViewById(R.id.tvType);
+        tvProtect=(TextView) v.findViewById(R.id.tvProtect);
+        tvId=(TextView) v.findViewById(R.id.tvId);
+        tvLatLon=(TextView) v.findViewById(R.id.tvLatLon);
+        tvDate=(TextView) v.findViewById(R.id.tvDate);
+        tvRange=(TextView) v.findViewById(R.id.tvRange);
+        tvRangeLabel=(TextView) v.findViewById(R.id.tvRangeLabel);
+        tvAlt=(TextView) v.findViewById(R.id.tvAlt);
+        tvAltLabel=(TextView) v.findViewById(R.id.tvAltLabel);
+        tvCellData=(TextView) v.findViewById(R.id.tvCellData);
+        tvNull=(TextView) v.findViewById(R.id.tvNull);
+        tvComment=(TextView) v.findViewById(R.id.tvComment);
+        etNote=(EditText) v.findViewById(R.id.etNote);
+        bNoteOk=(ImageButton) v.findViewById(R.id.bNoteOk);
+
+        U.enlargeFont(getActivity(), new TextView[] {tvId, tvType, tvComment} );
+      }
+
+      public void setListeners(final Editor ed) {
+        bNoteOk.setOnClickListener(new View.OnClickListener() {
+          @Override
+          public void onClick(View v) {
+            ed.updateNote();
+          }
+        });
+      }
+
+      public void alert(String s) { tvAlert.setText(s); }
+
       public void fillForm(Point p) {
         tvId.setText(ne(p.getId()));
         tvType.setText(ne(p.getType()));
@@ -276,77 +358,29 @@ public class EditPointActivity extends SingleFragmentActivity {
         }
         etNote.setText(ne(p.getNote()));
       }
-      
-      public void toggleProtect() {
-        if (p.isProtected()) p.unprotect();
-        else p.protect();
-        mPointList.update(p);
-        fillForm();
-      }
-      
-      public boolean die() {
-        if (p.isProtected()) {
-          tvAlert.setText("Cannot delete a protected point");
-          return false;
-        }
-        mPointList.moveUnprotectedToTrash(p.getId());
-        mModel.getJSbridge().onPoinlistmodified();
-        return true;
-      }
-      
-      public void findCoords() {
-        //tvAlert.setText("Sorry, not implemented in the free version");
-        if ( ! p.getType().equals("cell") || p.cellData == null || p.cellData.length() < 10) {
-          tvAlert.setText("This point is not a cell");
-          return;
-        }
-        ResolverWrapper rw=new ResolverWrapper(tvAlert,tvNull);
-        CellInformer ci=new CellInformer();
-        //ci.setFragment(mFragment);
-        ci.onlyResolve(rw, mEd, mEd.getPoint());
-      }
-      
-      public void updateComment(String s) {
-        p.setComment(s);
-        mPointList.update(p);
-        mModel.getJSbridge().onPoinlistmodified();
-        fillForm();
-      }
-      
-      public void updateNote() {
-        String s=etNote.getText().toString();
-        p.setNote(s);
-        mPointList.update(p);
-        fillForm();
-      }
-      
-      @Override
-      public void onPointavailable(Point p) { 
-      // callback after resolving cell to coords
-        tvNull.setVisibility(View.GONE);
-        tvAlert.setVisibility(View.VISIBLE);
-        mPointList.update(p);
-        mModel.getJSbridge().onPoinlistmodified();
-        fillForm(p);
-      }
-      
+
       private String ne(String s) {
         if (s == null || s.isEmpty()) return "";
         return s;
       }
-      
+
       private String ne(int i) {
         if (i <= 0) return "";
         return String.valueOf(i);
       }
-    }
-    
-    private class ResolverWrapper extends PointIndicator {
-      
-      public ResolverWrapper(TextView twP, TextView twD) {
-        super(twP, twD);
-      }      
-    }
+
+      public String getNote() { return etNote.getText().toString(); }
+
+      public TextView getTvAlert() { return tvAlert; }
+
+      public TextView getTvNull() { return tvNull; }
+
+      public void adjustVisibility() {
+        tvNull.setVisibility(View.GONE);
+        tvAlert.setVisibility(View.VISIBLE);
+      }
+
+    }// end Viewer
     
   }// end ListFragment
 

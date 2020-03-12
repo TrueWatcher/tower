@@ -47,17 +47,11 @@ public class FileActivity extends SingleFragmentActivity {
   }
   
   public static class FileFragment extends Fragment implements AdapterView.OnItemSelectedListener {
-    
-    private LinearLayout lTop, lExport;
-    private RadioGroup rgAct, rgMode;
-    private TextView tvAlert, tvMyFolder;
-    private EditText etExportFile,etExportFrom,etExportUntil;
-    private Spinner spDirCsv, spDirGpx;
-    private CheckBox ckRemoveExported;
     private Model mModel=Model.getInstance();
     private PointList mPointList=Model.getInstance().getPointList();
     private StorageHelper mStorageHelper=Model.getInstance().getStorageHelper();
     private TrackStorage mTrackStorage=Model.getInstance().getTrackStorage();
+    private FileFragment.Viewer mV;
     private String mSelectedFile="";
     private String mAct;// Open, Load, Export, Delete
     private String mMode="csv";// csv, gpx
@@ -71,46 +65,19 @@ public class FileActivity extends SingleFragmentActivity {
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
       View v = inflater.inflate(R.layout.fragment_file, container, false);
-      
-      spDirCsv=(Spinner) v.findViewById(R.id.spDirCsv);      
-      spDirGpx=(Spinner) v.findViewById(R.id.spDirGpx);
+      mV=new Viewer(v);
       adoptCatalog();
-      spDirGpx.setOnItemSelectedListener((OnItemSelectedListener) this);
-      spDirCsv.setOnItemSelectedListener((OnItemSelectedListener) this);
-      
-      tvAlert=(TextView) v.findViewById(R.id.tvAlert);
-      tvMyFolder=(TextView) v.findViewById(R.id.tvMyFolder);
-      tvMyFolder.setText("Data folder: "+mStorageHelper.getMyDir());
-      lTop=(LinearLayout) v.findViewById(R.id.lTop);
-      rgMode = (RadioGroup) v.findViewById(R.id.rgMode);
-      rgMode.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-        @Override
-        public void onCheckedChanged(RadioGroup group, int checkedId) { getMode(rgMode); }
-      });
-      lExport=(LinearLayout) v.findViewById(R.id.lExport);
-      etExportFile=(EditText) v.findViewById(R.id.etExportFile);
-      etExportFrom=(EditText) v.findViewById(R.id.etExportFrom);
-      etExportUntil=(EditText) v.findViewById(R.id.etExportUntil);
-      ckRemoveExported=(CheckBox) v.findViewById(R.id.ckRemoveExported);
-      
-      rgAct = (RadioGroup) v.findViewById(R.id.rgAct);
-      getAct(rgAct);
-      rgAct.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-        @Override
-        public void onCheckedChanged(RadioGroup group, int checkedId) { getAct(rgAct); }
-      });
-
-      U.enlargeFont(getActivity(), new TextView[] {tvAlert} );
-      String myFile=MyRegistry.getInstance().get("myFile");
-      tvAlert.setText("File loaded:"+myFile);
+      mV.setListeners(this);
+      mV.showMyFolder(mStorageHelper.getMyDir());
+      mV.alert("File loaded:"+MyRegistry.getInstance().get("myFile"));
       return v;
     }
-    
+
     private void adoptCatalog() {
-      addAdapter("csv", spDirCsv);
-      addAdapter("gpx", spDirGpx);
+      addAdapter("csv", mV.getSpinnerDirCsv());
+      addAdapter("gpx", mV.getSpinnerDirGpx());
     }
-    
+
     private void addAdapter(String mode, Spinner spinner) {
       String[] catalog=U.getCatalog(mStorageHelper.getMyDir(), mode);
       if (catalog == null || catalog.length == 0) catalog=new String[]{"no files"};
@@ -119,96 +86,6 @@ public class FileActivity extends SingleFragmentActivity {
       ArrayAdapter<String> sa = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_spinner_item, catalog);
       sa.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);
       spinner.setAdapter(sa); 
-    }
-    
-    private void getAct(RadioGroup rg) {
-      RadioButton radioButton = (RadioButton) rg.findViewById(rg.getCheckedRadioButtonId()); 
-      mAct=(String) radioButton.getText();
-      adjustVisibility(mAct);
-    }
-    
-    private void getMode(RadioGroup rg) {
-      RadioButton radioButton = (RadioButton) rg.findViewById(rg.getCheckedRadioButtonId()); 
-      mMode=(String) radioButton.getText();
-      adjustVisibility(mAct);
-    }
-    
-    private void adjustVisibility(String act) {
-      final String[] hideExportControls=new  String[] {
-              getString(R.string.action_open),
-              getString(R.string.action_load),
-              getString(R.string.action_delete),
-              getString(R.string.action_view_track)
-      };
-      if (U.arrayContains( hideExportControls, act)) {
-        etExportFile.setVisibility(View.GONE);
-        lExport.setVisibility(View.GONE);
-        ckRemoveExported.setVisibility(View.GONE);
-        adjustSpinnerVisibility(mMode);
-      }
-      else if (act.equals(getString(R.string.action_new))) {
-        etExportFile.setVisibility(View.VISIBLE);
-        lExport.setVisibility(View.GONE);
-        ckRemoveExported.setVisibility(View.GONE);
-        adjustSpinnerVisibility("off");
-      }
-      else if (act.equals(getString(R.string.action_export))) {
-        etExportFile.setVisibility(View.VISIBLE);
-        lExport.setVisibility(View.VISIBLE);
-        ckRemoveExported.setVisibility(View.VISIBLE);
-        adjustSpinnerVisibility("off");
-      }
-      else if (act.equals(getString(R.string.action_export_track))) {
-        etExportFile.setVisibility(View.VISIBLE);
-        etExportFile.setText("track" +
-                Trackpoint.getDate().replace(' ','_').replace(':','-'));
-        lExport.setVisibility(View.GONE);
-        ckRemoveExported.setVisibility(View.VISIBLE);
-        adjustSpinnerVisibility("off");
-      }
-      else {
-        Log.e(U.TAG,"FileFragment_adjustVisibility:"+"wrong act="+act);
-        tvAlert.setText("wrong act="+act);
-        return;
-      }
-      
-      if (act.equals(getString(R.string.action_open))) {
-        rgMode.setVisibility(View.GONE);
-        rgMode.check(R.id.rbCsv);
-        mMode="csv";
-        adjustSpinnerVisibility(mMode);        
-      }
-      else if (act.equals(getString(R.string.action_new))) {
-        rgMode.setVisibility(View.GONE);
-        rgMode.check(R.id.rbCsv);
-        mMode="csv";
-      }
-      else if (act.equals(getString(R.string.action_export_track))) {
-        rgMode.setVisibility(View.GONE);
-        rgMode.check(R.id.rbGpx);
-        mMode="gpx";
-      }
-      else {
-        rgMode.setVisibility(View.VISIBLE);
-      }
-    }
-    
-    private void adjustSpinnerVisibility(String mode) {
-      if (mode.equals("gpx")) {
-        spDirGpx.setVisibility(View.VISIBLE);
-        spDirCsv.setVisibility(View.GONE);
-      }
-      else if (mode.equals("csv")) {
-        spDirCsv.setVisibility(View.VISIBLE);
-        spDirGpx.setVisibility(View.GONE);
-      }
-      else if (mode.equals("off")) {
-        spDirCsv.setVisibility(View.GONE);
-        spDirGpx.setVisibility(View.GONE);
-      }
-      else {
-        Log.e(U.TAG, "FileFragment:"+"Wrong mode="+mode);
-      }
     }
 
     @Override
@@ -233,7 +110,7 @@ public class FileActivity extends SingleFragmentActivity {
         String r="";
         try { r=go(); }
         catch (Exception e) {
-          tvAlert.setText(e.getMessage());
+          mV.alert(e.getMessage());
           e.printStackTrace();
           return true;
         }
@@ -250,11 +127,10 @@ public class FileActivity extends SingleFragmentActivity {
     private String go() throws U.DataException, U.FileException, IOException {
       String myFile=MyRegistry.getInstance().get("myFile");
       String targetFile;
-      String resTemplate="";
-      String removed="";
+      int removedCount=-1;
       U.Summary s;
       
-      tvAlert.setText(mAct+" "+mSelectedFile);
+      mV.alert(mAct+" "+mSelectedFile);
       if (U.DEBUG) Log.d(U.TAG, "FileFragment_go:"+"act="+mAct+", file="+mSelectedFile);
       if (mAct.equals(getString(R.string.action_open))) {
         targetFile=assureExists(mSelectedFile,"csv");
@@ -266,31 +142,28 @@ public class FileActivity extends SingleFragmentActivity {
         mStorageHelper.checkPointCount(targetFile, mPointList);
         setRegistryMyFile(targetFile);
         s=mPointList.clearAndLoad();
-        resTemplate="%s %s points (of %s) from %s";
-        tvAlert.setText(String.format(resTemplate, s.act, s.adopted,s.found, s.fileName));
+        mV.showStat(mAct, s);
         return "Ok";
       }
       else if (mAct.equals(getString(R.string.action_new))) {
-        targetFile=etExportFile.getText().toString();
+        targetFile=mV.getExportFile();
         targetFile=assureNotExists(targetFile,mMode);
         s=mStorageHelper.writePoints(mPointList, targetFile, 0, 0, mMode);
         mStorageHelper.trySetMyFile(targetFile);
         setRegistryMyFile(targetFile);
         mPointList.fastClear();
-        resTemplate="New empty file %s is now current";
-        tvAlert.setText(String.format(resTemplate, targetFile));
+        mV.alert(String.format("New empty file %s is now current", targetFile));
         return "Ok";
       }
       else if (mAct.equals(getString(R.string.action_load))) {
         // adb push ~/Desktop/myRoute.gpx /sdcard/Android/data/truewatcher.tower/files
         targetFile=assureExists(mSelectedFile,mMode);
         s=mStorageHelper.readPoints(mPointList, targetFile, mPointList.getSize(), mMode);
-        resTemplate="%s %s points (of %s) from %s to %s";
-        tvAlert.setText(String.format(resTemplate, s.act, s.adopted,s.found, s.fileName, myFile));
         if (s.adopted > 0) { 
           mPointList.save();
           mPointList.setDirty();
         }
+        mV.showStat(mAct, s, -1, myFile);
         return "Ok";
       }
       else if (mAct.equals(getString(R.string.action_view_track))) {
@@ -308,68 +181,59 @@ public class FileActivity extends SingleFragmentActivity {
         }
         else throw new U.RunException("Not to get here");
         if ( ! s.act.equals("loaded")) {
-          tvAlert.setText(s.act);
+          mV.alert(s.act);
           return "fail";
         }
-        resTemplate="%s %s trackpoints (%s segment) from %s";
-        tvAlert.setText(String.format(resTemplate, s.act, s.adopted, s.segments, mSelectedFile));
         JSbridge jsb=Model.getInstance().getJSbridge();
         jsb.addViewTrackLatLonJson(latLonJson);
+        mV.showStat(mAct, s, -1, mSelectedFile);
         return "Ok";
       }
       else if (mAct.equals(getString(R.string.action_export))) {
-        targetFile=etExportFile.getText().toString();
+        targetFile=mV.getExportFile();
         if (targetFile.length() == 0) { throw new U.FileException("Empty file name"); }
         targetFile=U.assureExtension(targetFile,mMode);
-        int from=Integer.valueOf(etExportFrom.getText().toString());
-        int until=-1;
-        String str_until=etExportUntil.getText().toString();
-        if (str_until.equals("*")) until=-1;
-        else until=Integer.valueOf(str_until);
+        int from=mV.getExportFrom();
+        int until=mV.getExportUntil();
         if (U.DEBUG) Log.d(U.TAG, "FileFragment_Export:"+"targetFile="+targetFile+", from="+from+", until="+until);
         s=mStorageHelper.writePoints(mPointList, targetFile, from, until, mMode);
-        if ( ckRemoveExported.isChecked() ) {
-          int count=mPointList.fastDeleteGroup(from, until);
-          if (count > 0) { 
+        if ( mV.getRemoveExported() ) {
+          removedCount=mPointList.fastDeleteGroup(from, until);
+          if (removedCount > 0) {
             mPointList.save();
             mPointList.setDirty();
           }
-          removed=", "+count+" points removed from "+myFile;
         }
-        resTemplate="%s %s points (of %s) to %s%s";
-        tvAlert.setText(String.format(resTemplate,s.act,s.adopted,s.found,s.fileName,removed));
         adoptCatalog();
+        mV.showStat(mAct, s, removedCount, myFile);
         return "Ok";
       }
       else if (mAct.equals(getString(R.string.action_export_track))) {
         if (mModel.getTrackListener().isOn()) throw new U.FileException("Stop recording first");
-        targetFile=etExportFile.getText().toString();
+        targetFile=mV.getExportFile();
         if (targetFile.length() == 0) {
           throw new U.FileException("Empty file name");
         }
         targetFile=U.assureExtension(targetFile,mMode);
         if (U.DEBUG) Log.d(U.TAG, "FileFragment_Export track:"+"targetFile="+targetFile);
         s=mTrackStorage.trackCsv2Gpx(targetFile);
-        if ( ckRemoveExported.isChecked() ) {
+        if ( mV.getRemoveExported() ) {
           mTrackStorage.deleteAll();
-          removed=", all points removed from "+mTrackStorage.getMyFile();
+          removedCount=9999;
         }
-        resTemplate="%s %d points (of %d, %d segments) to %s%s";
-        tvAlert.setText(String.format(resTemplate,
-                s.act,s.adopted,s.found,s.segments,s.fileName,removed));
         adoptCatalog();
+        mV.showStat(mAct, s, removedCount, mTrackStorage.getMyFile());
         return "Ok";
       }
       else if (mAct.equals(getString(R.string.action_delete))) {
         targetFile=assureExists(mSelectedFile,mMode);
         if (targetFile.equals(myFile)) { throw new U.FileException("File "+targetFile+" is open now"); }
         s=U.unlink(mStorageHelper.getMyDir(), targetFile);
-        tvAlert.setText(s.act+" "+s.fileName);
         adoptCatalog();
+        mV.alert(s.act+" "+s.fileName);
         return "Ok";
       }
-      else Log.e(U.TAG, "FileActivity_go:"+"Wrong ACT="+mAct);
-      return "fail";
+      else throw new U.RunException ("FileActivity_go:"+"Wrong ACT="+mAct);
     }
     
     private String assureExists(String f, String ext) throws U.FileException {
@@ -392,7 +256,193 @@ public class FileActivity extends SingleFragmentActivity {
       MyRegistry.getInstance().set("myFile", f);
       MyRegistry.getInstance().saveToShared(getActivity(), "myFile");
     }
-  }
+
+    private class Viewer {
+      private LinearLayout lTop, lExport;
+      private RadioGroup rgAct, rgMode;
+      private TextView tvAlert, tvMyFolder;
+      private EditText etExportFile,etExportFrom,etExportUntil;
+      private Spinner spDirCsv, spDirGpx;
+      private CheckBox ckRemoveExported;
+
+      public Viewer(View v) {
+        spDirCsv = (Spinner) v.findViewById(R.id.spDirCsv);
+        spDirGpx = (Spinner) v.findViewById(R.id.spDirGpx);
+        tvAlert = (TextView) v.findViewById(R.id.tvAlert);
+        tvMyFolder = (TextView) v.findViewById(R.id.tvMyFolder);
+        lTop = (LinearLayout) v.findViewById(R.id.lTop);
+        rgMode = (RadioGroup) v.findViewById(R.id.rgMode);
+        lExport = (LinearLayout) v.findViewById(R.id.lExport);
+        etExportFile = (EditText) v.findViewById(R.id.etExportFile);
+        etExportFrom = (EditText) v.findViewById(R.id.etExportFrom);
+        etExportUntil = (EditText) v.findViewById(R.id.etExportUntil);
+        ckRemoveExported = (CheckBox) v.findViewById(R.id.ckRemoveExported);
+        rgAct = (RadioGroup) v.findViewById(R.id.rgAct);
+
+        U.enlargeFont(getActivity(), new TextView[] {tvAlert} );
+      }
+
+      public void showMyFolder(String s) { tvMyFolder.setText("Data folder: "+s); }
+
+      public Spinner getSpinnerDirCsv() { return spDirCsv; }
+
+      public Spinner getSpinnerDirGpx() { return spDirGpx; }
+
+      public void setListeners(OnItemSelectedListener _this) {
+        spDirGpx.setOnItemSelectedListener((OnItemSelectedListener) _this);
+        spDirCsv.setOnItemSelectedListener((OnItemSelectedListener) _this);
+        rgMode.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+          @Override
+          public void onCheckedChanged(RadioGroup group, int checkedId) { getMode(rgMode); }
+        });
+
+        getAct(rgAct);
+        rgAct.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+          @Override
+          public void onCheckedChanged(RadioGroup group, int checkedId) { getAct(rgAct); }
+        });
+      }
+
+      private void adjustVisibility(String act) {
+        final String[] hideExportControls=new  String[] {
+                getString(R.string.action_open),
+                getString(R.string.action_load),
+                getString(R.string.action_delete),
+                getString(R.string.action_view_track)
+        };
+        if (U.arrayContains( hideExportControls, act)) {
+          etExportFile.setVisibility(View.GONE);
+          lExport.setVisibility(View.GONE);
+          ckRemoveExported.setVisibility(View.GONE);
+          adjustSpinnerVisibility(mMode);
+        }
+        else if (act.equals(getString(R.string.action_new))) {
+          etExportFile.setVisibility(View.VISIBLE);
+          lExport.setVisibility(View.GONE);
+          ckRemoveExported.setVisibility(View.GONE);
+          adjustSpinnerVisibility("off");
+        }
+        else if (act.equals(getString(R.string.action_export))) {
+          etExportFile.setVisibility(View.VISIBLE);
+          lExport.setVisibility(View.VISIBLE);
+          ckRemoveExported.setVisibility(View.VISIBLE);
+          adjustSpinnerVisibility("off");
+        }
+        else if (act.equals(getString(R.string.action_export_track))) {
+          etExportFile.setVisibility(View.VISIBLE);
+          etExportFile.setText("track" +
+                  Trackpoint.getDate().replace(' ','_').replace(':','-'));
+          lExport.setVisibility(View.GONE);
+          ckRemoveExported.setVisibility(View.VISIBLE);
+          adjustSpinnerVisibility("off");
+        }
+        else {
+          Log.e(U.TAG,"FileFragment_adjustVisibility:"+"wrong act="+act);
+          tvAlert.setText("wrong act="+act);
+          return;
+        }
+
+        if (act.equals(getString(R.string.action_open))) {
+          rgMode.setVisibility(View.GONE);
+          rgMode.check(R.id.rbCsv);
+          mMode="csv";
+          adjustSpinnerVisibility(mMode);
+        }
+        else if (act.equals(getString(R.string.action_new))) {
+          rgMode.setVisibility(View.GONE);
+          rgMode.check(R.id.rbCsv);
+          mMode="csv";
+        }
+        else if (act.equals(getString(R.string.action_export_track))) {
+          rgMode.setVisibility(View.GONE);
+          rgMode.check(R.id.rbGpx);
+          mMode="gpx";
+        }
+        else {
+          rgMode.setVisibility(View.VISIBLE);
+        }
+      }
+
+      private void adjustSpinnerVisibility(String mode) {
+        if (mode.equals("gpx")) {
+          spDirGpx.setVisibility(View.VISIBLE);
+          spDirCsv.setVisibility(View.GONE);
+        }
+        else if (mode.equals("csv")) {
+          spDirCsv.setVisibility(View.VISIBLE);
+          spDirGpx.setVisibility(View.GONE);
+        }
+        else if (mode.equals("off")) {
+          spDirCsv.setVisibility(View.GONE);
+          spDirGpx.setVisibility(View.GONE);
+        }
+        else {
+          Log.e(U.TAG, "FileFragment:"+"Wrong mode="+mode);
+        }
+      }
+
+      private void getAct(RadioGroup rg) {
+        RadioButton radioButton = (RadioButton) rg.findViewById(rg.getCheckedRadioButtonId());
+        mAct=(String) radioButton.getText();
+        adjustVisibility(mAct);
+      }
+
+      private void getMode(RadioGroup rg) {
+        RadioButton radioButton = (RadioButton) rg.findViewById(rg.getCheckedRadioButtonId());
+        mMode=(String) radioButton.getText();
+        adjustVisibility(mAct);
+      }
+
+      public void alert(String s) { tvAlert.setText(s); }
+
+      public String getExportFile() { return etExportFile.getText().toString(); }
+
+      public int getExportFrom() { return Integer.valueOf(etExportFrom.getText().toString()); }
+
+      public int getExportUntil() {
+        String str_until = etExportUntil.getText().toString();
+        if (str_until.equals("*")) return -1;
+        else return Integer.valueOf(str_until);
+      }
+
+      public boolean getRemoveExported() { return ckRemoveExported.isChecked(); }
+
+      public void showStat(String act, U.Summary s) {
+        showStat(act, s, -1, "");
+      }
+
+      public void showStat(String act, U.Summary s, int removedCount, String extra) {
+        String resTemplate="";
+        String removed="";
+
+        if (mAct.equals(getString(R.string.action_open))) {
+          resTemplate="%s %s points (of %s) from %s";
+          tvAlert.setText(String.format(resTemplate, s.act, s.adopted,s.found, s.fileName));
+        }
+        else if (mAct.equals(getString(R.string.action_load))) {
+          resTemplate="%s %s points (of %s) from %s to %s";
+          tvAlert.setText(String.format(resTemplate, s.act, s.adopted,s.found, s.fileName, extra));
+        }
+        else if (mAct.equals(getString(R.string.action_view_track))) {
+          resTemplate = "%s %s trackpoints (%s segment) from %s";
+          tvAlert.setText(String.format(resTemplate, s.act, s.adopted, s.segments, extra));
+        }
+        else if (mAct.equals(getString(R.string.action_export))) {
+          if (removedCount > 0) removed=", "+removedCount+" points removed from "+extra;
+          resTemplate = "%s %s points (of %s) to %s%s";
+          tvAlert.setText(String.format(resTemplate, s.act, s.adopted, s.found, s.fileName, removed));
+        }
+        else if (mAct.equals(getString(R.string.action_export_track))) {
+          if (removedCount > 0) removed=", all points removed from "+extra;
+          resTemplate="%s %d points (of %d, %d segments) to %s%s";
+          tvAlert.setText(String.format(resTemplate,
+                  s.act,s.adopted,s.found,s.segments,s.fileName,removed));
+        }
+        else throw new U.RunException ("FileActivity_Viewer_showStat:"+"Wrong ACT="+act);
+      }
+
+    }// end Viewer
+  }// end FileFragment
   
   @Override
   protected Fragment createFragment() { return new FileFragment(); }
