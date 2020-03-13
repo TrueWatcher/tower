@@ -40,9 +40,6 @@ public class MainActivity extends SingleFragmentActivity {
   public static class MainPageFragment extends PermissionAwareFragment
           implements TrackListener.TrackPointListener {
     private MyRegistry mRegistry=MyRegistry.getInstance();
-    private TextView mTwA;
-    private TextView mTwB;    
-    private WebView mWebView;
     private MapViewer mMapViewer;
     private Model mModel = Model.getInstance();
     private CellInformer mCellInformer = mModel.getCellInformer();;
@@ -99,11 +96,9 @@ public class MainActivity extends SingleFragmentActivity {
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
       if (U.DEBUG) Log.i(U.TAG,"mainFragment:onCreateView");
       View v = inflater.inflate(R.layout.fragment_main, container, false);
-      mTwA = (TextView) v.findViewById(R.id.twA);
-      mTwA.setText("");
-      mTwB = (TextView) v.findViewById(R.id.twB);
-      mTwB.setText("");
-      mWebView = (WebView) v.findViewById(R.id.wvWebView);
+      TextView mTwA = (TextView) v.findViewById(R.id.twA);
+      TextView mTwB = (TextView) v.findViewById(R.id.twB);
+      WebView mWebView = (WebView) v.findViewById(R.id.wvWebView);
       mMapViewer =new MapViewer(mTwA, mTwB, mWebView);
       //mMapViewer.redraw(); causes empty webView
       mMapViewer.hideIndicator();
@@ -142,7 +137,7 @@ public class MainActivity extends SingleFragmentActivity {
         int nearestId=-1;
         try { nearestId=findPointNearCursor(); }
         catch (U.DataException e) {
-          mTwA.setText(e.getMessage());
+          mMapViewer.showProgress(e.getMessage());
           return true;
         }
         Intent si=new Intent(this.getActivity(), EditPointActivity.class);
@@ -185,8 +180,7 @@ public class MainActivity extends SingleFragmentActivity {
       if (U.DEBUG) Log.i(U.TAG,"mainFragment:onResume");
       mCellInformer.setFragment(this);
       mGpsInformer.setFragment(this);
-      mTwA.setText("");
-      mTwB.setText("");
+      mMapViewer.clearIndicator();
       if (mModel.getJSbridge().isDirty() > 0) {
         mMapViewer.hideIndicator();
         mMapViewer.redraw();

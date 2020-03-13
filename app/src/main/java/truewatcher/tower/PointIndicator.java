@@ -76,4 +76,14 @@ public class PointIndicator {
     return r;
   }
 
+  public void clearIndicator() {
+    twProgress.setText("");
+    twData.setText("");
+  }
+
+  public void hideIndicator() {
+    hideProgress();
+    hideData();
+  }
+
 }

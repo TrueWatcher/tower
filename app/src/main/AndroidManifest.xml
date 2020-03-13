@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.tower"
-    android:versionCode="54"
-    android:versionName="2.6.4" >
+    android:versionCode="55"
+    android:versionName="2.6.6" >
 <!--
 2.0.9 31 9.11.2019 improved myRegistry, added 2 files to assets
 2.0.10 32 10.11.2019 added BuildConfig check
@@ -27,7 +27,8 @@
 2.6.2  51 08.03.2020 refactoring
 2.6.3  52 09.03.2020 optimized map redrawing
 2.6.4  53 10.03.2020 code improvements
-2.6.4  54 12.03.2020 refactoring view-controller
+2.6.5  54 12.03.2020 refactoring view-controller
+2.6.6  55 13.03.2020 refactoring, new tests
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

@@ -29,6 +29,8 @@ public class Tests1 extends SingleFragmentActivity {
     private String mPath;
     private PointList mPl;
     private StorageHelper mSh;
+    private TrackStorage mTs;
+    private GpxHelper mGh;
     private String mGpxBuffer;
     
     @Override
@@ -281,9 +283,7 @@ public class Tests1 extends SingleFragmentActivity {
               "one unresolved cell gives -1");
     }
 
-
-
-    private String getTestTrack() {
+    private String getTestTrackGpx() {
       String s="";
       s+="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" +
               "<gpx version=\"1.1\" xmlns=\"http://www.topografix.com/GPX/1/1\" creator=\"truewatcher.tower\" >";
@@ -303,6 +303,25 @@ public class Tests1 extends SingleFragmentActivity {
       return s;
     }
 
+    private String getTestTrackCsv() {
+      String header = TextUtils.join(Trackpoint.SEP, Trackpoint.FIELDS);
+      String s="";
+      s+=header+Point.NL;
+      s+="note;;2020-02-17 23:19:58;;;;;onStartCommand;intnt:true,flags:0,id:1"+Point.NL;
+      s+="T;1;2020-02-17 23:21:13;1;2;123.45;8.0;;"+Point.NL;
+      s+="T;;2020-02-17 23:21:13;3;4;123.45;8.0;;"+Point.NL;
+      s+="T;;2020-02-17 23:21:13;5;6;123.45;8.0;;"+Point.NL;
+      s+="note;;2020-02-18 00:22:55;;;;;onStartCommand;intnt:true,flags:0,id:1"+Point.NL;
+      s+="T;2;2020-02-17 23:21:13;7;8;23.45;8;;"+Point.NL;
+      s+="T;;2020-02-17 23:21:13;9;10;23.45;8.0;;"+Point.NL;
+      s+="note;;2020-02-18 00:22:55;;;;;onStartCommand;intnt:true,flags:0,id:1"+Point.NL;
+      s+="note;;2020-02-18 00:22:55;;;;;onStartCommand;intnt:true,flags:0,id:1"+Point.NL;
+      s+="T;;2020-02-17 23:21:13;-1.10;1.11;23.45;8.0;;"+Point.NL;
+      s+="T;;2020-02-17 23:21:13;12;13;23.45;8.0;;"+Point.NL;
+      return s;
+    }
+
+
     private void testTrackUtils() throws TestFailure, IOException {
       th.printlnln("Testing track infrastructure -----");
       th.println("Joining JSON arrays");
@@ -321,20 +340,22 @@ public class Tests1 extends SingleFragmentActivity {
               "found [:".concat(String.valueOf(U.countEntries(add21,"["))));
       th.assertEquals(U.countEntries(add21,"["), U.countEntries(add21,"]"),"Unequal [/] count",
               "found ]:same");
-      GpxHelper gh=new GpxHelper();
+
+      mGh=new GpxHelper();
       String latLonJson = "[]";
       try {
-        th.println("Parsing a test track");
-        latLonJson = gh.track2latLonJson(getTestTrack());
+        th.println("Parsing a test GPX track");
+        latLonJson = mGh.track2latLonJson(getTestTrackGpx());
         th.println(latLonJson);
-        U.Summary res=gh.getResults();
+        U.Summary res=mGh.getResults();
         th.assertEquals(2,res.segments,"Wrong segment count",
                 "found segments:".concat(String.valueOf(res.segments)));
         th.assertEquals(7,res.adopted,"Wrong point count",
                 "found points:".concat(String.valueOf(res.adopted)));
         th.assertEquals(json3, latLonJson,"Wrong trackGpx to latLonJson conversion", "latLonJson OK");
-        th.assertEquals(2*res.adopted-1, U.countEntries(latLonJson,","),"Wrong , count",
-                "found commas:".concat(String.valueOf(res.adopted)));
+        int foundCommas=U.countEntries(latLonJson,",");
+        th.assertEquals(2*res.adopted-1, foundCommas,"Wrong , count",
+                "found commas:".concat(String.valueOf(foundCommas)));
         th.assertEquals(1+res.segments+res.adopted, U.countEntries(latLonJson,"["),"Wrong [ count",
                 "found [:".concat(String.valueOf(U.countEntries(latLonJson,"["))));
         th.assertEquals(U.countEntries(latLonJson,"["),U.countEntries(latLonJson,"]"),"Unequal [/] count",
@@ -343,6 +364,8 @@ public class Tests1 extends SingleFragmentActivity {
       catch (U.DataException e) {
         th.println("Error while converting:"+e.getMessage());
       }
+
+      th.println("Adding same array");
       String added=U.joinJsonArrays(json3,latLonJson);
       th.println(added);
       th.assertEquals(27, U.countEntries(added,","),"Wrong , count",
@@ -351,6 +374,70 @@ public class Tests1 extends SingleFragmentActivity {
               "found [:".concat(String.valueOf(U.countEntries(added,"["))));
       th.assertEquals(U.countEntries(added,"["),U.countEntries(added,"]"),"Unequal [/] count",
               "found ]:same");
+
+      latLonJson = "[]";
+      try {
+        mTs=new TrackStorage();
+        TrackStorage.Track2LatLonJSON converter=mTs.new Track2LatLonJSON();
+        th.println("Parsing a test CSV track");
+        latLonJson = converter.csv2LatLonJSON(getTestTrackCsv());
+        th.println(latLonJson);
+        U.Summary res=converter.getResults();
+        th.assertEquals(2,res.segments,"Wrong segment count",
+                "found segments:".concat(String.valueOf(res.segments)));
+        th.assertEquals(7,res.adopted,"Wrong point count",
+                "found points:".concat(String.valueOf(res.adopted)));
+        th.assertEquals(json3, latLonJson,"Wrong trackGpx to latLonJson conversion", "latLonJson OK");
+      }
+      catch (U.DataException e) {
+        th.println("Error while converting:"+e.getMessage());
+      }
+
+      th.println("Removing last segment");
+      String truncated = "***";
+      try {
+        truncated = new TrackStorage().deleteLastSegmentString(getTestTrackCsv());
+        TrackStorage.Track2LatLonJSON converter=mTs.new Track2LatLonJSON();
+        latLonJson = converter.csv2LatLonJSON(truncated);
+        th.println(latLonJson);
+        U.Summary res=converter.getResults();
+
+        th.assertEquals(1,res.segments,"Wrong segment count",
+              "found segments:".concat(String.valueOf(res.segments)));
+        th.assertEquals(3,res.adopted,"Wrong point count",
+              "found points:".concat(String.valueOf(res.adopted)));
+        int foundCommas=U.countEntries(latLonJson,",");
+        th.assertEquals(2*res.adopted-1, foundCommas,"Wrong , count",
+              "found commas:".concat(String.valueOf(foundCommas)));
+        th.assertEquals(1+res.segments+res.adopted, U.countEntries(latLonJson,"["),"Wrong [ count",
+              "found [:".concat(String.valueOf(U.countEntries(latLonJson,"["))));
+        th.assertEquals(U.countEntries(latLonJson,"["),U.countEntries(latLonJson,"]"),"Unequal [/] count",
+              "found ]:same");
+      }
+      catch (U.DataException e) {
+        th.println("Error while removing last segment:"+e.getMessage());
+      }
+
+      try {
+        th.println("Parsing a test CSV converted to GPX");
+        TrackStorage.TrackToGpx converter = mTs.new TrackToGpx();
+        String converted = converter.csv2gpx("test_track", getTestTrackCsv());
+        th.println("Produced a GPX of "+converted.length()+" bytes");
+        latLonJson = mGh.track2latLonJson(converted);
+        th.println(latLonJson);
+        U.Summary res=converter.getResults();
+        U.Summary res2=mGh.getResults();
+        th.assertEquals(res2.segments,res.segments,"Wrong segment count",
+                "found segments:".concat(String.valueOf(res.segments)));
+        th.assertEquals(res2.adopted,res.adopted,"Wrong point count",
+                "found points:".concat(String.valueOf(res.adopted)));
+        th.assertEquals(json3, latLonJson,"Wrong trackGpx to latLonJson conversion", "latLonJson OK");
+      }
+      catch (U.DataException e) {
+        th.println("Error while converting:"+e.getMessage());
+      }
+
+
     }
     
     private void testCsvExport() throws TestFailure {

@@ -2,7 +2,6 @@ package truewatcher.tower;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -66,9 +65,9 @@ public class AddPointActivity  extends SingleFragmentActivity {
       Point toBeRemoved;
       View v = inflater.inflate(R.layout.fragment_add_point, container, false);
       mV=new Viewer(v);
-      mV.showCenter();
-      mV.showNumber();
-      mV.showEdge();
+      mV.showCenter(mJSbridge.importCenterLatLon());
+      mV.showNumber(mPointList.getNextS());
+      mV.showEdge(mPointList);
       mGpsRenderer=new PointRenderer(mV.getTvGpsStatus(), mV.getTvGpsData());
       mCellRenderer=new PointRenderer(mV.getTvCellStatus(), mV.getTvCellData());
       mV.setListeners(mGpsRenderer,mCellRenderer);
@@ -119,7 +118,7 @@ public class AddPointActivity  extends SingleFragmentActivity {
           outcome="Cannot add anything: "+e.getMessage();
         }
         mV.alert(outcome);
-        mV.showNumber();
+        mV.showNumber(mPointList.getNextS());
         mV.setComment("");
         mV.uncheckBoxes();
         mV.removeFocus();
@@ -278,23 +277,23 @@ public class AddPointActivity  extends SingleFragmentActivity {
         });
       }
 
-      public void showCenter() {
-        tvCenter.setText(mJSbridge.importCenterLatLon());
+      public void showCenter(String s) {
+        tvCenter.setText(s);
       }
 
-      public void showNumber() {
-        tvNumber.setText(mPointList.getNextS());
+      public void showNumber(String s) {
+        tvNumber.setText(s);
       }
 
       public void setComment(String s) { etComment.setText(s); }
 
       public String getComment() { return etComment.getText().toString(); }
 
-      public void showEdge() {
+      public void showEdge(PointList pointList) {
         String rp="";
         Point toBeRemoved;
         try {
-          toBeRemoved = mPointList.getEdge();
+          toBeRemoved = pointList.getEdge();
           if (toBeRemoved != null) {
             rp = "List is full, ready to remove " + String.valueOf(toBeRemoved.getId())
                     + "." + toBeRemoved.getComment();

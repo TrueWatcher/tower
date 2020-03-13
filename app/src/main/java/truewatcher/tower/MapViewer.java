@@ -13,8 +13,8 @@ public class MapViewer extends PointIndicator implements PointReceiver {
   private String mPageURI;
   private JSbridge mJSbridge = Model.getInstance().getJSbridge();
   
-  public MapViewer(TextView twP, TextView twD, WebView wvW) {
-    super(twP, twD);
+  public MapViewer(TextView tvP, TextView tvD, WebView wvW) {
+    super(tvP, tvD);
     wvWebView=wvW;
     wvWebView.setWebViewClient(new WebViewClient() {
       @Override
@@ -32,11 +32,6 @@ public class MapViewer extends PointIndicator implements PointReceiver {
   @Override
   public void onPointavailable(Point p) { 
     redraw();
-  }
-
-  public void hideIndicator() {
-    hideProgress();
-    hideData();
   }
 
   public void redraw() {

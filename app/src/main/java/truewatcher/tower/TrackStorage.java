@@ -238,12 +238,21 @@ public class TrackStorage {
   }
 
   public void deleteLastSegment() throws U.FileException, U.DataException, IOException {
-    int lastSegmentMark = -1, i = 0;
-    String[] fields;
     if (null == U.fileExists(mTargetPath, mCurrentTrackFile, "csv")) {
       throw new U.FileException("Missing my good file");
     }
     String buf = U.fileGetContents(mTargetPath, mCurrentTrackFile);
+
+    buf = deleteLastSegmentString(buf);
+
+    if (buf == null) return;// no segments found - nothing to write
+    U.filePutContents(mTargetPath, mCurrentTrackFile, buf, false);
+    mShouldStartNewSegment = true;
+  }
+
+  public String deleteLastSegmentString(String buf) throws U.DataException {
+    int lastSegmentMark = -1, i = 0;
+    String[] fields;
     String[] lines = splitCsv(buf);
     int l = lines.length;
     int typeColumn = Trackpoint.FIELDS.indexOf("type");
@@ -260,11 +269,10 @@ public class TrackStorage {
         break;
       }
     }
-    if (lastSegmentMark <= 0) return;// no segments found - nothing to write
+    if (lastSegmentMark <= 0) return null;
     buf = TextUtils.join(Point.NL, lines);
     buf = buf.trim().concat(Point.NL);
-    U.filePutContents(mTargetPath, mCurrentTrackFile, buf, false);
-    mShouldStartNewSegment = true;
+    return buf;
   }
 
   public void deleteAll() {
@@ -351,8 +359,9 @@ public class TrackStorage {
     return (new TrackToGpx()).trackCsv2Gpx(targetFileExt);
   }
 
-  private class TrackToGpx {
+  public class TrackToGpx {
     public int mCount = 0, mRecords = 0, mSegments = 1;
+    private String mTargetFileExt="test_file.gpx";
     private String mTrkptTemplate, mGpxFramingHead, mGpxFramingTail, mTrkHeader, mTrkTail, mTrkChangeSegment;
 
     private void init() {
@@ -372,13 +381,18 @@ public class TrackStorage {
       String buf = U.fileGetContents(mTargetPath, mCurrentTrackFile);
       buf = csv2gpx(targetFileExt, buf);
       if (mCount == 0) { return new U.Summary("failed to export", mRecords, mCount, targetFileExt); }
-      targetFileExt = U.assureExtension(targetFileExt, "gpx");
-      U.filePutContents(mTargetPath, targetFileExt, buf, false);
+      mTargetFileExt = U.assureExtension(targetFileExt, "gpx");
+      U.filePutContents(mTargetPath, mTargetFileExt, buf, false);
       //String aAct, int aFound, int aAdopted, String file,int aSegments
-      return new U.Summary("exported", mRecords, mCount, targetFileExt, mSegments);
+      return getResults();
+    }
+
+    public U.Summary getResults() {
+      return new U.Summary("exported", mRecords, mCount, mTargetFileExt, mSegments);
     }
 
     public String csv2gpx(String targetFileExt, String buf) throws U.DataException {
+      mTargetFileExt = targetFileExt;
       StringBuilder outBuf = new StringBuilder();
       Map<String, String> csv;
       init();
