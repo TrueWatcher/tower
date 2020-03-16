@@ -36,7 +36,7 @@ public abstract class U {
 
   public static final String TAG = "tower";
 
-  public static boolean DEBUG = true;//BuildConfig.DEBUG;
+  public static boolean DEBUG = BuildConfig.DEBUG;//true;//
 
   public static void debugOn() {
     U.DEBUG = true;

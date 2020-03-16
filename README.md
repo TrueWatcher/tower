@@ -2,7 +2,7 @@
 # <img src="app/src/main/assets/icons_readme/ic_tower1.svg" /> Tower: a navigation tool
 
 _Tower_ is a navigation program for OS Android
-for finding user location (by phone cell or GPS), viewing online maps, creating and storing waypoints, with minimal permissions and no background activity
+for finding user location (by phone cell or GPS), viewing online maps, creating and storing waypoints and tracks, with minimal permissions and no background activity
 
 ## Features:
 
@@ -15,8 +15,9 @@ for finding user location (by phone cell or GPS), viewing online maps, creating 
 * all waypoints are stored on a memory card
 * waypoint lists may be stored in any number of files (that is, be grouped by locality or in any other way)
 * waypoint lists may be exported/imported in the GPX format, compatible with many navigators and software
-* finds location only by explicit user's command, doesn't perform any background activities, so is very mild on the battery
-* NOT implemented: map offline caching, track recording, routing, photo and video point attachments, serving cold beer :)
+* finds location only by explicit user's command, so is very mild on the battery
+* since v2.6 there are options of writing tracks (by means of a foreground service) and exporting them in the GPX format; GPX tracks from other devices may be viewed
+* NOT implemented: map offline caching, routing, photo and video point attachments, serving cold beer :)
 * for pure open distributions, that lack API keys and access to some services, there are options to enter user's own keys
 
 ## How to use it and where to get it

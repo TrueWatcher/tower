@@ -72,21 +72,10 @@ public class JSbridge {
   }
   
   @android.webkit.JavascriptInterface
-  public String getNamelessMarker() { 
-    String empty=(new JSONArray()).toString();
-    JSONArray jo;
+  public String getNamelessMarker() {
     Point loc=Model.getInstance().lastPosition;
-    if (loc == null || ! loc.hasCoords()) return empty;
-    String[] ar={loc.getType(), loc.lat, loc.lon};
-    try {
-      jo=new JSONArray(ar);
-      return jo.toString();
-    }
-    catch (JSONException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }  
-    return empty;
+    if (loc == null || ! loc.hasCoords()) return (new JSONArray()).toString();
+    return loc.makeJsonPresentation(0).toString();
   }
 
   @android.webkit.JavascriptInterface

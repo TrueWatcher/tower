@@ -40,7 +40,7 @@ public class ForegroundService extends Service {
     PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
     NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-            .setContentTitle("TrackWriter")
+            .setContentTitle("Tower")
             .setContentText(text)
             .setSmallIcon(R.mipmap.ic_launcher3)
             .setContentIntent(contentIntent)
