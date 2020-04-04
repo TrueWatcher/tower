@@ -58,7 +58,7 @@
     <string name="gpsMinDistance">Minimal track leg, m</string>
     <string name="gpsMinDelayS">Minimal GPS fix interval, s</string>
     <string name="enableTrack">Display current track</string>
-    <string name="shouldCenterMapOnTrack">Always center map on latest trackpoint</string>
+    <string name="shouldCenterMapOnTrack">Center map on a new trackpoint</string>
     <string name="useTowerFolder">Use Tower folder</string>
     <string name="workingFileFull">Working file:</string>
     <string name="action_start">Start</string>

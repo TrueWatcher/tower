@@ -10,16 +10,16 @@
       android:summary="" />
 
   <ListPreference
-      app:key="cellResolver"
-      app:title="@string/chooseCellResolver"
-      app:entries="@array/cellResolverArray"
-      app:entryValues="@array/cellResolverValues" />
-
-  <ListPreference
       app:key="mapProvider"
       app:title="@string/chooseMapProvider"
       app:entries="@array/mapProviderArray"
       app:entryValues="@array/mapProviderValues" />
+
+  <ListPreference
+      app:key="cellResolver"
+      app:title="@string/chooseCellResolver"
+      app:entries="@array/cellResolverArray"
+      app:entryValues="@array/cellResolverValues" />
 
   <EditTextPreference
       app:key="mapZoom"

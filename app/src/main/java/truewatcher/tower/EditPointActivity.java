@@ -67,8 +67,9 @@ public class EditPointActivity extends SingleFragmentActivity {
 
     public static final String MAP="map";
     public static final String LIST="list";
-    private Model mModel;
-    private PointList mPointList;
+    private Model mModel=Model.getInstance();;
+    private PointList mPointList=mModel.getPointList();;
+    private JSbridge mJSbribge=mModel.getJSbridge();
     private android.support.v4.app.Fragment mFragment;
     private EditPointFragment.Editor mEd;
     private EditPointFragment.Viewer mV;
@@ -79,8 +80,6 @@ public class EditPointActivity extends SingleFragmentActivity {
       super.onCreate(savedInstanceState);
       setHasOptionsMenu(true);
       mFragment=this;
-      mModel=Model.getInstance();
-      mPointList=mModel.getPointList();
       mEd=new Editor();
     }
       
@@ -112,13 +111,13 @@ public class EditPointActivity extends SingleFragmentActivity {
           mV.alert("No coordinates");
           return true;
         }
-        mModel.getJSbridge().consumeLocation(mPoint);
+        mJSbribge.consumeLocation(mPoint);
         Point p2=(Point) mPoint.clone();
         mPointList.setProximityOrigin(p2);
         return true;
       }
       if (id == R.id.action_map) {
-        mModel.getJSbridge().consumeLocation(mPoint);
+        mJSbribge.consumeLocation(mPoint);
         exit(ListActivity.ListPointsFragment.FLUSH);
         return true;
       }
@@ -140,7 +139,7 @@ public class EditPointActivity extends SingleFragmentActivity {
         return true;
       }
       if (id == R.id.action_coords) {
-        mEd.findCoords();
+        mEd.findCellCoords();
         return true;
       }
       return super.onOptionsItemSelected(item);
@@ -188,7 +187,7 @@ public class EditPointActivity extends SingleFragmentActivity {
     public void onConfirmationPositive(int id) {
       if (U.DEBUG) Log.d(U.TAG, "EditPointFragment:"+"ConfirmationPositive:"+id);
       if (id == R.id.action_delete) {
-        if (mEd.die()) exit("Ok");
+        if (mEd.tryDeleteCurrentPoint()) exit("Ok");
       }
     }
     
@@ -208,90 +207,78 @@ public class EditPointActivity extends SingleFragmentActivity {
       return myData;
     }
 
+    @Override
+    public void onPause() {
+      super.onPause();
+      if (mPointList.isDirty()) {
+        String res=mPointList.save();
+        if (U.DEBUG) Log.d(U.TAG,"EditPointFragment_trySavePoints:"+res);
+      }
+    }
+
     private class Editor implements PointReceiver {
-      private Point p;
+      private Point mP;
       
       public void adoptPoint(int iid) {
-        p = mPointList.getById(iid);
-        if (p == null) {
+        mP = mPointList.getById(iid);
+        if (mP == null) {
           mV.alert("No point with id="+iid);
           return;
         }
-        mV.fillForm(p);
+        mV.fillForm(mP);
       }
       
-      public Point getPoint() { return p; }
-      
-      public void _fillForm(Point p) {
-        mV.fillForm(p);
-      }
+      public Point getPoint() { return mP; }
       
       public void toggleProtect() {
-        if (p.isProtected()) p.unprotect();
-        else p.protect();
-        mPointList.update(p);
-        mV.fillForm(p);
+        if (mP.isProtected()) mP.unprotect();
+        else mP.protect();
+        mPointList.update(mP);
+        mV.fillForm(mP);
       }
       
-      public boolean die() {
-        if (p.isProtected()) {
+      public boolean tryDeleteCurrentPoint() {
+        if (mP.isProtected()) {
           mV.alert("Cannot delete a protected point");
           return false;
         }
-        mPointList.moveUnprotectedToTrash(p.getId());
-        mModel.getJSbridge().onPoinlistmodified();
+        mPointList.moveUnprotectedToTrash(mP.getId());
+        mJSbribge.onPoinlistmodified();
         return true;
       }
-      
-      public void findCoords() {
-        //tvAlert.setText("Sorry, not implemented in the free version");
-        if ( ! p.getType().equals("cell") || p.cellData == null || p.cellData.length() < 10) {
+
+      public void updateComment(String s) {
+        mP.setComment(s);
+        mPointList.update(mP);
+        mJSbribge.onPoinlistmodified();
+        mV.fillForm(mP);
+      }
+
+      public void updateNote() {
+        mP.setNote(mV.getNote());
+        mPointList.update(mP);
+        mV.fillForm(mP);
+      }
+
+      public void findCellCoords() {
+        if ( ! mP.getType().equals("cell") || mP.cellData == null || mP.cellData.length() < 10) {
           mV.alert("This point is not a cell");
           return;
         }
-        ResolverWrapper rw=new ResolverWrapper(mV.getTvAlert(), mV.getTvNull());
+        PointIndicator pi=new PointIndicator(mV.getTvAlert(), mV.getTvNull());
         CellInformer ci=new CellInformer();
         //ci.setFragment(mFragment);
-        ci.onlyResolve(rw, mEd, mEd.getPoint());
+        ci.onlyResolve(pi, this, mP);
       }
-      
-      public void updateComment(String s) {
-        p.setComment(s);
-        mPointList.update(p);
-        mModel.getJSbridge().onPoinlistmodified();
-        mV.fillForm(p);
-      }
-      
-      public void updateNote() {
-        p.setNote(mV.getNote());
-        mPointList.update(p);
-        mV.fillForm(p);
-      }
-      
+
       @Override
-      public void onPointavailable(Point p) { 
-      // callback after resolving cell to coords
+      public void onPointavailable(Point p) {
+        // callback after resolving cell to coords
         mV.adjustVisibility();
         mPointList.update(p);
-        mModel.getJSbridge().onPoinlistmodified();
+        mJSbribge.onPoinlistmodified();
         mV.fillForm(p);
       }
-      
-      private String ne(String s) {
-        if (s == null || s.isEmpty()) return "";
-        return s;
-      }
-      
-      private String ne(int i) {
-        if (i <= 0) return "";
-        return String.valueOf(i);
-      }
-    }
-    
-    private class ResolverWrapper extends PointIndicator {
-      public ResolverWrapper(TextView twP, TextView twD) {
-        super(twP, twD);
-      }      
     }
 
     private class Viewer {

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.tower"
-    android:versionCode="58"
-    android:versionName="2.6.10" >
+    android:versionCode="59"
+    android:versionName="2.6.11" >
 <!--
 2.0.9 31 9.11.2019 improved myRegistry, added 2 files to assets
 2.0.10 32 10.11.2019 added BuildConfig check
@@ -32,6 +32,7 @@
 2.6.7  56 16.03.2020 updated docs, minor improvements
 2.6.8  57 17.03.2020 moved rtf doc to the project root folder
 2.6.10 58 23.03.2020 added fastlane metadata
+2.6.11 59 04.04.2020 improved EditPointActivity
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

@@ -112,7 +112,6 @@ public class ListActivity extends SingleFragmentActivity {
         if (U.DEBUG) Log.d(U.TAG,"ListActivity:"+"Got result="+result);
         if (result.equals(ListActivity.ListPointsFragment.FLUSH)) {
           // quit LIST -- go to MAP
-          trySavePoints();
           mFragment.getActivity().finish();
           return;
         }
