@@ -305,6 +305,7 @@ public class EditPointActivity extends SingleFragmentActivity {
         bNoteOk=(ImageButton) v.findViewById(R.id.bNoteOk);
 
         U.enlargeFont(getActivity(), new TextView[] {tvId, tvType, tvComment} );
+        tvAlert.setTextColor(U.MSG_COLOR);
       }
 
       public void setListeners(final Editor ed) {

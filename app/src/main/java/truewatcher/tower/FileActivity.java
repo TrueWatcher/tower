@@ -280,6 +280,7 @@ public class FileActivity extends SingleFragmentActivity {
         rgAct = (RadioGroup) v.findViewById(R.id.rgAct);
 
         U.enlargeFont(getActivity(), new TextView[] {tvAlert} );
+        tvAlert.setTextColor(U.MSG_COLOR);
       }
 
       public void showMyFolder(String s) { tvMyFolder.setText("Data folder: "+s); }

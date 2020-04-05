@@ -16,7 +16,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
-
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -94,7 +93,8 @@ public class ListActivity extends SingleFragmentActivity {
         }
       });
 
-      U.enlargeFont(getActivity(), new TextView[] {tvAlert} );
+      //U.enlargeFont(getActivity(), new TextView[] {tvAlert} );
+      tvAlert.setTextColor(U.MSG_COLOR);
       return v;
     }
     

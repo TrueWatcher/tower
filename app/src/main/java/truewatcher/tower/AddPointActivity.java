@@ -3,7 +3,6 @@ package truewatcher.tower;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -243,15 +242,8 @@ public class AddPointActivity  extends SingleFragmentActivity {
         etLat = (EditText) v.findViewById(R.id.etLat);
         etLon = (EditText) v.findViewById(R.id.etLon);
 
-        adjustFont();
-      }
-
-      private void adjustFont() {
-        float ts = etComment.getTextSize();
-        TextView[] tv = {tvNumber};
-        for (int i = 0; i < tv.length; i += 1) {
-          tv[i].setTextSize(TypedValue.COMPLEX_UNIT_PX, ts);
-        }
+        U.enlargeFont(getActivity(), new TextView[] {tvNumber} );
+        tvAlert.setTextColor(U.MSG_COLOR);
       }
 
       public TextView getTvGpsStatus() { return tvGpsStatus; }

@@ -10,6 +10,9 @@ import android.support.v7.preference.ListPreference;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -56,7 +59,6 @@ public class PreferencesActivity extends AppCompatActivity {
       //if (U.DEBUG) Log.i(U.TAG,"at PreferencesFragment.onCreatePreferences");
       setHasOptionsMenu(true);
       setPreferencesFromResource(R.xml.prefs, rootKey);
-      pAlert=getPreferenceManager().findPreference("pAlert");
       adjustPrefsScreen();
     }
 
@@ -76,23 +78,10 @@ public class PreferencesActivity extends AppCompatActivity {
     
     private void adjustPrefsScreen() {
       String key;
+      pAlert=getPreferenceManager().findPreference("pAlert");
 
-      key="cellResolver";
-      ListPreference lpCellResolver = (ListPreference) findPreference(key);;
-      if (lpCellResolver.findIndexOfValue(mRegistry.get(key)) < 0) {
-        if (U.DEBUG) Log.d(U.TAG,"PreferencesFragment:"+"Unknown lpCellResolver value:"+mRegistry.get(key));
-      }
-      else { lpCellResolver.setValue(mRegistry.get(key)); }
-      lpCellResolver.setSummary(mRegistry.get(key));
-
-      key="mapProvider";
-      ListPreference lpMapProvider = (ListPreference) findPreference(key);
-      if (lpMapProvider.findIndexOfValue(mRegistry.get(key)) < 0) {
-        if (U.DEBUG) Log.d(U.TAG,"PreferencesFragment"+"Unknown lpMapProvider value:"+mRegistry.get(key));
-      }
-      else { lpMapProvider.setValue(mRegistry.get(key)); }
-      lpMapProvider.setSummary(mRegistry.get(key));
-
+      prepareListPreference("mapProvider");
+      prepareListPreference("cellResolver");
       prepareEditTextPref("mapZoom");
       prepareEditTextPref("maxPoints");
       prepareSwitchPref("useTrash");
@@ -109,7 +98,17 @@ public class PreferencesActivity extends AppCompatActivity {
         screen.removePreference(findPreference(key));
       }
 
-      //if (mRegistry.noAnyKeys()) { pAlert.setSummary(getString(R.string.keyless_warning)); }
+      //if (mRegistry.noAnyKeys()) { alert(getString(R.string.keyless_warning)); }
+    }
+
+    private ListPreference prepareListPreference(String key) {
+      ListPreference lp = (ListPreference) findPreference(key);
+      if (lp.findIndexOfValue(mRegistry.get(key)) < 0) {
+        if (U.DEBUG) Log.d(U.TAG,"PreferencesFragment"+"Unknown "+key+" value:"+mRegistry.get(key));
+      }
+      else { lp.setValue(mRegistry.get(key)); }
+      lp.setSummary(mRegistry.get(key));
+      return lp;
     }
 
     private EditTextPreference prepareEditTextPref(String key) {
@@ -132,9 +131,9 @@ public class PreferencesActivity extends AppCompatActivity {
       }
       Map<String, ?> mp = prefs.getAll();
       String checkedApi = rollbackIfNoKey(key, String.valueOf(mp.get(key)) );
-      if (checkedApi.isEmpty()) { pAlert.setSummary(""); }
+      if (checkedApi.isEmpty()) { alert(""); }
       else { // change was denied -- no api key
-        pAlert.setSummary(checkedApi);
+        alert(checkedApi);
         return;
       }
       if (key.equals("maxPoints")) {
@@ -147,7 +146,7 @@ public class PreferencesActivity extends AppCompatActivity {
         }
       }
       else {
-        // make sure there're no letters in numbers
+        // make sure there are no letters in numbers
         String filtered=U.enforceInt(MyRegistry.INT_KEYS, key, String.valueOf(mp.get(key)));
         mRegistry.set(key, filtered);
       }
@@ -236,6 +235,12 @@ public class PreferencesActivity extends AppCompatActivity {
               .registerOnSharedPreferenceChangeListener(this);
     }
 
+    private void alert(String s) {
+      Spannable ss = new SpannableString(s);
+      ss.setSpan(new ForegroundColorSpan(U.MSG_COLOR), 0, ss.length(), 0);
+      pAlert.setSummary(ss);
+    }
+
     private void syncCurrentTrack(boolean isEnabled) {
       String buf="[[]]";
       if (isEnabled) {
@@ -243,7 +248,7 @@ public class PreferencesActivity extends AppCompatActivity {
           buf = Model.getInstance().getTrackStorage().trackCsv2LatLonString();
         }
         catch (Exception e) {
-          pAlert.setSummary("Error:" + e.getMessage());
+          alert("Error:" + e.getMessage());
         }
       }
       Model.getInstance().getJSbridge().replaceCurrentTrackLatLonJson(buf);

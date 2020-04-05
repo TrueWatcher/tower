@@ -289,6 +289,8 @@ public class TrackActivity extends SingleFragmentActivity {
         bOnSegm = (Button) v.findViewById(R.id.bOnSegm);
         bOff = (Button) v.findViewById(R.id.bOff);
         tlTable1 = (TableLayout) v.findViewById(R.id.tlTable1);
+
+        tvState.setTextColor(U.MSG_COLOR);
       }
 
       @RequiresApi(api = Build.VERSION_CODES.M)

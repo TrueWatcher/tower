@@ -3,6 +3,7 @@ package truewatcher.tower;
 import android.content.Context;
 import java.text.SimpleDateFormat;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.ArrayMap;
@@ -43,6 +44,8 @@ public abstract class U {
   }
 
   public static final String H = "https://";
+
+  public static int MSG_COLOR = Color.parseColor("#0000ff");
 
   static class RunException extends RuntimeException {
     public RunException(String s) {
