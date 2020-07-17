@@ -4,6 +4,10 @@
 _Tower_ is a navigation program for OS Android
 for finding user location (by phone cell or GPS), viewing online maps, creating and storing waypoints and tracks, with minimal permissions and no background activity
 
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+     alt="Get it on F-Droid"
+     height="80">](https://f-droid.org/packages/truewatcher.tower/)
+
 ## Features:
 
 * no Google Services dependencies, only necessary permissions (fine and coarse location, internet)
