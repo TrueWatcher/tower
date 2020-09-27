@@ -85,8 +85,19 @@ public class TrackStorage {
 
   public U.Summary2 statStored() throws U.FileException, IOException, U.DataException {
     U.Summary2 res=visitStored(new Counter());
+    if (res.adopted == 0) { // the track is empty
+      return res;
+    }
     U.Summary2 mil=visitStored(new Mileage());
-    res.segMap=res.segMap+Point.NL+mil.segMap;
+    // repack segMaps
+    String[] counts = TextUtils.split(res.segMap," ");
+    String[] mils = TextUtils.split(mil.segMap," ");
+    int i=0;
+    String segMap="";
+    for (; i < counts.length-1; i+=1) {
+      segMap += String.format("#%d  %s  %s\n",i+1,counts[i],mils[i]);
+    }
+    res.segMap=segMap;
     return res;
   }
 
@@ -367,7 +378,7 @@ public class TrackStorage {
     private void init() {
       mTrkptTemplate = "<trkpt lat=\"%s\" lon=\"%s\" >%s<time>%s</time>%s</trkpt>";
       mGpxFramingHead = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" +
-              "<gpx version=\"1.1\" xmlns=\"http://www.topografix.com/GPX/1/1\" creator=\"truewatcher.trackwriter\" >";
+              "<gpx version=\"1.1\" xmlns=\"http://www.topografix.com/GPX/1/1\" creator=\"truewatcher.tower\" >";
       mTrkHeader = "<trk><name>%s</name><trkseg>";
       mTrkTail = "</trkseg></trk>";
       mTrkChangeSegment = "</trkseg>\n<trkseg>";

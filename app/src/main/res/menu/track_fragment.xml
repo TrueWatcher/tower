@@ -12,20 +12,17 @@
       android:icon="@drawable/ic_chevron_left_white_24dp" />
 
   <item
-      android:id="@+id/action_delete_last_segment"
+      android:id="@+id/action_fit_to_map"
       android:orderInCategory="2"
+      app:showAsAction="never"
+      android:title="@string/action_fit_to_map" />
+
+  <item
+      android:id="@+id/action_delete_last_segment"
+      android:orderInCategory="3"
       app:showAsAction="never"
       android:title="@string/action_delete_last_segment"
       />
-
-<!--
-  <item
-      android:id="@+id/action_export_gpx"
-      android:orderInCategory="3"
-      app:showAsAction="never"
-      android:title="@string/action_export_gpx"
-      />
--->
 
   <item
       android:id="@+id/action_settings"

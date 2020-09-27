@@ -64,6 +64,7 @@
     <string name="action_start">Start</string>
     <string name="action_start_new_segment">Start \nnew segment</string>
     <string name="action_stop">Stop</string>
+    <string name="action_fit_to_map">Fit to map</string>
     <string name="action_delete_last_segment">Delete last segment</string>
     <string name="action_export_gpx">Export as GPX</string>
     <string name="action_lengths">Count lengths</string>

@@ -13,6 +13,7 @@ public class JSbridge {
   private int mDirty=3;// load map on first use
   private String mViewTrackLatLonJson="[]";
   private String mCurrentTrackLatLonJson="[]";
+  private String mIsBounded="";
   
   @android.webkit.JavascriptInterface
   public String importLonLat() { return mCenterLon+","+mCenterLat; }
@@ -118,6 +119,12 @@ public class JSbridge {
 
   @android.webkit.JavascriptInterface
   public boolean importFollowCurrentTrack() { return mRegistry.getBool("shouldCenterMapOnTrack"); }
+
+  @android.webkit.JavascriptInterface
+  public String getIsBounded() { return mIsBounded; }
+
+  @android.webkit.JavascriptInterface
+  public void setBounded(String s) { mIsBounded=s; }
   
   public void setPointList(PointList pl) { mPointList=pl; }
 

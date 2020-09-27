@@ -460,7 +460,7 @@ public abstract class U {
     int l1=a1.length();
     int l2=a2.length();
     if ( ! (a1.startsWith("[") && a1.endsWith("]")) ) throw new U.RunException("Wrong A1="+a1);
-    if ( ! (a2.startsWith("[") && a2.endsWith("]")) ) throw new U.RunException("Wrong A2="+a1);
+    if ( ! (a2.startsWith("[") && a2.endsWith("]")) ) throw new U.RunException("Wrong A2="+a2);
     if (a1.equals(empty)) return a2;
     if (a2.equals(empty)) return a1;
     String res=a1.substring(0, l1-1).concat(",").concat(a2.substring(1,l2));

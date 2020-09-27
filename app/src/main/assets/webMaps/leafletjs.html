@@ -23,42 +23,21 @@
   </div>
   <div id="attributionDiv" style="margin: 0; padding: 0.5em; position: fixed; bottom: 0%; left: 0%; z-index:990; color: #888; text-align: left; font-family: Arial, Helvetica, sans-serif; font-size: 70%">Something is wrong if you see this
   </div>
-<script>
-
-  var ind=new wm.utils.Ind(document.getElementById("ind"));
-  var scrInfo=wm.utils.getScreenParams();
-  //alert(scrInfo.width+"/"+scrInfo.height);
-  var mapDiv=document.getElementById("mapDiv");
-  var w=""+Math.min(scrInfo.width,1200);// no exact limit known
-  var h=""+Math.min(scrInfo.height-2*scrInfo.emPx, 800);
-  //alert(w+"/"+h);
-  mapDiv.style.width=w+"px";
-  mapDiv.style.height=h+"px";  
   
-  var ll="55.79038894644,37.7759262544";
-  var zoom=16;
-  var type="gps";
-  var mapProvider="not set";
-  if (typeof JSbridge == "undefined") { 
-    ind.say("mock coords");
-    JSbridge=new wm.utils.MockJSbridge("opentopo map",ind);//"google hyb"//"osm map"//"google sat"
-    JSbridge.moveLatLon();
-  }
-
-  var map;
-  var currentTrack=false;
-  var trackThicknessPx=2;
+<script>
+  'use strict';
+  var map,
+      currentTrack=false,
+      trackThicknessPx=2,
+      scrInfo=wm.utils.getViewportParams(),
+      ind=new wm.utils.Ind(document.getElementById("ind"));
 
   function initmap() {
-    ll=JSbridge.importLatLon();
-    zoom=JSbridge.importZoom();
-    mapProvider=JSbridge.importMapType();
-    ind.say(ll+",z="+zoom);
-    var lls=ll.split(",");
-    var lat=lls[0];
-    var lon=lls[1];
+    var ll=JSbridge.importLatLon();
+    var zoom=JSbridge.importZoom();
+    var mapProvider=JSbridge.importMapType();
     map = new L.Map('mapDiv');
-    map.setView(new L.LatLng(lat,lon),zoom);
+    setViewArea(map, ll, zoom);
     addViewTrack(map, getColor("mark"));
     replaceCurrentTrack(map, getColor("gps"));
     drawNamelessMarker(map);
@@ -69,6 +48,38 @@
       JSbridge.exportCenterLatLon(""+map.getCenter().lat, ""+map.getCenter().lng);
       JSbridge.saveZoom(""+map.getZoom());
     } );
+  }
+  
+  function setViewArea(oMap,ll,zoom) {
+    if ( JSbridge.getIsBounded() ) {
+      var limits = (new wm.utils.LimitFinder()).go(JSbridge);
+      if (limits) {
+        applyBounds(limits, oMap);
+        ind.say("drawn by bounds, "+JSbridge.importLatLon()+", z="+JSbridge.importZoom());
+      }
+      else ind.fail("No objects to adjust map to");
+    }
+    else {
+      applyLatLonZoom(ll, zoom);
+      ind.say(ll+",z="+zoom);
+    }
+  }
+  
+  function applyBounds(limits, oMap) {
+    if ( ! (limits instanceof wm.utils.Limits)) throw new Error ("Wrong LIMITS");
+    var bounds=L.latLngBounds( [ limits.minLat,limits.minLon ], [ limits.maxLat,limits.maxLon ] );
+    oMap.fitBounds(bounds);
+    //alert(""+oMap.getCenter().lat);
+    JSbridge.exportCenterLatLon(""+oMap.getCenter().lat, ""+oMap.getCenter().lng);
+    JSbridge.saveZoom(""+oMap.getZoom());
+    JSbridge.setBounded("");
+  }
+  
+  function applyLatLonZoom(latLonStr, z) {
+    var lls=latLonStr.split(",");
+    var lat=lls[0];
+    var lon=lls[1];
+    map.setView(new L.LatLng(lat,lon),z);
   }
       
   function addTileLayer(mapProvider,map) {
@@ -88,12 +99,12 @@
       "osm map": {
         url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', provider: "osm",
         attrib: attribOsm, attribColor: "black",
-        make: function(url) { return new L.TileLayer(url, { minZoom: 8, maxZoom: 19 }); }
+        make: function(url) { return new L.TileLayer(url, { minZoom: 1, maxZoom: 19 }); }
       },
       "opentopo map": {
         url: 'http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', provider: "opentopo",
         attrib: attribOtm, attribColor: "black",
-        make: function(url) { return new L.TileLayer(url, { minZoom: 8, maxZoom: 17 }); }
+        make: function(url) { return new L.TileLayer(url, { minZoom: 1, maxZoom: 17 }); }
       },
       "google hyb": {
         url: 'http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', provider: "google",
@@ -107,8 +118,7 @@
       },
       "blank map": {
         url: '', provider: "blank", attrib: "", attribColor: "black", make: function(url) { return false; }
-      }
-    
+      }    
     };
     // lyrs= Hybrid: s,h; Satellite: s; Streets: m; Terrain: p;
     // https://stackoverflow.com/questions/9394190/leaflet-map-api-with-google-satellite-layer
@@ -155,20 +165,20 @@
   function drawMarkers(map) { wm.utils.putMarkers(map, ind, JSbridge.getMarkers(), addMark); }
   
   function addViewTrack(map, aColor) {
-    var track=JSbridge.importViewTrackLatLonJson();
+    var track = JSbridge.importViewTrackLatLonJson();
     if (! track) return;
     track=JSON.parse(track);
-    if (! track instanceof Array || track.length == 0 ) return;
+    if ( ! (track instanceof Array) || track.length == 0 ) return;
     L.polyline(track, {color: aColor, weight: trackThicknessPx}).addTo(map);
   }
   
   function replaceCurrentTrack(map, aColor) {
     if (currentTrack) { currentTrack.remove(); currentTrack=false; }
     if ( ! JSbridge.importViewCurrentTrack()) return;
-    var track=JSbridge.importCurrentTrackLatLonJson();
+    var track = JSbridge.importCurrentTrackLatLonJson();
     if (! track) return;
     track=JSON.parse(track);
-    if (! track instanceof Array || track.length == 0 ) return;
+    if ( ! (track instanceof Array) || track.length == 0 ) return;
     currentTrack=L.polyline(track, {color: aColor, weight: trackThicknessPx}).addTo(map);
   }
   
@@ -190,24 +200,28 @@
     el.addEventListener('touchmove', function(e) { e.preventDefault(); }, false);
   }
   
+  function addEvents() {
+    window.onDatareloadEvent = new Event('onDatareload');
+    window.addEventListener('onDatareload', function() {
+      if (map) {
+        ind.init(); map.off(); map.remove(); initmap(); ind.hide();
+      } },
+      false);
+    
+    window.onTrackreloadEvent = new Event('onTrackreload');
+    window.addEventListener('onTrackreload', function() {
+      if (map) {
+        updateCenter(map); replaceCurrentTrack(map, "#f00");
+      } },
+      false);
+  }
+  
+  wm.utils.findJSbridge(ind,"opentopo map");
+  wm.utils.adjustScreen();
   initmap();
-  ind.hide();
-  
-  window.onDatareloadEvent = new Event('onDatareload');
-  window.addEventListener('onDatareload', function() {
-    if (map) {
-      ind.init(); map.off(); map.remove(); initmap(); ind.hide();
-    } },
-    false);
-  
-  window.onTrackreloadEvent = new Event('onTrackreload');
-  window.addEventListener('onTrackreload', function() {
-    if (map) {
-      updateCenter(map); replaceCurrentTrack(map, "#f00");
-    } },
-    false);
-  
+  addEvents();
   if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();
+  ind.hide();
 
   
 </script>    

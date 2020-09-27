@@ -31,6 +31,7 @@ public class TrackActivity extends SingleFragmentActivity {
     private TrackListener mTrackListener=Model.getInstance().getTrackListener();
     private TrackPageFragment.Viewer mV;
     private DataWatcher mDataWatcher=new DataWatcher();
+    private JSbridge mJSbridge=Model.getInstance().getJSbridge();
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -45,9 +46,13 @@ public class TrackActivity extends SingleFragmentActivity {
         getActivity().finish();
         return true;
       }
+      if (id == R.id.action_fit_to_map) {
+        tryFitTrackToMap();
+        return true;
+      }
       if (id == R.id.action_delete_last_segment) {
         deleteLastSegment();
-        Model.getInstance().getJSbridge().setDirty(1);
+        mJSbridge.setDirty(1);
         return true;
       }
       if (id == R.id.action_settings) {
@@ -254,6 +259,23 @@ public class TrackActivity extends SingleFragmentActivity {
       catch (U.FileException e) {
         mV.alert("FileException:"+e.getMessage());
         Log.e(U.TAG, "FileException:"+e.getMessage());
+      }
+    }
+
+    private void tryFitTrackToMap() {
+      if ( ! mJSbridge.importViewCurrentTrack() ) {
+        mV.alert("Current track turned off in Settings");
+        return;
+      }
+      if (mJSbridge.importCurrentTrackLatLonJson().length() < 3) {
+        mV.alert("No trackpoints found");
+        return;
+      }
+      mJSbridge.setBounded("ct");
+      mJSbridge.setDirty(2);
+      if (mJSbridge.hasNoCenter()) {
+        mJSbridge.exportCenterLatLon("45","45");
+        mJSbridge.setDirty(3);
       }
     }
 

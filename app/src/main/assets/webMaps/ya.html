@@ -17,53 +17,38 @@
     </div>
   </div>
 <script>
-  //"use strict";
-  
-  var ind=new wm.utils.Ind(document.getElementById("ind"));
-  var scrInfo=wm.utils.getScreenParams();
-  var mapDiv=document.getElementById("mapDiv");
-  var w=""+Math.min(scrInfo.width,1200);// no exact limit known
-  var h=""+Math.min(scrInfo.height-3.5*scrInfo.emPx,800);
-  mapDiv.style.width=w+"px";
-  mapDiv.style.height=h+"px";
-  
-  var ll="55.79038894644,37.7759262544";
-  var zoom=16;
-  var type="gps";
-  if (typeof JSbridge == "undefined") { 
-    ind.say("mock coords");
-    JSbridge=new wm.utils.MockJSbridge("yandex hyb",ind);
+  "use strict";
+  var currentTrack=[],
+      trackThicknessPx=2,
+      myMap = {},
+      ind=new wm.utils.Ind(document.getElementById("ind")),
+      scrInfo=wm.utils.getViewportParams();
+
+  function loadApiScripts(yainit) {
+    var starter="https://api-maps.yandex.ru/2.1/?apikey="+JSbridge.getKey()+"&lang=en_RU";
+    ind.say("loading API");  
+    var apiScript=document.createElement("script");
+    apiScript.onerror=function() { ind.fail("failed to load API, is your network Ok? ") };
+    apiScript.onload=function() {
+      ind.say("Ok");
+      ymaps.ready(yainit);
+    };
+    document.head.appendChild(apiScript);
+    apiScript.src=starter;
+    // further initializations are inside yainit
   }
-  ll=JSbridge.importLatLon();
-  zoom=JSbridge.importZoom();
-  ind.say(ll+",z="+zoom);
-  var currentTrack=[];
-  var trackThicknessPx=2;
   
-  var myMap = {};
-  //var global={}; global.myMap={};
-  var starter="https://api-maps.yandex.ru/2.1/?apikey="+JSbridge.getKey()+"&lang=en_RU";
-  ind.say("loading API");  
-  var apiScript=document.createElement("script");
-  apiScript.onerror=function() { ind.fail("failed to load API, is your network Ok? ") };
-  apiScript.onload=function() {
-    ind.say("Ok");
-    ymaps.ready(yainit);
-  };
-  document.head.appendChild(apiScript);
-  apiScript.src=starter;
-  // further initializations are inside yainit
-  window.onDatareloadEvent = new Event('onDatareload');
-  window.addEventListener('onDatareload', function() { if (myMap) { myMap.destroy(); yainit(); } }, false);
-  window.onTrackreloadEvent = new Event('onTrackreload');
-  window.addEventListener('onTrackreload', function() { if (myMap) { updateCenter(myMap); replaceCurrentTrack(myMap,"#f00"); } }, false);
-  if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();
-  
+  function addEvents() {
+    window.onDatareloadEvent = new Event('onDatareload');
+    window.addEventListener('onDatareload', function() { if (myMap) { myMap.destroy(); yainit(); } }, false);
+    window.onTrackreloadEvent = new Event('onTrackreload');
+    window.addEventListener('onTrackreload', function() { if (myMap) { updateCenter(myMap); replaceCurrentTrack(myMap,"#f00"); } }, false);
+  }
   
   function yainit() {
     var params;
     try {
-      params=paramsBuilder(JSbridge.importLatLon(), JSbridge.importZoom(), "hyb");
+      params=paramsBuilder("hyb");
     }
     catch (e) { ind.fail(" PARAMS error: ".concat(e)); };
     ind.say("Params:"+JSON.stringify(params)+",creating map ");
@@ -71,6 +56,7 @@
       myMap = new ymaps.Map("mapDiv", params);
       //var p;
       //for (p in myMap) console.log(p+">>"+myMap[p]);
+      if (params.bounds) resetIsBounded(myMap);
     }
     catch (e) { ind.fail("API failed: "+e); return; };
     
@@ -88,28 +74,61 @@
     ind.hide();
   }
   
-  function paramsBuilder(latlon,zoom,type) {
+  function paramsBuilder(type) {
+    if (type.charAt(0) == "s") type="yandex#satellite";
+    else if (type.charAt(0) == "h") type="yandex#hybrid";
+    else type="yandex#map";
+    var params={type: type};
+    
+    if (JSbridge.getIsBounded()) {
+      var limits=(new wm.utils.LimitFinder()).go(JSbridge);
+      if (limits) { 
+        params = addBounds(params,limits);
+        ind.say(" drawn by bounds ");
+      }
+      else throw new Error("No objects to align map to");
+    }
+    else { 
+      params = addLatLonZoom(params,JSbridge.importLatLon(), JSbridge.importZoom());
+      ind.say(JSbridge.importLatLon()+",z="+JSbridge.importZoom());
+    }
+    return params;
+  }
+  
+  function addLatLonZoom(params,latlon,zoom) {
     if ( ! latlon) throw new Error("Empty LATLON");
     if (typeof latlon == "string") {
       latlon=latlon.split(",");
       if (latlon.length != 2) { throw new Error("Wrong LATLON string"); }
       latlon=[ parseFloat(latlon[0]), parseFloat(latlon[1]) ];
     }    
-    if ( ! latlon instanceof Array || latlon.length != 2 || Number(latlon[0]) !== latlon[0] ) {
+    if ( ! (latlon instanceof Array) || latlon.length != 2 || Number(latlon[0]) !== latlon[0] ) {
       throw new Error( "Wrong LATLON array("+latlon.length+","+(Number(latlon[0]) === latlon[0]) +") ");
     }
     if (zoom <= 1 || zoom > 25) throw new Error("Wrong ZOOM=".concat(zoom));
-    if (type.charAt(0) == "s") type="yandex#satellite";
-    else if (type.charAt(0) == "h") type="yandex#hybrid";
-    else type="yandex#map";
-    return {zoom: zoom, center: latlon, type: type};
+    params.center=latlon;
+    params.zoom=zoom;
+    return params;
+  }
+  
+  function addBounds(params,limits) {
+    if ( ! (limits instanceof wm.utils.Limits)) throw new Error("Wrong LIMITS");
+    var bounds = [ [limits.minLat,limits.minLon], [limits.maxLat,limits.maxLon] ];
+    params.bounds=bounds;
+    return params;
+  }
+  
+  function resetIsBounded(oMap) {
+    JSbridge.exportCenterLatLon(myMap.getCenter()[0], myMap.getCenter()[1]);
+    JSbridge.saveZoom(""+myMap.getZoom());
+    JSbridge.setBounded("");
   }
   
   function addViewTrack(oMap, aColor) {
     var track=JSbridge.importViewTrackLatLonJson();
     if (! track) return;
     track=JSON.parse(track);
-    if (! track instanceof Array || track.length == 0 ) return;
+    if (! (track instanceof Array) || track.length == 0 ) return;
     var segCount=track.length;
     var i=0,seg;
     for (;i < segCount; i+=1) {
@@ -133,9 +152,9 @@
     var track=JSbridge.importCurrentTrackLatLonJson();
     if (! track) return;
     track=JSON.parse(track);
-    if (! track instanceof Array || track.length == 0 ) return;
+    if (! (track instanceof Array) || track.length == 0 ) return;
     track.forEach(function(segment) {
-      seg=new ymaps.Polyline(segment,{},{strokeColor: aColor, strokeWidth: trackThicknessPx});
+      var seg=new ymaps.Polyline(segment,{},{strokeColor: aColor, strokeWidth: trackThicknessPx});
       oMap.geoObjects.add(seg);
       currentTrack.push(seg);
     });
@@ -183,6 +202,12 @@
   }
   
   function drawMarkers(map) { wm.utils.putMarkers(map, ind, JSbridge.getMarkers(), addMark); }
+      
+  wm.utils.findJSbridge(ind,"yandex hyb");
+  wm.utils.adjustScreen();
+  loadApiScripts(yainit);
+  addEvents();
+  if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();
   
 </script>    
 </body>

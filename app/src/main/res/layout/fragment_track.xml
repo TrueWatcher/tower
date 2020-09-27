@@ -93,7 +93,7 @@
   </TableLayout>
 
   <TextView
-      android:layout_marginTop="10pt"
+      android:layout_marginTop="5pt"
       android:id="@+id/tvFooter"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"

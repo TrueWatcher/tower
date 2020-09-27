@@ -58,6 +58,7 @@ public class ListActivity extends SingleFragmentActivity {
     private Fragment mFragment;
     private ListView lvListView;
     private PointList mPointList=Model.getInstance().getPointList();
+    private JSbridge mJSbridge=Model.getInstance().getJSbridge();
     private ArrayList<String> mList;
     private ListHelper mListHelper = new ListHelper(mPointList);
     private ListHelper.MyArrayAdapter mAdapter;
@@ -164,6 +165,10 @@ public class ListActivity extends SingleFragmentActivity {
         }
         return true;
       }
+      if (id == R.id.action_fit_to_map) {
+        tryFitListToMap();
+        return true;
+      }
       if (id == R.id.action_renumber) {
         requestConfirmation(R.id.action_renumber, R.string.action_renumber);
         return true;
@@ -173,6 +178,19 @@ public class ListActivity extends SingleFragmentActivity {
         return true;
       }
       return super.onOptionsItemSelected(item);
+    }
+
+    private void tryFitListToMap() {
+      if (mJSbridge.getMarkers().length() < 3) {
+        tvAlert.setText("No waypoints found");
+        return;
+      }
+      mJSbridge.setBounded("w");
+      mJSbridge.setDirty(2);
+      if (mJSbridge.hasNoCenter()) {
+        mJSbridge.exportCenterLatLon("45","45");
+        mJSbridge.setDirty(3);
+      }
     }
     
     private void requestConfirmation(int actionId, int actionStringId) {
@@ -204,7 +222,7 @@ public class ListActivity extends SingleFragmentActivity {
         return;
       }
     }
-    
+
     private void adoptChanges() {
       mList = mListHelper.getList();
       mAdapter.changeObjects(mList);

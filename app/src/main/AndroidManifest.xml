@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.tower"
-    android:versionCode="60"
-    android:versionName="2.6.12" >
+    android:versionCode="61"
+    android:versionName="2.7.0" >
 <!--
 2.0.9 31 9.11.2019 improved myRegistry, added 2 files to assets
 2.0.10 32 10.11.2019 added BuildConfig check
@@ -34,6 +34,7 @@
 2.6.10 58 23.03.2020 added fastlane metadata
 2.6.11 59 04.04.2020 improved EditPointActivity
 2.6.12 60 05.04.2020 added U.MSG_COLOR and real screenshots
+2.7.0  61 27.09.2020 updated WebMaps, many improvements
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
