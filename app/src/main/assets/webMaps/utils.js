@@ -146,8 +146,8 @@ wm.utils.LimitFinder=function() {
     var mode = JSbridge.getIsBounded();
     if ( ! mode || mode == "") return false;
     var currentTracklimits=false, viewTracklimits=false, waypointlimits=false;
-    if (mode == "*" || mode == "ct") currentTracklimits=findTrackLimits(JSbridge.importCurrentTrackLatLonJson());
-    if (mode == "*" || mode == "vt") viewTracklimits=findTrackLimits(JSbridge.importViewTrackLatLonJson());
+    if (mode == "*" || mode == "t" || mode == "ct") currentTracklimits=findTrackLimits(JSbridge.importCurrentTrackLatLonJson());
+    if (mode == "*" || mode == "t" || mode == "vt") viewTracklimits=findTrackLimits(JSbridge.importViewTrackLatLonJson());
     if (mode == "*" || mode == "w") waypointlimits=findWaypointLimits(JSbridge.getMarkers());
     var limits = mergeLimits( [ currentTracklimits, viewTracklimits, waypointlimits ] );
     if ( ! limits) return false;

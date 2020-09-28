@@ -47,7 +47,7 @@ public class TrackActivity extends SingleFragmentActivity {
         return true;
       }
       if (id == R.id.action_fit_to_map) {
-        tryFitTrackToMap();
+        if (tryFitTrackToMap()) getActivity().finish();// show map
         return true;
       }
       if (id == R.id.action_delete_last_segment) {
@@ -262,21 +262,24 @@ public class TrackActivity extends SingleFragmentActivity {
       }
     }
 
-    private void tryFitTrackToMap() {
-      if ( ! mJSbridge.importViewCurrentTrack() ) {
+    private boolean tryFitTrackToMap() {
+      if ( ! mJSbridge.importViewCurrentTrack() &&
+              mJSbridge.importViewTrackLatLonJson().length() < 3) {
         mV.alert("Current track turned off in Settings");
-        return;
+        return false;
       }
-      if (mJSbridge.importCurrentTrackLatLonJson().length() < 3) {
+      if (mJSbridge.importCurrentTrackLatLonJson().length() < 3 &&
+              mJSbridge.importViewTrackLatLonJson().length() < 3) {
         mV.alert("No trackpoints found");
-        return;
+        return false;
       }
-      mJSbridge.setBounded("ct");
+      mJSbridge.setBounded("t");// t for currentTrack abd viewTrack, ct for currentTrack only
       mJSbridge.setDirty(2);
       if (mJSbridge.hasNoCenter()) {
         mJSbridge.exportCenterLatLon("45","45");
         mJSbridge.setDirty(3);
       }
+      return true;
     }
 
     private class DataWatcher implements Runnable {

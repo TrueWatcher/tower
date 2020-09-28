@@ -120,6 +120,10 @@
   
   function resetIsBounded(oMap) {
     JSbridge.exportCenterLatLon(myMap.getCenter()[0], myMap.getCenter()[1]);
+    if (typeof(JSbridge.importDefaultZoom) === "function") {
+      // avoid overzoom on single point
+      oMap.setZoom(Math.min( oMap.getZoom(), parseFloat(JSbridge.importDefaultZoom())));
+    }
     JSbridge.saveZoom(""+myMap.getZoom());
     JSbridge.setBounded("");
   }

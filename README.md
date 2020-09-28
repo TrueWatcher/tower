@@ -7,17 +7,15 @@ for finding user location (by phone cell or GPS), viewing online maps, creating 
 ## Features:
 
 * no Google Services dependencies, only necessary permissions (fine and coarse location, internet)
-* may connect to several map providers
-* acceptable performance on slow GPRS-EDGE networks
-* may find coarse location by phone cell without GPS
+* connects to several online map providers
+* acceptable performance on slow GPRS-EDGE networks; may find coarse location by phone cell without GPS; may create waypoints with GPS without phone and internet connections
 * displays and saves cell info ( MCC, MNC, LAC, CID )
-* may create waypoints with GPS without phone and internet connections
-* all waypoints are stored on a memory card
-* waypoint lists may be stored in any number of files (that is, be grouped by locality or in any other way)
-* waypoint lists may be exported/imported in the GPX format, compatible with many navigators and software
+* all waypoints are stored on a memory card and may be organized in any number of files (by regions etc.)
+* waypoint lists may be exported or imported in the GPX format, compatible with many navigators and software
 * finds location only by explicit user's command, so is very mild on the battery
-* since v2.6 there are options of writing tracks (by means of a foreground service) and exporting them in the GPX format; GPX tracks from other devices may be viewed
-* NOT implemented: map offline caching, routing, photo and video point attachments, serving cold beer :)
+* capable of writing tracks (by means of a foreground service) and exporting them in the GPX format
+* tracks from other devices (GPX files) may be viewed along with your data
+* NOT implemented: map offline caching, routing, editing tracks, photo and video attachments, serving cold beer :)
 * for pure open distributions, that lack API keys and access to some services, there are options to enter user's own keys
 
 ## How to use it and where to get it

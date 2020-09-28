@@ -47,7 +47,7 @@ public class MainActivity extends SingleFragmentActivity {
     private PointList mPointList = mModel.getPointList();
     private JSbridge mJSbridge = mModel.getJSbridge();
     private TrackListener mTrackListener = mModel.getTrackListener();
-    private U.Summary mReadPoints=null;
+    private U.Summary mReadPoints=null, mReadTrack=null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -84,7 +84,9 @@ public class MainActivity extends SingleFragmentActivity {
         TrackStorage ts=mModel.getTrackStorage();
         ts.initTargetDir(getActivity());
         if ( ! mRegistry.getBool("enableTrack")) return;
-        String buf=ts.trackCsv2LatLonString();
+        TrackStorage.Track2LatLonJSON converter=ts.getTrack2LatLonJSON();
+        String buf=converter.file2LatLonJSON();
+        mReadTrack=converter.getResults();
         mJSbridge.replaceCurrentTrackLatLonJson(buf);
       }
       catch (Exception e) {
@@ -192,6 +194,11 @@ public class MainActivity extends SingleFragmentActivity {
         mMapViewer.addProgress(mReadPoints.act+" "+mReadPoints.adopted+" points (of "+mReadPoints.found+") from "
           +mReadPoints.fileName, "\n");
         mReadPoints=null;
+      }
+      if (mReadTrack != null && mReadTrack.adopted > 0) {
+        mMapViewer.addProgress(mReadTrack.act+" "+mReadTrack.adopted+" trackpoints ("+mReadTrack.segments+" segments) from "
+                +mReadTrack.fileName, "\n");
+        mReadTrack=null;
       }
       mTrackListener.attachListener(this);
     }

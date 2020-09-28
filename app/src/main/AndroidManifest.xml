@@ -1,40 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.tower"
-    android:versionCode="61"
-    android:versionName="2.7.0" >
+    android:versionCode="62"
+    android:versionName="2.7.1" >
 <!--
-2.0.9 31 9.11.2019 improved myRegistry, added 2 files to assets
-2.0.10 32 10.11.2019 added BuildConfig check
-2.0.11 33 11.11.2019 fixed GPX time issue, added time conversion utils and test
-2.0.12 34 16.11.2019 fixed attribution position issue
-2.0.13 35 17.11.2019 improved GPX compliance
-2.1.0  36 26.11.2019 added choose point by cursor
-2.2.0  37 2.12.2019  added handling distros without API keys
-2.3.0  38 3.12.2019  added OpenTopoMaps, improved JS wrappers
-2.3.1  39 6.12.2019  updated docs; minor improvements
-2.3.2  40 9.12.2019  added track GPX parser
-2.3.3  41 10.12.2019 improvements
-2.3.4  42 11.12.2019 fixed crash on U.sqDistance of unresolved cell
-2.4.0  43 11.12.2019 added files-view track
-2.4.1  44 15.12.2019 added files-new; code improvements and bugfixes
-2.4.2  45 16.12.2019 fixed string comparisons
-2.4.3  46 16.12.2019 fixed scrolling issue
-2.5.0  47 18.02.2020 Added reading csv tracks
-2.5.1  48 01.03.2020 improvements
-2.6.0  49 06.03.2020 merged with TrackWriter
-2.6.1  50 06.03.2020 workable track features
-2.6.2  51 08.03.2020 refactoring
-2.6.3  52 09.03.2020 optimized map redrawing
-2.6.4  53 10.03.2020 code improvements
-2.6.5  54 12.03.2020 refactoring view-controller
-2.6.6  55 13.03.2020 refactoring, new tests
 2.6.7  56 16.03.2020 updated docs, minor improvements
 2.6.8  57 17.03.2020 moved rtf doc to the project root folder
 2.6.10 58 23.03.2020 added fastlane metadata
 2.6.11 59 04.04.2020 improved EditPointActivity
 2.6.12 60 05.04.2020 added U.MSG_COLOR and real screenshots
 2.7.0  61 27.09.2020 updated WebMaps, many improvements
+2.7.1  62 28.09.2020 improvements and fixes, updated screenshot 6 and readme
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

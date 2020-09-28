@@ -166,7 +166,7 @@ public class ListActivity extends SingleFragmentActivity {
         return true;
       }
       if (id == R.id.action_fit_to_map) {
-        tryFitListToMap();
+        if (tryFitListToMap()) getActivity().finish();// show map
         return true;
       }
       if (id == R.id.action_renumber) {
@@ -180,10 +180,10 @@ public class ListActivity extends SingleFragmentActivity {
       return super.onOptionsItemSelected(item);
     }
 
-    private void tryFitListToMap() {
+    private boolean tryFitListToMap() {
       if (mJSbridge.getMarkers().length() < 3) {
         tvAlert.setText("No waypoints found");
-        return;
+        return false;
       }
       mJSbridge.setBounded("w");
       mJSbridge.setDirty(2);
@@ -191,6 +191,7 @@ public class ListActivity extends SingleFragmentActivity {
         mJSbridge.exportCenterLatLon("45","45");
         mJSbridge.setDirty(3);
       }
+      return true;
     }
     
     private void requestConfirmation(int actionId, int actionStringId) {

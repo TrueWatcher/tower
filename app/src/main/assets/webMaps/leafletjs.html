@@ -70,6 +70,10 @@
     var bounds=L.latLngBounds( [ limits.minLat,limits.minLon ], [ limits.maxLat,limits.maxLon ] );
     oMap.fitBounds(bounds);
     //alert(""+oMap.getCenter().lat);
+    if (typeof(JSbridge.importDefaultZoom) === "function") {
+      // avoid overzoom on single point
+      oMap.setZoom(Math.min( oMap.getZoom(), parseFloat(JSbridge.importDefaultZoom())));
+    }
     JSbridge.exportCenterLatLon(""+oMap.getCenter().lat, ""+oMap.getCenter().lng);
     JSbridge.saveZoom(""+oMap.getZoom());
     JSbridge.setBounded("");

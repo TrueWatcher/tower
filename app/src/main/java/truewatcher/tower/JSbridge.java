@@ -45,7 +45,7 @@ public class JSbridge {
   
   @android.webkit.JavascriptInterface
   public String importZoom() { 
-    if (mZoom == null) mZoom=mRegistry.get("mapZoom");
+    if (mZoom == null) mZoom=importDefaultZoom();
     return mZoom;
   }
   
@@ -56,6 +56,9 @@ public class JSbridge {
     mZoom=z;
     setDirty(2);
   }
+
+  @android.webkit.JavascriptInterface
+  public String importDefaultZoom() { return mRegistry.get("mapZoom"); }
   
   @android.webkit.JavascriptInterface
   public String importMapType() { 

@@ -294,14 +294,20 @@ public class TrackStorage {
   }
 
   public String trackCsv2LatLonString() throws U.DataException, IOException, U.FileException {
-    return (new Track2LatLonJSON()).file2LatLonJSON(mCurrentTrackFile);
+    return (new Track2LatLonJSON()).file2LatLonJSON();
   }
+
+  public Track2LatLonJSON getTrack2LatLonJSON() { return new Track2LatLonJSON(); }
 
   public class Track2LatLonJSON {
     private int mPointCount=0;
     private int mSegCount=1;
     private int mRecordCount=0;
     private String mTargetFile=mCurrentTrackFile;
+
+    public String file2LatLonJSON() throws U.FileException, IOException, U.DataException {
+      return file2LatLonJSON(mCurrentTrackFile);
+    }
 
     public String file2LatLonJSON(String aTargetFileExt)
             throws U.FileException, IOException, U.DataException {
