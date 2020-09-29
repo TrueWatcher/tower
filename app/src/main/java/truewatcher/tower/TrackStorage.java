@@ -59,6 +59,8 @@ public class TrackStorage {
     return mTargetPath + mCurrentTrackFile;
   }
 
+  public String getMyDir() { return mTargetPath; }
+
   public Trackpoint simplySave(Trackpoint p) {
     //if ( ! mRg.getBool("enableTrack")) return null;
     if ( ( mShouldStartNewSegment || mTotalPointCount == 0 ) && p.getType().equals("T")) {
@@ -364,7 +366,7 @@ public class TrackStorage {
       }
       return new U.Summary("failed to load", mRecordCount, mPointCount, mTargetFile);
     }
-  }
+  }// end class Track2LatLonJSON
 
   private boolean isExtraSegment(Map<String, String> content, int count) {
     if (count == 0) return false; // first <trkseg> is already in template
@@ -475,6 +477,6 @@ public class TrackStorage {
       return entry;
     }
 
-  }// end private class TrackToGpx
+  }// end class TrackToGpx
 
 }

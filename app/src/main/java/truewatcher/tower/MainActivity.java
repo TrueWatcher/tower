@@ -45,6 +45,7 @@ public class MainActivity extends SingleFragmentActivity {
     private CellInformer mCellInformer = mModel.getCellInformer();;
     private GpsInformer mGpsInformer = mModel.getGpsInformer();;
     private PointList mPointList = mModel.getPointList();
+    private StorageHelper mStorageHelper = mModel.getStorageHelper();
     private JSbridge mJSbridge = mModel.getJSbridge();
     private TrackListener mTrackListener = mModel.getTrackListener();
     private U.Summary mReadPoints=null, mReadTrack=null;
@@ -68,8 +69,8 @@ public class MainActivity extends SingleFragmentActivity {
 
     private void loadStoredPoints() {
       mReadPoints=null;
-      if ( ! mPointList.isEmpty()) return;
-      mModel.getStorageHelper().init(this.getActivity(), mRegistry.get("myFile"));
+      if ( mStorageHelper.getMyDir() != null ) return;
+      mStorageHelper.init(this.getActivity(), mRegistry.get("myFile"));
       try {
         mReadPoints=mPointList.load();
         if (U.DEBUG) Log.d(U.TAG,"MainPageFragment:"+ "Loaded "+mReadPoints.adopted+" points");
@@ -82,7 +83,8 @@ public class MainActivity extends SingleFragmentActivity {
     private void loadCurrentTrack() {
       try {
         TrackStorage ts=mModel.getTrackStorage();
-        ts.initTargetDir(getActivity());
+        if ( ts.getMyDir() != null ) return;
+        ts.initTargetDir(this.getActivity());
         if ( ! mRegistry.getBool("enableTrack")) return;
         TrackStorage.Track2LatLonJSON converter=ts.getTrack2LatLonJSON();
         String buf=converter.file2LatLonJSON();

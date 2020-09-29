@@ -70,10 +70,9 @@
     var bounds=L.latLngBounds( [ limits.minLat,limits.minLon ], [ limits.maxLat,limits.maxLon ] );
     oMap.fitBounds(bounds);
     //alert(""+oMap.getCenter().lat);
-    if (typeof(JSbridge.importDefaultZoom) === "function") {
-      // avoid overzoom on single point
-      oMap.setZoom(Math.min( oMap.getZoom(), parseFloat(JSbridge.importDefaultZoom())));
-    }
+    // avoid overzoom on single point
+    var dz=parseFloat(JSbridge.importDefaultZoom());
+    if (oMap.getZoom() > dz) oMap.setZoom(dz);
     JSbridge.exportCenterLatLon(""+oMap.getCenter().lat, ""+oMap.getCenter().lng);
     JSbridge.saveZoom(""+oMap.getZoom());
     JSbridge.setBounded("");
@@ -196,9 +195,9 @@
   }
   
   function addAttribution(html, color) {
-    var leafletAttr='<a href="http://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>';
+    var leafletAttr='<a href="http://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>'+"<br />";
     var el=document.getElementById("attributionDiv");
-    el.innerHTML=leafletAttr+"<br />"+html;
+    el.innerHTML=html;//leafletAttr+html;
     el.style.color=color;
     // disable scrolling <body> through this element 
     el.addEventListener('touchmove', function(e) { e.preventDefault(); }, false);

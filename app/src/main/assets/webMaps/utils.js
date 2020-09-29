@@ -79,6 +79,7 @@ wm.utils.MockJSbridge=function(provider,ind) {
   var _isBounded="";
   this.importLatLon=function() { return _lat.concat(",").concat(_lon); };
   this.importZoom=function() { return _zoom; };
+  this.importDefaultZoom=function() { return "16"; };
   this.importMapType=function() { return provider; };
   this.exportCenterLatLon=function(a,o) { 
     ind.init(); ind.say( ">>>"+a+","+o );
