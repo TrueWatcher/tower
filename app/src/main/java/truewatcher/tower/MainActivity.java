@@ -48,7 +48,7 @@ public class MainActivity extends SingleFragmentActivity {
     private StorageHelper mStorageHelper = mModel.getStorageHelper();
     private JSbridge mJSbridge = mModel.getJSbridge();
     private TrackListener mTrackListener = mModel.getTrackListener();
-    private U.Summary mReadPoints=null, mReadTrack=null;
+    private U.Summary[] mReadData=null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -60,40 +60,9 @@ public class MainActivity extends SingleFragmentActivity {
 
       mRegistry.readFromShared(getActivity());
       mRegistry.syncSecrets(getActivity());
-      mPointList.adoptMax(mRegistry.getInt("maxPoints"));
-      loadStoredPoints();
-      loadCurrentTrack();
+      mReadData=mModel.loadData(this.getActivity(), mRegistry);
       mCellInformer.setFragment(this);
       mGpsInformer.setFragment(this);
-    }
-
-    private void loadStoredPoints() {
-      mReadPoints=null;
-      if ( mStorageHelper.getMyDir() != null ) return;
-      mStorageHelper.init(this.getActivity(), mRegistry.get("myFile"));
-      try {
-        mReadPoints=mPointList.load();
-        if (U.DEBUG) Log.d(U.TAG,"MainPageFragment:"+ "Loaded "+mReadPoints.adopted+" points");
-      }
-      catch (Exception e) {
-        Log.e(U.TAG,"MainPageFragment:"+e.getMessage());
-      }
-    }
-
-    private void loadCurrentTrack() {
-      try {
-        TrackStorage ts=mModel.getTrackStorage();
-        if ( ts.getMyDir() != null ) return;
-        ts.initTargetDir(this.getActivity());
-        if ( ! mRegistry.getBool("enableTrack")) return;
-        TrackStorage.Track2LatLonJSON converter=ts.getTrack2LatLonJSON();
-        String buf=converter.file2LatLonJSON();
-        mReadTrack=converter.getResults();
-        mJSbridge.replaceCurrentTrackLatLonJson(buf);
-      }
-      catch (Exception e) {
-        Log.e(U.TAG,"MainPageFragment:"+e.getMessage());
-      }
     }
 
     @Override
@@ -192,15 +161,19 @@ public class MainActivity extends SingleFragmentActivity {
       if (mModel.getJSbridge().hasNoCenter() && mRegistry.noAnyKeys()) {
         mMapViewer.addProgress(getString(R.string.keyless_warning),"\n");
       }
-      if (mReadPoints != null) {
-        mMapViewer.addProgress(mReadPoints.act+" "+mReadPoints.adopted+" points (of "+mReadPoints.found+") from "
-          +mReadPoints.fileName, "\n");
-        mReadPoints=null;
+      if (mReadData != null && mReadData[0] != null) {
+        String points="%s %d points (of %s) from %s";
+        mMapViewer.addProgress(String.format(points,
+                mReadData[0].act,mReadData[0].adopted,mReadData[0].found,mReadData[0].fileName
+        ), "\n");
+        mReadData[0]=null;
       }
-      if (mReadTrack != null && mReadTrack.adopted > 0) {
-        mMapViewer.addProgress(mReadTrack.act+" "+mReadTrack.adopted+" trackpoints ("+mReadTrack.segments+" segments) from "
-                +mReadTrack.fileName, "\n");
-        mReadTrack=null;
+      if (mReadData != null && mReadData[1] != null && mReadData[1].adopted > 0) {
+        String trkpoints="%s %d trackpoints (%d segments) from %s";
+        mMapViewer.addProgress(String.format(trkpoints,
+           mReadData[1].act,mReadData[1].adopted,mReadData[1].segments,mReadData[1].fileName
+        ), "\n");
+        mReadData[1]=null;
       }
       mTrackListener.attachListener(this);
     }

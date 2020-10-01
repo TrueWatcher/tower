@@ -156,7 +156,7 @@ public class PreferencesActivity extends AppCompatActivity {
       // some prefs are not on the screen  
         getPreferenceManager().findPreference(key).setSummary(mRegistry.get(key));
       }
-      adjustApiKeys(key);
+      adjustApiKey(key);
 
       if (key.equals("mapZoom")) {
         Model.getInstance().getJSbridge().exportZoom(mRegistry.get(key));
@@ -224,7 +224,7 @@ public class PreferencesActivity extends AppCompatActivity {
       return null;
     }
 
-    private void adjustApiKeys(String key) {
+    private void adjustApiKey(String key) {
       if ( ! mRegistry.getBool("isKeylessDistro") || ! U.arrayContains(MyRegistry.APIS, key) ) return;
       getPreferenceScreen().getSharedPreferences()
               .unregisterOnSharedPreferenceChangeListener(this);
