@@ -467,6 +467,18 @@ public abstract class U {
     return res;
   }
 
+  public static String pushJsonArray(String a1, String a2) {
+    String empty="[]";
+    int l1=a1.length();
+    int l2=a2.length();
+    if ( ! (a1.startsWith("[") && a1.endsWith("]")) ) throw new U.RunException("Wrong A1="+a1);
+    if ( ! (a2.startsWith("[") && a2.endsWith("]")) ) throw new U.RunException("Wrong A2="+a2);
+    if (a2.indexOf(",") < 0) return a1;
+    if (a1.equals(empty)) return ("[").concat(a2).concat("]");
+    String res=a1.substring(0, l1-1).concat(",").concat(a2).concat("]");
+    return res;
+  }
+
   public static int countEntries(String haystack, String needle) {
     return (haystack.length() - haystack.replace(needle, "").length()) / needle.length();
   }

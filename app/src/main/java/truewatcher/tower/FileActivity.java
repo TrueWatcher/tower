@@ -183,7 +183,8 @@ public class FileActivity extends SingleFragmentActivity {
           return "fail";
         }
         JSbridge jsb=Model.getInstance().getJSbridge();
-        jsb.addViewTrackLatLonJson(latLonJson);
+        jsb.pushViewTrack(latLonJson);
+        jsb.pushViewTrackName(mSelectedFile);
         mV.showStat(act, s, -1, mSelectedFile);
         return "Ok";
       }

@@ -23,6 +23,9 @@
   </div>
   <div id="attributionDiv" style="margin: 0; padding: 0.5em; position: fixed; bottom: 0%; left: 0%; z-index:990; color: #888; text-align: left; font-family: Arial, Helvetica, sans-serif; font-size: 70%">Something is wrong if you see this
   </div>
+  <div id="myControlDiv" style="margin: 0; padding: 0.5em; position: fixed; top: 3%; right: 0%; z-index:999; text-align: left; font-family: Arial, Helvetica, sans-serif; font-size: 100%">
+    <button id="visBtn" style="margin: 0; padding: 0.3em; font-size: 80%; font-weight: bold; background-color: #fff;" title="hide/show points and tracks">Hide</button>
+  </div>
   
 <script>
   'use strict';
@@ -30,7 +33,8 @@
       currentTrack=false,
       trackThicknessPx=2,
       scrInfo=wm.utils.getViewportParams(),
-      ind=new wm.utils.Ind(document.getElementById("ind"));
+      ind=new wm.utils.Ind(document.getElementById("ind")),
+      visBtn;
 
   function initmap() {
     var ll=JSbridge.importLatLon();
@@ -38,8 +42,8 @@
     var mapProvider=JSbridge.importMapType();
     map = new L.Map('mapDiv');
     setViewArea(map, ll, zoom);
-    addViewTrack(map, getColor("mark"));
-    replaceCurrentTrack(map, getColor("gps"));
+    addViewTrackColored(map, wm.utils.getColor("mark"));
+    replaceCurrentTrack(map, wm.utils.getColor("gps"));
     drawNamelessMarker(map);
     //ind.say("markers:"+JSbridge.getMarkers());
     drawMarkers(map);
@@ -47,6 +51,7 @@
     map.on('moveend', function(e) {
       JSbridge.exportCenterLatLon(""+map.getCenter().lat, ""+map.getCenter().lng);
       JSbridge.saveZoom(""+map.getZoom());
+      if (JSbridge.onMoveend && typeof JSbridge.onMoveend == "function") JSbridge.onMoveend();
     } );
   }
   
@@ -94,10 +99,10 @@
   
   function getService(mapProvider) {
     var year=new Date().getFullYear();
-    var attribOsm='Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors '+year;
-    var attribOtm='Map data © <a href="https://opentopomap.org">OpenTopoMap</a> contributors '+year;
+    var attribOsm='Map data © <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a> contributors '+year;
+    var attribOtm='Map data © <a href="https://opentopomap.org" target="_blank">OpenTopoMap</a> contributors '+year;
     var attribGoogle='Imagery © CNES / Airbus, Landsat / Copernicus, Maxar Technologies, '+year+',\
-    Map data © <a href="https://maps.google.com">Google</a> '+year;
+    Map data © <a href="https://maps.google.com" target="_blank">Google</a> '+year;
     var services={
       "osm map": {
         url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', provider: "osm",
@@ -119,20 +124,19 @@
         attrib: attribGoogle, attribColor: "#fff",
         make: function(url) { return new L.TileLayer(url, { maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'] }); }
       },
+      "marshruty.ru map": {
+        url: 'http://maps.marshruty.ru/ml.ashx?al=1&x={x}&y={y}&z={z}&i=1', provider: "marshruty.ru",
+        attrib: 'Map data © <a href="http://maps.marshruty.ru" target="_blank">maps.marshruty.ru</a>', attribColor: "black",
+        make: function(url) { return new L.TileLayer(url, { minZoom: 1, maxZoom: 18 }); }
+      },
       "blank map": {
         url: '', provider: "blank", attrib: "", attribColor: "black", make: function(url) { return false; }
-      }    
+      }
     };
     // lyrs= Hybrid: s,h; Satellite: s; Streets: m; Terrain: p;
     // https://stackoverflow.com/questions/9394190/leaflet-map-api-with-google-satellite-layer
     if (! services.hasOwnProperty(mapProvider)) throw new Error("Unknown mapProvider="+mapProvider);
     return services[mapProvider];
-  }
-  
-  function getColor(type) {
-    var colors={ cell: "white", gps: "red", mark: "magenta" };
-    if (! colors.hasOwnProperty(type)) throw new Error("Unknown type="+type);
-    return colors[type];
   }
   
   function addMark(oMap,type,lat,lon,text) {
@@ -142,7 +146,7 @@
       lat=type[1];
       type=type[0];
     }
-    var color=getColor(type);
+    var color=wm.utils.getColor(type);
     var center;
     if ( lat && lon) {
       center=[lat,lon];
@@ -175,6 +179,30 @@
     L.polyline(track, {color: aColor, weight: trackThicknessPx}).addTo(map);
   }
   
+  function addViewTrackColored(map, aColor) {
+    var pl;
+    var track = JSbridge.importViewTrackLatLonJson();
+    if (! track) return;
+    var trackNames=JSbridge.importViewTrackNamesJson();
+    //ind.say("Got trackNames"+trackNames);
+    if (trackNames) trackNames=JSON.parse(trackNames);
+    track=JSON.parse(track);
+    if ( ! (track instanceof Array) || track.length == 0 ) return;// track is invalid or empty
+    if ( ! (track[0] instanceof Array) || track[0].length == 0) return;// missing or empty segments
+    if ((track[0][0][0] instanceof Array) && track[0][0][0].length == 2) {
+      //console.log("draw as track array");
+      for (var itr=0; itr < track.length; itr += 1) {
+        //console.log("aColor="+wm.utils.getTrackColor(itr));
+        pl=L.polyline(track[itr], {color: wm.utils.getTrackColor(itr), weight: trackThicknessPx}).addTo(map);
+        if (trackNames && (trackNames.length == track.length)) pl.bindPopup(trackNames[itr]);
+      }
+    }
+    else {
+      //console.log("draw as segment array");
+      L.polyline(track, {color: aColor, weight: trackThicknessPx}).addTo(map);
+    }
+  }
+   
   function replaceCurrentTrack(map, aColor) {
     if (currentTrack) { currentTrack.remove(); currentTrack=false; }
     if ( ! JSbridge.importViewCurrentTrack()) return;
@@ -207,22 +235,49 @@
     window.onDatareloadEvent = new Event('onDatareload');
     window.addEventListener('onDatareload', function() {
       if (map) {
-        ind.init(); map.off(); map.remove(); initmap(); ind.hide();
+        ind.init(); map.off(); map.remove(); initmap(); ind.hide(); visBtn.reapply();
       } },
       false);
     
     window.onTrackreloadEvent = new Event('onTrackreload');
     window.addEventListener('onTrackreload', function() {
       if (map) {
-        updateCenter(map); replaceCurrentTrack(map, "#f00");
+        updateCenter(map); replaceCurrentTrack(map, "#f00"); visBtn.reapply();
       } },
       false);
+  }
+  
+  function LayerToggler(button) {
+    var isVisible=true,
+        _this=this;
+    
+    button.onclick=function toggleObjects() {
+      isVisible= ! isVisible;
+      _this.reapply();
+    };
+    
+    this.reapply=function() {
+      var overlayPane=document.querySelector("div.leaflet-overlay-pane g");
+      var tooltipPane=document.querySelector("div.leaflet-tooltip-pane");
+      if ( ! overlayPane || ! tooltipPane) { return; }
+      if (isVisible) {
+        overlayPane.style.visibility=tooltipPane.style.visibility="visible";
+        button.innerHTML="Hide";
+        button.style.color="#000";
+      }
+      else {
+        overlayPane.style.visibility=tooltipPane.style.visibility="hidden";
+        button.innerHTML="Show";
+        button.style.color=wm.utils.getTrackColor(0);
+      }
+    };
   }
   
   wm.utils.findJSbridge(ind,"opentopo map");
   wm.utils.adjustScreen();
   initmap();
   addEvents();
+  visBtn=new LayerToggler(document.getElementById("visBtn"));
   if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();
   ind.hide();
 

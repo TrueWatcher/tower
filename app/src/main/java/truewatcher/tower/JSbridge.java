@@ -12,6 +12,7 @@ public class JSbridge {
   private PointList mPointList;
   private int mDirty=3;// load map on first use
   private String mViewTrackLatLonJson="[]";
+  private String mViewTrackNamesJson="[]";
   private String mCurrentTrackLatLonJson="[]";
   private String mIsBounded="";
   
@@ -85,10 +86,24 @@ public class JSbridge {
   @android.webkit.JavascriptInterface
   public String importViewTrackLatLonJson() { return mViewTrackLatLonJson; }
 
-  public void addViewTrackLatLonJson(String json) {
-    mViewTrackLatLonJson=U.joinJsonArrays(mViewTrackLatLonJson,json);
+  //public void addViewTrackLatLonJson(String json) {
+  //  mViewTrackLatLonJson=U.joinJsonArrays(mViewTrackLatLonJson,json);
+  //  setDirty(2);
+  //}
+
+  public void pushViewTrack(String json) {
+    if (json.indexOf(",") >= 0 && ! json.startsWith("[[[")) {
+      throw new U.RunException("Non-empty and non-3d-array argument"); }
+    mViewTrackLatLonJson=U.pushJsonArray(mViewTrackLatLonJson,json);
     setDirty(2);
   }
+
+  public void pushViewTrackName(String name) {
+    mViewTrackNamesJson=U.joinJsonArrays(mViewTrackNamesJson, "[\"".concat(name).concat("\"]"));
+  }
+
+  @android.webkit.JavascriptInterface
+  public String importViewTrackNamesJson() { return mViewTrackNamesJson; }
 
   @android.webkit.JavascriptInterface
   public String importCurrentTrackLatLonJson() { return mCurrentTrackLatLonJson; }

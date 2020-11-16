@@ -28,9 +28,9 @@
     var starter="https://api-maps.yandex.ru/2.1/?apikey="+JSbridge.getKey()+"&lang=en_RU";
     ind.say("loading API");  
     var apiScript=document.createElement("script");
-    apiScript.onerror=function() { ind.fail("failed to load API, is your network Ok? ") };
+    apiScript.onerror=function() { ind.fail("failed to load API, is your network OK? ") };
     apiScript.onload=function() {
-      ind.say("Ok");
+      ind.say("OK");
       ymaps.ready(yainit);
     };
     document.head.appendChild(apiScript);
@@ -70,6 +70,7 @@
       // https://tech.yandex.ru/maps/doc/jsapi/2.1/ref/reference/Map-docpage/#Map__events-summary
       JSbridge.exportCenterLatLon(myMap.getCenter()[0], myMap.getCenter()[1]);
       JSbridge.saveZoom(""+myMap.getZoom());
+      if (JSbridge.onMoveend && typeof JSbridge.onMoveend == "function") JSbridge.onMoveend();
     });
     ind.hide();
   }
@@ -128,14 +129,33 @@
   }
   
   function addViewTrack(oMap, aColor) {
+    var title="";
     var track=JSbridge.importViewTrackLatLonJson();
     if (! track) return;
+    var trackNames=JSbridge.importViewTrackNamesJson();
+    if (trackNames) trackNames=JSON.parse(trackNames);
     track=JSON.parse(track);
     if (! (track instanceof Array) || track.length == 0 ) return;
+    if ( ! (track[0] instanceof Array) || track[0].length == 0) return;// missing or empty segments
+    if ((track[0][0][0] instanceof Array) && track[0][0][0].length == 2) {
+      //console.log("draw as track array");
+      for (var itr=0; itr < track.length; itr += 1) {
+        //console.log("aColor="+wm.utils.getTrackColor(itr));
+        if (trackNames && (trackNames.length == track.length)) title=trackNames[itr];
+        drawSegment(oMap, track[itr], wm.utils.getTrackColor(itr), title);
+      }
+    }
+    else {
+      //console.log("draw as segment array");
+      drawSegment(oMap,track,aColor,"");
+    }
+  }
+  
+  function drawSegment(oMap,track,aColor,title) {
     var segCount=track.length;
     var i=0,seg;
     for (;i < segCount; i+=1) {
-      seg=new ymaps.Polyline(track[i],{},{strokeColor: aColor, strokeWidth: trackThicknessPx});
+      seg=new ymaps.Polyline(track[i],{balloonContentBody: title},{strokeColor: aColor, strokeWidth: trackThicknessPx} );
       oMap.geoObjects.add(seg);
       //console.log("added a segment");
     }
@@ -174,11 +194,9 @@
   
   function addMark(oMap,markData) {
     // [ pointType, lat, lon, text ]
-    var colors={ cell:"white", gps:"red", mark:"magenta" };
     if ( ! markData || markData.length < 3) return;
     if ( ! markData || ! markData[0]) return;
-    if ( ! colors[markData[0]]) ind.fail("Unknown marker type:"+markData[0]);
-    var color=colors[markData[0]];
+    var type=markData[0];
     var text="";
     if (markData[3]) {
       text=markData[3];
@@ -190,7 +208,7 @@
       props.iconContent=text;
       iconType="islands#stretchyIcon";
     }  
-    var params={ preset:iconType, iconColor:color };
+    var params={ preset:iconType, iconColor: wm.utils.getColor(type) };
     var m=new ymaps.Placemark(center, props, params);
     oMap.geoObjects.add(m);
   }

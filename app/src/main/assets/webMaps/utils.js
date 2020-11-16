@@ -153,24 +153,37 @@ wm.utils.LimitFinder=function() {
     var limits = mergeLimits( [ currentTracklimits, viewTracklimits, waypointlimits ] );
     if ( ! limits) return false;
     //console.log(wm.utils.dumpArray(limits));
-    console.log(JSON.stringify(limits));
+    //console.log(JSON.stringify(limits));
     return limits;    
   }
   
   function findTrackLimits(trackJson) {
-    var nseg, np;
+    var ntr=0;
     var res = new wm.utils.Limits(); 
     var track=JSON.parse(trackJson);
     if ( ! track || ! (track instanceof Array) || track.length == 0 ) return false;
     if (! (track[0] instanceof Array) || ! (track[0][0] instanceof Array) ) throw new Error("Malformed track");
-    var segCount=track.length;
+    if (track[0][0][0] instanceof Array && track[0][0][0].length == 2) { 
+      //console.log("limits as array of tracks");
+      for (; ntr < track.length; ntr+=1) { processSegmentArray(track[ntr],res); }
+    }
+    else {
+      //console.log("limits as array of segments");
+      processSegmentArray(track,res);
+    }
+    return res;
+  }
+  
+  function processSegmentArray(segArr,res) {
+    var nseg, np;
+    var segCount=segArr.length;
     for (nseg=0; nseg < segCount; nseg+=1) {
-      for (np=0; np < track[nseg].length; np+=1) {
+      for (np=0; np < segArr[nseg].length; np+=1) {
         //console.log(nseg+"/"+np);
-        res.addLatLon(track[nseg][np]);
+        res.addLatLon(segArr[nseg][np]);
       }
     }
-    return res;  
+    return res; 
   }
 
   function findWaypointLimits(markersJson) {
@@ -267,6 +280,18 @@ wm.utils.joinJsonArrays=function(a1, a2) {
   return res;
 };
 
+wm.utils.pushJsonArray=function(a1, a2) {
+  var empty="[]";
+  var l1=a1.length;
+  var l2=a2.length;
+  if ( ! (a1.startsWith("[") && a1.endsWith("]")) ) throw new Error("Wrong A1="+a1);
+  if ( ! (a2.startsWith("[") && a2.endsWith("]")) ) throw new Error("Wrong A2="+a2);
+  if (a2.indexOf(",") < 0) return a1;
+  if (a1 == empty) return ("[").concat(a2).concat("]");
+  var res=a1.substring(0, l1-1).concat(",").concat(a2).concat("]");
+  return res;
+};
+
 wm.utils.findJSbridge=function (ind, mockMapType) {
   if ( ! window.hasOwnProperty("JSbridge")) {
     if (window.parent && window.parent.JSbridge) {// we are in an iframe
@@ -299,5 +324,46 @@ wm.utils.adjustScreen=function() {
 wm.utils.sumUp=function(arr) { return arr.reduce(function(a, b) { return a + b; }, 0); };
 // https://stackoverflow.com/questions/1230233/how-to-find-the-sum-of-an-array-of-numbers
 
+wm.utils.shiftColor=function(aColor,serial,colorStep) {
+  if (typeof colorStep == "undefined") colorStep=[0,16,-16];
+  var c;
+  if ( ! aColor.length || aColor.length != 7 ) throw new Error("Wrong ACOLOR="+aColor);
+  var rgb=[ aColor.substring(1,3), aColor.substring(3,5), aColor.substring(5) ];
+  var shiftedColor="#";
+  //serial+=1;// DEBUG
+  for (var i=0; i<=2; i+=1) {
+    //alert(rgb[i]);
+    c= Math.round( parseInt(rgb[i],16) + serial*colorStep[i] );
+    if (c < 0) { c = Math.abs(c%256); }
+    else if (c > 255) { c = c%256; }
+    rgb[i]=c.toString(16);
+    if (rgb[i].length == 1) rgb[i] = "0"+rgb[i];
+    if (rgb[i].length > 2) throw new Error("Wrong RGBI="+rgb[i]+", c="+c);//rgb[i] = "ff";//
+    //alert(rgb[i]);
+    shiftedColor=shiftedColor.concat(rgb[i]);
+  }
+  //alert(">>"+shiftedColor);
+  //console.log("shiftedColor="+shiftedColor);
+  if ( shiftedColor.length != 7 ) { 
+    console.log("Wrong shiftedColor="+shiftedColor);
+    shiftedColor=aColor;
+  }
+  return shiftedColor;
+};
 
+wm.utils.getColor=function(type) {
+  var colors={ cell: "#ffffff", gps: "#ff0000", mark: "#ff00ff" };
+  if (! colors.hasOwnProperty(type)) throw new Error("Unknown type="+type);
+  return colors[type];
+};
 
+wm.utils.getTrackColor=function(i) {
+  var colors=[ "#ff00ff","#0080ff","#ff8080","#ee90ee" ];
+  return colors[i % colors.length];
+};
+
+wm.utils.truncateAfterPoint=function(str,digits) {
+  var pointPosition=str.indexOf(".");
+  if (pointPosition < 0) return str;
+  return str.substring(0, pointPosition+digits+1);
+};

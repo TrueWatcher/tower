@@ -57,6 +57,7 @@ public class MainActivity extends SingleFragmentActivity {
       setHasOptionsMenu(true);
 
       //if (U.DEBUG) U.clearPrefs(getActivity()); // DEBUG
+      //U.clearPrefs(getActivity()); // DEBUG
 
       mRegistry.readFromShared(getActivity());
       mRegistry.syncSecrets(getActivity());

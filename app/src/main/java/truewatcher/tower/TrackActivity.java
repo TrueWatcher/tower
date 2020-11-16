@@ -245,6 +245,8 @@ public class TrackActivity extends SingleFragmentActivity {
       }
       try {
         mTrackStorage.deleteLastSegment();
+        String buf= mTrackStorage.trackCsv2LatLonString();
+        mJSbridge.replaceCurrentTrackLatLonJson(buf);
         mV.alert("IDLE");
         mV.displayStorageStat(mTrackStorage.statStored());;
       }

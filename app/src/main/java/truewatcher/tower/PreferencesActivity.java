@@ -242,7 +242,7 @@ public class PreferencesActivity extends AppCompatActivity {
     }
 
     private void syncCurrentTrack(boolean isEnabled) {
-      String buf="[[]]";
+      String buf="[]";//"[[]]";
       if (isEnabled) {
         try {
           buf = Model.getInstance().getTrackStorage().trackCsv2LatLonString();
