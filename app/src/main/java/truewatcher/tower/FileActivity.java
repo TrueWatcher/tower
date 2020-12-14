@@ -48,9 +48,10 @@ public class FileActivity extends SingleFragmentActivity {
   
   public static class FileFragment extends Fragment implements AdapterView.OnItemSelectedListener {
     private Model mModel=Model.getInstance();
-    private PointList mPointList=Model.getInstance().getPointList();
-    private StorageHelper mStorageHelper=Model.getInstance().getStorageHelper();
-    private TrackStorage mTrackStorage=Model.getInstance().getTrackStorage();
+    private PointList mPointList=mModel.getPointList();
+    private StorageHelper mStorageHelper=mModel.getStorageHelper();
+    private TrackStorage mTrackStorage=mModel.getTrackStorage();
+    private JSbridge mJSbridge=mModel.getJSbridge();
     private FileFragment.Viewer mV;
     private String mSelectedFile="";
     
@@ -182,9 +183,8 @@ public class FileActivity extends SingleFragmentActivity {
           mV.alert(s.act);
           return "fail";
         }
-        JSbridge jsb=Model.getInstance().getJSbridge();
-        jsb.pushViewTrack(latLonJson);
-        jsb.pushViewTrackName(mSelectedFile);
+        mJSbridge.pushViewTrack(latLonJson);
+        mJSbridge.pushViewTrackName(mSelectedFile);
         mV.showStat(act, s, -1, mSelectedFile);
         return "Ok";
       }
@@ -218,6 +218,7 @@ public class FileActivity extends SingleFragmentActivity {
         s=mTrackStorage.trackCsv2Gpx(targetFile);
         if ( mV.getRemoveExported() ) {
           mTrackStorage.deleteAll();
+          mJSbridge.replaceCurrentTrackLatLonJson("[]");
           removedCount=9999;
         }
         adoptCatalog();
