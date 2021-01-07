@@ -107,7 +107,7 @@ public class Tests1 extends SingleFragmentActivity {
       //th.assertNotContains("енг", "йцукенг", "assertNotContains got inclusion", "assertNotContains should fail here");
     }
     
-    private void testFileUtilities() throws TestFailure, IOException {
+    private void testFileUtilities() throws TestFailure, IOException, U.FileException {
       th.printlnln("Testing file utilities -----");
       String testName0="test_".concat(Point.getDate());
       String testString="data_".concat(testName0);
@@ -200,7 +200,7 @@ public class Tests1 extends SingleFragmentActivity {
       return all;
     }
     
-    private PointList testCsvImport() throws IOException, TestFailure, U.DataException {
+    private PointList testCsvImport() throws IOException, TestFailure, U.DataException, U.FileException {
       th.printlnln("Testing basic csv import -----");
       String extCsv="csv";
       String testName0="test_".concat(Point.getDate());

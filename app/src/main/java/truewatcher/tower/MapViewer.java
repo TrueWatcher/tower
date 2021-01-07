@@ -1,5 +1,10 @@
 package truewatcher.tower;
 
+import android.content.Context;
+import android.webkit.ConsoleMessage;
+import android.webkit.CookieManager;
+import android.webkit.WebChromeClient;
+import android.webkit.WebStorage;
 import android.widget.TextView;
 import android.util.Log;
 import android.webkit.WebSettings;
@@ -66,6 +71,7 @@ public class MapViewer extends PointIndicator implements PointReceiver {
     }
     mPageURI=choosePage(mRegistry.get("mapProvider"));
     wvWebView.addJavascriptInterface(mJSbridge, "JSbridge");
+    redirectConsole(wvWebView);
     wvWebView.loadUrl(mPageURI);
     mJSbridge.clearDirty(3);
   }
@@ -100,6 +106,37 @@ public class MapViewer extends PointIndicator implements PointReceiver {
     String reloadData="(function() { window.dispatchEvent(onDatareloadEvent); })();";
     wvWebView.evaluateJavascript(reloadData,null);
     mJSbridge.clearDirty(2);
+  }
+
+  public void purge(Context context) {
+    showWallpaper();
+    WebStorage.getInstance().deleteAllData();
+    CookieManager.getInstance().removeAllCookies(null);
+    CookieManager.getInstance().flush();
+    wvWebView.clearCache(true);
+    wvWebView.clearFormData();
+    wvWebView.clearHistory();
+    wvWebView.clearSslPreferences();
+    context.deleteDatabase("webview.db");
+    context.deleteDatabase("webviewCache.db");
+    showMap();
+  }
+
+  private void redirectConsole(WebView myWebView) {
+    if ( ! U.DEBUG) return;
+    //myWebView.getSettings().setAllowUniversalAccessFromFileURLs(true);
+    //myWebView.getSettings().setAllowFileAccessFromFileURLs(true);
+    WebView.setWebContentsDebuggingEnabled(true);
+    myWebView.setWebChromeClient(new WebChromeClient() {
+      public boolean onConsoleMessage(ConsoleMessage cm) {
+        if (U.DEBUG) {
+          String msg = "WebView console:" + cm.message() + ", line "
+                  + cm.lineNumber() + " of " + cm.sourceId();
+          Log.d(U.TAG, msg);
+        }
+        return true;
+      }
+    });
   }
 
 }

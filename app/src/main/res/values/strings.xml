@@ -9,6 +9,7 @@
     <string name="action_waypoint">Point</string>
     <string name="action_list">List</string>
     <string name="action_map">Map</string>
+    <string name="action_reload">Reload</string>
     <string name="action_file">File</string>
     <string name="action_go">Go</string>
     <string name="action_ok">OK</string>

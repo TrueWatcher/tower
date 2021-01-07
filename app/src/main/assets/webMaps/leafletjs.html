@@ -93,7 +93,10 @@
   function addTileLayer(mapProvider,map) {
     var s=getService(mapProvider);
     var l=s.make(s.url);
-    if (l) map.addLayer(l);
+    if (l) {
+      map.addLayer(l);
+      ind.say(' Added tiles:"'+s.url+'" ');
+    }
     addAttribution(s.attrib, s.attribsColor);
   }
   

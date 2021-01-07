@@ -78,7 +78,14 @@ public class FileActivity extends SingleFragmentActivity {
     }
 
     private void addAdapter(String mode, Spinner spinner) {
-      String[] catalog=U.getCatalog(mStorageHelper.getMyDir(), mode);
+      String[] catalog=new String[0];
+      try {
+        catalog = U.getCatalog(mStorageHelper.getMyDir(), mode);
+      }
+      catch (U.FileException e) {
+        mV.alert(e.getMessage());
+        catalog=new String[0];
+      }
       if (catalog == null || catalog.length == 0) catalog=new String[]{"no files"};
       // the evil thing always selects 0th item by itself and ignores prompt
       catalog=U.arrayConcat(new String[] {"Choose file"}, catalog);

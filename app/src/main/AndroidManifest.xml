@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.tower"
-    android:versionCode="67"
-    android:versionName="2.8.2" >
+    android:versionCode="68"
+    android:versionName="2.8.3" >
 <!--
 2.6.7  56 16.03.2020 updated docs, minor improvements
 2.6.8  57 17.03.2020 moved rtf doc to the project root folder
@@ -16,12 +16,15 @@
 2.8.0  65 16.11.2020 updated WebMaps, track-delete bug fix
 2.8.1  66 24.11.2020 updated metadata
 2.8.2  67 14.12.2021 bugfix
+2.8.3  68 07.01.2021 adapted for Android 9+ restrictions
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <uses-feature android:name="android.hardware.location.gps" />
 
@@ -29,7 +32,9 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher3"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:usesCleartextTraffic="true"
+        android:theme="@style/Theme.AppCompat.Light.DarkActionBar" >
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name" >

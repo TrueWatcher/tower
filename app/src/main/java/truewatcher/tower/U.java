@@ -265,13 +265,16 @@ public abstract class U {
   }
 
   // reads a whole directory
-  public static String[] getCatalog(String path) {
+  public static String[] getCatalog(String path) throws FileException {
     String[] myDir = (new File(path)).list();
+    if (null == myDir) throw new U.FileException("Failed to list the working directory:"+path);
     return myDir;
   }
 
   // reads a directory? filtered by the given type
-  public static String[] getCatalog(String path, String ext) {
+  public static String[] getCatalog(String path, String ext) throws FileException {
+    File dir=(new File(path));
+    if (null == dir) throw new U.FileException("Wrong working directory:"+path);
     final String dotExt = "." + ext;
     FilenameFilter ff = new FilenameFilter() {
       @Override
@@ -279,8 +282,8 @@ public abstract class U {
         return (name.endsWith(dotExt));
       }
     };
-    String[] myDir = (new File(path)).list(ff);
-    //String[] myDir=(new File(mPath)).list(makeFilter("."+ext));
+    String[] myDir = dir.list(ff);
+    if (null == myDir) throw new U.FileException("Failed to list the working directory:"+path);
     return myDir;
   }
 

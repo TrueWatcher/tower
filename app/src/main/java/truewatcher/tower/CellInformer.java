@@ -129,11 +129,12 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
       cellInfos = tm.getAllCellInfo();
     }
     catch (SecurityException e) { throw new U.RunException(e.getMessage()); }
-    if (U.DEBUG) Log.d(U.TAG,"got "+cellInfos.size()+" cell infos");
-    if (cellInfos.size() > 0) {
+    if (null != cellInfos && cellInfos.size() > 0) {
+      if (U.DEBUG) Log.d(U.TAG,"got "+cellInfos.size()+" cell infos");
       cellData = getMyCellParams(cellInfos.get(0));
     }
     else {
+      if (U.DEBUG) Log.d(U.TAG,"got null cell info");
       cellData = getMockParams();
       mStatus="mocking";
     }
