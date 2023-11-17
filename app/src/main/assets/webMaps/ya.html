@@ -184,7 +184,7 @@
   }
   
   function updateCenter(oMap) {
-    if ( ! JSbridge.importFollowCurrentTrack) return;
+    if ( ! JSbridge.importFollowCurrentTrack()) return;
     var ll=JSbridge.importLatLon();
     var lls=ll.split(",");
     var lat=lls[0];

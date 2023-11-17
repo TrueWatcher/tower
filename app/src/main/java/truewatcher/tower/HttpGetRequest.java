@@ -7,6 +7,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import android.os.AsyncTask;
 
+import javax.net.ssl.HttpsURLConnection;
+
 interface HttpReceiver {
   public void onHttpReceived(String result);
   public void onHttpError(String error);
@@ -34,7 +36,7 @@ public class HttpGetRequest extends AsyncTask<String, Void, String> {
       URL myUrl = new URL(stringUrl);
 
       //Create a connection
-      HttpURLConnection connection = (HttpURLConnection) myUrl.openConnection();
+      HttpsURLConnection connection = (HttpsURLConnection) myUrl.openConnection();
       //Set methods and timeouts
       connection.setRequestMethod(REQUEST_METHOD);
       connection.setReadTimeout(READ_TIMEOUT);

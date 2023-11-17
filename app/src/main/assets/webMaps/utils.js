@@ -96,9 +96,17 @@ wm.utils.MockJSbridge=function(provider,ind) {
   this.getNamelessMarker=function() { return '["gps","'+_lat+'","'+_lon+'"]'; };
   this.getMarkers=function() { return '[["mark","'+(parseFloat(_lat)+1e-3)+'","'+_lon+'","upper_mark"]]'; };
   this.importViewTrackLatLonJson=function() { return '[\
-    [[55.7904,37.7760],[55.791,37.777],[55.792,37.778],[55.793,37.779]],\
-    [[55.791,37.778],[55.792,37.779],[55.793,37.780]]\
+    [\
+      [[55.7904,37.7760],[55.791,37.777],[55.792,37.778],[55.793,37.779]],\
+      [[55.791,37.778],[55.792,37.779],[55.793,37.780]]\
+    ],\
+    [\
+      [[55.7914,37.7760],[55.792,37.777],[55.793,37.778],[55.794,37.779]]\
+    ]\
   ]'; };
+  this.importViewTrackNamesJson=function() {
+    return '["track1", "track2"]';
+  };
   this.importCurrentTrackLatLonJson=function() { return '[\
     [[55.7906,37.7760],[55.7912,37.777],[55.7922,37.778],[55.7932,37.779]],\
     [[55.7912,37.778],[55.7922,37.779],[55.7932,37.780]]\

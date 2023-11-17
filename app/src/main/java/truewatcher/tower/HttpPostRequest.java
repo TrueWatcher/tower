@@ -14,6 +14,8 @@ import java.util.Map;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import javax.net.ssl.HttpsURLConnection;
+
 //@link  https://stackoverflow.com/questions/9767952/how-to-add-parameters-to-httpurlconnection-using-post-using-namevaluepair
 public class HttpPostRequest extends AsyncTask<String, Void, String> {
   private HttpReceiver receiver;
@@ -44,7 +46,7 @@ public class HttpPostRequest extends AsyncTask<String, Void, String> {
 
     try {
       url = new URL(stringUrl);
-      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
       conn.setReadTimeout(15000);
       conn.setConnectTimeout(15000);
       conn.setRequestMethod("POST");

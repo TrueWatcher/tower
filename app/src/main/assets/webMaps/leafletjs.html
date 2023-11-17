@@ -5,8 +5,8 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <script src="utils.js"></script>
-  <link rel="stylesheet" type="text/css" href="leafletjs/leaflet.css" />
-  <script src="leafletjs/leaflet.js"></script>
+  <link rel="stylesheet" type="text/css" href="leafletjs_1_9/leaflet.css" />
+  <script src="leafletjs_1_9/leaflet.js"></script>
   <style>
     #attributionDiv a:link, #attributionDiv a:visited { color: inherit; }
   </style>
@@ -93,10 +93,7 @@
   function addTileLayer(mapProvider,map) {
     var s=getService(mapProvider);
     var l=s.make(s.url);
-    if (l) {
-      map.addLayer(l);
-      ind.say(' Added tiles:"'+s.url+'" ');
-    }
+    if (l) map.addLayer(l);
     addAttribution(s.attrib, s.attribsColor);
   }
   
@@ -108,12 +105,12 @@
     Map data © <a href="https://maps.google.com" target="_blank">Google</a> '+year;
     var services={
       "osm map": {
-        url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', provider: "osm",
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', provider: "osm",
         attrib: attribOsm, attribColor: "black",
         make: function(url) { return new L.TileLayer(url, { minZoom: 1, maxZoom: 19 }); }
       },
       "opentopo map": {
-        url: 'http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', provider: "opentopo",
+        url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', provider: "opentopo",
         attrib: attribOtm, attribColor: "black",
         make: function(url) { return new L.TileLayer(url, { minZoom: 1, maxZoom: 17 }); }
       },
@@ -186,9 +183,10 @@
     var pl;
     var track = JSbridge.importViewTrackLatLonJson();
     if (! track) return;
-    var trackNames=JSbridge.importViewTrackNamesJson();
+    var trackNames = JSbridge.importViewTrackNamesJson();
     //ind.say("Got trackNames"+trackNames);
     if (trackNames) trackNames=JSON.parse(trackNames);
+    //console.log("trackNames[0]="+trackNames[0]);
     track=JSON.parse(track);
     if ( ! (track instanceof Array) || track.length == 0 ) return;// track is invalid or empty
     if ( ! (track[0] instanceof Array) || track[0].length == 0) return;// missing or empty segments
@@ -217,7 +215,7 @@
   }
   
   function updateCenter(map) {
-    if ( ! JSbridge.importFollowCurrentTrack) return;
+    if ( ! JSbridge.importFollowCurrentTrack()) return;
     var ll=JSbridge.importLatLon();
     var lls=ll.split(",");
     var lat=lls[0];
