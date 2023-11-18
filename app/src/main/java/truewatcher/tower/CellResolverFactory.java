@@ -18,8 +18,7 @@ public class CellResolverFactory {
   public static CellResolver getResolver(String which) {
     if (which.equals("mylnikov")) return new MylnikovResolver();
     if (which.equals("yandex")) return new YandexResolver();
-    Log.e(U.TAG,"CellInformer:"+"Wrong WHICH="+which);
-    return null;
+    throw new U.RunException("CellInformer:"+"Wrong WHICH="+which);
   }
   
   private static class MylnikovResolver implements CellResolver {
@@ -28,13 +27,10 @@ public class CellResolverFactory {
       String resolverServiceBase="api.mylnikov.org/geolocation/cell";
       String lacTac = cellData.has("TAC" ) ? "TAC" : "LAC";
       // https://api.mylnikov.org/geolocation/cell?v=1.1&mcc=250&mnc=02&cellid=200719106&lac=7840
-      //long cid=cellData.optLong("CID");
-      //cid=cid & 0xffff;
-      //String scid = String.valueOf(cid);
       String resolverUri = Uri.parse(U.H+resolverServiceBase)
         .buildUpon()
         .appendQueryParameter("v", "1.1")
-        .appendQueryParameter("data", "open")
+        //.appendQueryParameter("data", "open")
         .appendQueryParameter("mcc", cellData.optString("MCC"))
         .appendQueryParameter("mnc", cellData.optString("MNC"))
         .appendQueryParameter("lac", cellData.optString(lacTac))

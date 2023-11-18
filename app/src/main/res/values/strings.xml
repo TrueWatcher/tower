@@ -37,7 +37,7 @@
     <string name="ckRemoveExported">remove exported points</string>
     <string name="get">Get</string>
     <string name="action_done">Done</string>
-    <string name="chooseCellResolver">Mobile cell info service</string>
+    <string name="chooseCellResolver">Cell location service</string>
     <string name="chooseMapProvider">Map service</string>
     <string name="chooseMapZoom">Map zoom level</string>
     <string name="chooseMaxPoints">Max number of points</string>

@@ -43,6 +43,12 @@ public abstract class U {
     U.DEBUG = true;
   }
 
+  public static void debugOff() { U.DEBUG = false; }
+
+  public static void debugDef() {
+    U.DEBUG = BuildConfig.DEBUG;
+  }
+
   public static final String H = "https://";
 
   public static int MSG_COLOR = Color.parseColor("#0000ff");

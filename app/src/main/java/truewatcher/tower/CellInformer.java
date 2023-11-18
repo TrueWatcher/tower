@@ -47,6 +47,11 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
     mPoint=new Point("cell");
     mPoint.cellData=cd;
     mPi.showData(JsonHelper.filterQuotes(cd));
+    if ( "none".equals( MyRegistry.getInstance().get("cellResolver") ) ) {
+      mPi.addProgress("cell location is off");
+      onPointavailable(mPoint);
+      return;
+    }
     mPi.addProgress("trying to resolve...");
     startResolveCell();
   }
@@ -60,6 +65,10 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
     mToUpdateLocation=false;
     if ( ! p.getType().equals("cell") || p.cellData == null || p.cellData.length() < 10) {
       mPi.addProgress("Not a valid cell");
+      return;
+    }
+    if ( "none".equals( MyRegistry.getInstance().get("cellResolver") ) ) {
+      mPi.addProgress("Select cell location service");
       return;
     }
     startResolveCell();

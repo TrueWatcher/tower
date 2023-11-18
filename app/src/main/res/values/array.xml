@@ -1,10 +1,12 @@
 <resources>
 
     <string-array name="cellResolverArray">
+        <item>off</item>
         <item>mylnikov.org</item>
         <item>Yandex Locator</item>
     </string-array>
     <string-array name="cellResolverValues">
+        <item>none</item>
         <item>mylnikov</item>
         <item>yandex</item>
     </string-array>
