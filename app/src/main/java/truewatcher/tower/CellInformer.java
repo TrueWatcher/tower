@@ -6,6 +6,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import android.Manifest;
 import android.content.Context;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
@@ -20,6 +21,8 @@ import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoNr;
 import android.telephony.CellInfoWcdma;
+import android.telephony.CellSignalStrengthLte;
+import android.telephony.CellSignalStrengthNr;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -30,7 +33,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
   private String mResponse="";
   
   @Override
-  protected String getPermissionType() { return Manifest.permission.ACCESS_COARSE_LOCATION; }
+  protected String getPermissionType() { return Manifest.permission.ACCESS_FINE_LOCATION; }
   
   @Override
   protected int getPermissionCode() { return 1; }
@@ -44,18 +47,34 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
       mPi.addProgress("failed to get cell info");
       return;
     }
+    if (mStatus.equals("forbidden")) {
+      mPi.addProgress(mActivity.getResources().getString(R.string.permissionfailure));
+      return;
+    }
     mPoint=new Point("cell");
     mPoint.cellData=cd;
     mPi.showData(JsonHelper.filterQuotes(cd));
-    if ( "none".equals( MyRegistry.getInstance().get("cellResolver") ) ) {
-      mPi.addProgress("cell location is off");
+    if (shouldNotResolve()) {
       onPointavailable(mPoint);
       return;
     }
-    mPi.addProgress("trying to resolve...");
+    mPi.addProgress("trying to get location...");
     startResolveCell();
   }
-  
+
+  private boolean shouldNotResolve() {
+    if ("none".equals( MyRegistry.getInstance().get("cellResolver") ) ) {
+      mPi.addProgress("location service is off");
+      return true;
+    }
+    //if (U.DEBUG) Log.i(U.TAG,"network on:"+U.isNetworkOn(mActivity));
+    if (! U.isNetworkOn(mActivity)) {
+      mPi.addProgress("no network");
+      return true;
+    }
+    return false;
+  }
+
   public void onlyResolve(PointIndicator pi, PointReceiver pr, Point p) {
   // a shortcut entrypoint for resolving a ready cell without permission checks
     mPi=pi;
@@ -145,17 +164,32 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
     // the permission is checked in PointFetcher; just to make Lint happy
       cellInfos = tm.getAllCellInfo();
     }
-    catch (SecurityException e) { throw new U.RunException(e.getMessage()); }
-    if (null != cellInfos && cellInfos.size() > 0) {
-      if (U.DEBUG) Log.d(U.TAG,"got "+cellInfos.size()+" cell infos");
-      cellData = getMyCellParams(cellInfos.get(0));
+    catch (SecurityException e) {
+      //throw new U.RunException(e.getMessage());
+      mStatus="forbidden";
+      return cellData.toString();
     }
-    else {
+    if (null == cellInfos || cellInfos.size() == 0) {
       if (U.DEBUG) Log.d(U.TAG,"got null cell info");
       cellData = getMockParams();
       mStatus="mocking";
     }
+    else {
+      int cellCount = cellInfos.size();
+      if (U.DEBUG) Log.d(U.TAG,"got "+cellCount+" cell infos");
+      cellData = getMyCellParams(cellInfos.get(0));
+      if (U.DEBUG) Log.d(U.TAG,"0th cellInfo is registered:"+cellInfos.get(0).isRegistered()+
+          ", cellInfos registered:"+countRegisteres(cellInfos));
+    }
     return cellData.toString();    
+  }
+
+  private int countRegisteres(List<CellInfo> cellInfos) {
+    int found = 0;
+    for (CellInfo c : cellInfos) {
+      if (c.isRegistered()) found +=1;
+    }
+    return found;
   }
   
   @RequiresApi(api = Build.VERSION_CODES.Q)
@@ -174,7 +208,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
         int dbm = cellInfoGsm.getCellSignalStrength().getDbm();
         data.accumulate("dBm", dbm);
       }
-      else if (cellInfo instanceof CellInfoCdma){
+      else if (cellInfo instanceof CellInfoCdma) {
         CellInfoCdma cellInfoCdma = (CellInfoCdma) cellInfo;
         CellIdentityCdma cellIdentityCdma = cellInfoCdma.getCellIdentity();
         data.accumulate("type", "CDMA");
@@ -185,7 +219,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
         int dbm = cellInfoCdma.getCellSignalStrength().getDbm();
         data.accumulate("dBm", dbm);
       }
-      else if (cellInfo instanceof CellInfoWcdma){
+      else if (cellInfo instanceof CellInfoWcdma) {
         CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) cellInfo;
         CellIdentityWcdma cellIdentityWcdma = cellInfoWcdma.getCellIdentity();
         data.accumulate("type", "WCDMA");
@@ -194,6 +228,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
         data.accumulate("LAC", cellIdentityWcdma.getLac());
         data.accumulate("CID", cellIdentityWcdma.getCid());
         int dbm = cellInfoWcdma.getCellSignalStrength().getDbm();
+        // Get the RSCP as dBm value -120..-24dBm or UNAVAILABLE
         data.accumulate("dBm", dbm);
       }
       else if (cellInfo instanceof CellInfoLte) {
@@ -205,8 +240,16 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
         data.accumulate("TAC", cellIdentityLte.getTac());
         data.accumulate("CID", cellIdentityLte.getCi());
         data.accumulate("PCI", cellIdentityLte.getPci());
-        int dbm = cellInfoLte.getCellSignalStrength().getDbm();
-        data.accumulate("dBm", dbm);
+        CellSignalStrengthLte ss = (CellSignalStrengthLte) cellInfoLte.getCellSignalStrength();
+        if (U.classHasMethod(CellSignalStrengthLte.class, "getDbm")) {
+          data.accumulate("dBm", ss.getDbm());
+        }
+        if (U.classHasMethod(CellSignalStrengthLte.class, "getRsrp")) {
+          data.accumulate("RSRP", ss.getRsrp());
+        }
+        if (U.classHasMethod(CellSignalStrengthLte.class, "getRssi")) {
+          data.accumulate("RSSI", ss.getRssi());
+        }
       }
       else if (cellInfo instanceof CellInfoNr) {
         CellInfoNr cellInfoNr = (CellInfoNr) cellInfo;
@@ -217,8 +260,15 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
         data.accumulate("TAC", cellIdentityNr.getTac());
         data.accumulate("CID", cellIdentityNr.getNci());
         data.accumulate("PCI", cellIdentityNr.getPci());
-        int dbm = cellInfoNr.getCellSignalStrength().getDbm();
-        data.accumulate("dBm", dbm);
+        CellSignalStrengthNr ss = (CellSignalStrengthNr)  cellInfoNr.getCellSignalStrength();
+        data.accumulate("dBm", ss.getDbm());
+        // Get the SS-RSRP as dBm value -140..-44dBm or UNAVAILABLE
+        if (U.classHasMethod(CellSignalStrengthNr.class, "getCsiRsrp")) {
+          data.accumulate("CsiRSRP", ss.getCsiRsrp());
+        }
+        if (U.classHasMethod(CellSignalStrengthNr.class, "getSsRsrp")) {
+          data.accumulate("SsRSRP", ss.getSsRsrp());
+        }
       }
       else {
         Log.e(U.TAG,"Wrong cellInfo");
@@ -244,6 +294,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
       data.accumulate("MNC", 99);
       data.accumulate("LAC", 11002);
       data.accumulate("CID", 26953);
+      data.accumulate("dBm", -60);
     }
     catch (JSONException e) {
       Log.e(U.TAG, e.getStackTrace().toString());

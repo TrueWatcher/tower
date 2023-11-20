@@ -13,12 +13,12 @@ android {
     buildTypes {
         release {
             // no optimisation
-            //minifyEnabled false
+            minifyEnabled false
 
             // optimisation
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            //minifyEnabled true
+            //shrinkResources true
+            //proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
 
             // optimise more agressively
             //proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.txt'

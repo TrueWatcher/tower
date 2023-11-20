@@ -70,4 +70,5 @@
     <string name="action_export_gpx">Export as GPX</string>
     <string name="action_lengths">Count lengths</string>
     <string name="dontminimize">While writing a track, do not minimize this app, or else it will stop after a few minutes.You may press POWER to turn the screen off</string>
+    <string name="permissionfailure">Problem with location permission, try to click GPS or allow it manually in Settings - apps</string>
 </resources>

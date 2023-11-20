@@ -1,9 +1,13 @@
 package truewatcher.tower;
 
+import android.app.Activity;
 import android.content.Context;
+
+import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.ArrayMap;
@@ -37,7 +41,7 @@ public abstract class U {
 
   public static final String TAG = "tower";
 
-  public static boolean DEBUG = BuildConfig.DEBUG;//true;//
+  public static boolean DEBUG = true;//BuildConfig.DEBUG;//true;//
 
   public static void debugOn() {
     U.DEBUG = true;
@@ -246,7 +250,12 @@ public abstract class U {
       segMap=aSegMap;
       away=aAway;
     }
+  }
 
+  public static boolean isNetworkOn(Activity activity) {
+    ConnectivityManager cm = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
+    if ( cm.getActiveNetworkInfo() == null || ! cm.getActiveNetworkInfo().isConnected()) return false;
+    return true;
   }
 
   // deletes a file
@@ -385,7 +394,17 @@ public abstract class U {
     Class<?> objectClass;
     try {
       classClass.getField(fieldName);
-    } catch (NoSuchFieldException e) {
+    } catch (NoSuchFieldException | SecurityException e) {
+      return false;
+    }
+    return true;
+  }
+
+  public static boolean classHasMethod(Class<?> classClass, String methodName) {
+    Class<?> objectClass;
+    try {
+      classClass.getMethod(methodName);
+    } catch (NoSuchMethodException | SecurityException e) {
       return false;
     }
     return true;
