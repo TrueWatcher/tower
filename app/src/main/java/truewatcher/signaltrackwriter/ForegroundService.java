@@ -1,4 +1,4 @@
-package truewatcher.trackwriter;
+package truewatcher.signaltrackwriter;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -7,7 +7,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
-import android.support.v4.app.NotificationCompat;
+import androidx.core.app.NotificationCompat;
 import android.util.Log;
 
 // https://github.com/android/location-samples/blob/master/LocationUpdatesForegroundService/app/src/main/java/com/google/android/gms/location/sample/locationupdatesforegroundservice/LocationUpdatesService.java

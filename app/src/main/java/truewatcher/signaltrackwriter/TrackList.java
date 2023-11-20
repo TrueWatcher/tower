@@ -1,9 +1,8 @@
-package truewatcher.trackwriter;
+package truewatcher.signaltrackwriter;
 
 import org.json.JSONArray;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /*
@@ -94,7 +93,7 @@ public class TrackList implements StorageHelper.PointList {
     Trackpoint tp=mSArr.get(mSeg).getArr().get(mTp);
     mTp += 1;
     mIterCount += 1;
-    tp.setId(mIterCount);
+    tp.setIdInt(mIterCount);
     return tp;
   }
 

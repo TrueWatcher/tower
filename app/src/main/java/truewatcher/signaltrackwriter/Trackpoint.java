@@ -1,9 +1,13 @@
-package truewatcher.trackwriter;
+package truewatcher.signaltrackwriter;
 
 import java.util.Set;
 import org.json.JSONArray;
+import org.json.JSONObject;
+
 import android.location.Location;
 import android.text.TextUtils;
+import android.util.Log;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class Trackpoint extends LatLon implements Cloneable {
-  private int mId=0;
+  public String id="";
   private String mType="T";
   private static final Set<String> TYPES = new HashSet<String>(Arrays.asList(
           new String[] {"T","note"}
@@ -21,12 +25,13 @@ public class Trackpoint extends LatLon implements Cloneable {
   public String alt="";
   public String range="";
   public String time=getDate();
-  public String data="";
-  private String mNewSegment="";
   public String comment="";
+  public String data="";
+  public String data1="";
+  private String mNewSegment="";
   // https://www.gpsvisualizer.com/tutorials/tracks.html
   public static final List<String> FIELDS = Collections.unmodifiableList(Arrays.asList(
-          new String[] {"type","new_track","time","lat","lon","alt","range","name","data"}
+          new String[] {"id","type","new_track","time","lat","lon","alt","range","comment","data","data1"}
           ));
   public static final String SEP = ";";
   public static final String NL = "\n";
@@ -47,13 +52,29 @@ public class Trackpoint extends LatLon implements Cloneable {
     if (loc.hasAccuracy()) this.range=String.valueOf(loc.getAccuracy());
   }
 
+  public Trackpoint(String lat, String lon) {
+    this.lat=lat;
+    this.lon=lon;
+  }
+
+  public void addCell(JSONObject cellData) {
+    this.setComment("S");
+    this.setData(cellData.optString("dBm"));
+    cellData.remove("dBm");
+    this.setData1(cellData.toString());
+  }
+
+  public void setComment(String c) { comment=c; }
+  public void setData(String d) { data=d; }
+  public void setData1(String d) { data1=d; }
+
   public Object clone() {
     try { return super.clone(); }
     catch ( CloneNotSupportedException e ) { return null; }
   }
 
-  public void setId(int i) { mId=i; }
-  public int getId() { return mId; }
+  public void setIdInt(int i) { id=String.valueOf(i); }
+  public int getIdInt() { return Integer.valueOf(id); }
 
   public void setType(String t) {
     if ( ! TYPES.contains(t) ) throw new U.RunException("Unhnown type="+t);
@@ -65,6 +86,7 @@ public class Trackpoint extends LatLon implements Cloneable {
   public void setNewSegment() { mNewSegment="1"; }
   public void setNewSegment(String s) { mNewSegment=s; }
   public boolean isNewSegment() { return ! mNewSegment.isEmpty(); }
+  public String getNewSegment() { return mNewSegment; }
 
   public static String getDate() {
     SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -82,6 +104,7 @@ public class Trackpoint extends LatLon implements Cloneable {
 
   public String toCsv() {
     List<String> ls=new ArrayList<String>();
+    ls.add(ne(id));
     ls.add(ne(mType));
     ls.add(ne(mNewSegment));
     ls.add(ne(time));
@@ -91,6 +114,7 @@ public class Trackpoint extends LatLon implements Cloneable {
     ls.add(ne(range));
     ls.add(ne(comment));
     ls.add(ne(data));
+    ls.add(ne(data1));
     String s= TextUtils.join(Trackpoint.SEP, ls);
     return s;
   }
@@ -98,19 +122,24 @@ public class Trackpoint extends LatLon implements Cloneable {
   public Trackpoint fromCsv(String s) throws U.DataException {
     s=s.trim();
     if (s.isEmpty()) return null;
+    if (s.indexOf(Trackpoint.NL) >= 0) {
+      Log.e(U.TAG, "Found NL in supposed csv line at:"+String.valueOf(s.indexOf(Trackpoint.NL)));
+    }
     String[] ls=TextUtils.split(s, Trackpoint.SEP);
     if (ls.length != Trackpoint.FIELDS.size()) {
       throw new U.DataException("Source has "+ls.length+" fields, while "+Trackpoint.FIELDS.size()+" are required");
     }
-    setType(ls[0]);
-    if ( ! ls[1].isEmpty()) setNewSegment(ls[1]);
-    time=ls[2];
-    lat=ls[3];
-    lon=ls[4];
-    alt=ls[5];
-    range=ls[6];
-    comment=ls[7];
-    data=ls[8];
+    id=ls[0];
+    setType(ls[1]);
+    if ( ! ls[2].isEmpty()) setNewSegment(ls[2]);
+    time=ls[3];
+    lat=ls[4];
+    lon=ls[5];
+    alt=ls[6];
+    range=ls[7];
+    comment=ls[8];
+    data=ls[9];
+    data1=ls[10];
     return this;
   }
 

@@ -1,10 +1,11 @@
-package truewatcher.trackwriter;
+package truewatcher.signaltrackwriter;
 
 public class Model {
   private static Model sMe=null;
 
   private TrackStorage mTrackStorage=new TrackStorage();
   private TrackListener mTrackListener=new TrackListener(mTrackStorage);
+  private CellInformer mCellInformer=new CellInformer();
 
   public static Model getInstance() {
     if (sMe == null) sMe=new Model();
@@ -14,9 +15,8 @@ public class Model {
   private Model() {}
 
   public TrackStorage getTrackStorage() { return mTrackStorage; }
-
   public TrackListener getTrackListener() { return mTrackListener; }
-
+  public CellInformer getCellInformer() { return mCellInformer; }
 }
 
 

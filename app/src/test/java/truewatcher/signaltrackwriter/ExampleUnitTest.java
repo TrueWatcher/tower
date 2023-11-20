@@ -1,4 +1,4 @@
-package truewatcher.trackwriter;
+package truewatcher.signaltrackwriter;
 
 import org.junit.Test;
 

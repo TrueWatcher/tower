@@ -1,4 +1,4 @@
-package truewatcher.trackwriter;
+package truewatcher.signaltrackwriter;
 
 import java.io.IOException;
 import android.content.Context;
@@ -40,7 +40,7 @@ public class StorageHelper {
     StringBuilder sb=new StringBuilder(buf);
     while ((p=pl.iterate()) != null) {
       fullCount+=1;
-      id=p.getId();
+      id=p.getIdInt();
       if (id >= from && (until < 0 || id <= until)) {
         sb.append(p.toCsv()).append(Point.NL);
         count+=1;
@@ -132,8 +132,8 @@ public class StorageHelper {
       line=lines[i].trim();
       if (line.isEmpty()) continue;
       p=(new Point()).fromCsv(line);
-      if (U.DEBUG) Log.d(U.TAG,"StorageHelper:"+"About to add point "+p.getId());
-      if (p.getId() == pl.getNext()) { pl.addAsNext(p); }
+      if (U.DEBUG) Log.d(U.TAG,"StorageHelper:"+"About to add point "+p.getIdInt());
+      if (p.getIdInt() == pl.getNext()) { pl.addAsNext(p); }
       else { pl.addAndShiftNext(p); }
       count+=1;
       if (count >= maxCount) {

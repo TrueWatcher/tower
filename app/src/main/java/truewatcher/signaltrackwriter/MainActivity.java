@@ -1,4 +1,4 @@
-package truewatcher.trackwriter;
+package truewatcher.signaltrackwriter;
 
 import android.Manifest;
 import android.content.Context;
@@ -8,8 +8,8 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.RequiresApi;
-import android.support.v4.app.Fragment;
+import androidx.annotation.RequiresApi;
+import androidx.fragment.app.Fragment;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -47,6 +47,7 @@ public class MainActivity extends SingleFragmentActivity {
     private MyRegistry mRg=MyRegistry.getInstance();
     private TrackStorage mTrackStorage=Model.getInstance().getTrackStorage();
     private TrackListener mTrackListener=Model.getInstance().getTrackListener();
+    private CellInformer mCellInformer=Model.getInstance().getCellInformer();
     private TextView tvState, tvData, tvCount, tvPrevInterval, tvTime;
     private Button bRefresh, bOn, bOnSegm, bOff, bSettings;
     private TableLayout tlTable1;
@@ -198,6 +199,7 @@ public class MainActivity extends SingleFragmentActivity {
         startMyService();
         mTrackStorage.initTargetDir(getActivity());
         String storageIbfo=displayStorageStat(mTrackStorage.statStored());
+        mCellInformer.bindAxtivity(getActivity());
         mTrackListener.clearCounter();
         mTrackListener.startListening(getActivity());
         mTrackListener.setOn();
@@ -382,6 +384,6 @@ public class MainActivity extends SingleFragmentActivity {
   }// end MainPageFragment
 
   @Override
-  protected android.support.v4.app.Fragment createFragment() { return new MainPageFragment(); }
+  protected Fragment createFragment() { return new MainPageFragment(); }
 
 }

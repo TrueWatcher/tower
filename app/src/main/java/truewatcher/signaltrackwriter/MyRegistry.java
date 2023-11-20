@@ -1,4 +1,4 @@
-package truewatcher.trackwriter;
+package truewatcher.signaltrackwriter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -89,7 +89,7 @@ public class MyRegistry {
   }
 
   private static String getDefaultsString() {
-    String defs = "{\"gpsMinDistance\":\"0\",\"gpsMinDelayS\":\"5\",\"trackShouldWrite\":\"true\","
+    String defs = "{\"gpsMinDistance\":\"8\",\"gpsMinDelayS\":\"5\",\"trackShouldWrite\":\"true\","
             + "\"gpsTimeoutS\":\"120\",\"gpsAcceptableAccuracy\":\"8\",\"useTowerFolder\":false\"\""
             + "}";
     return defs;

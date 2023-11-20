@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="truewatcher.trackwriter"
-    android:versionCode="8"
-    android:versionName="1.4.3" >
+    package="truewatcher.signaltrackwriter"
+    android:versionCode="21"
+    android:versionName="2.0.1" >
   <!--
+  trackwriter
   1.4.0 5 18.02.2020 added saving to the truewatcher.tower folder
   1.4.1 6 19.02.2020 fixed starting new segment after deleteLastSegment
   1.4.2 7 28.02.2020 bugfix
   1.4.3 8 01.03.2020 code improvements in TrackStorage
   1.4.4 9 06.03.2020 tefactoring
+  signaltrackwriter
+  2.0.0  20 18.11.2023 added CellInformer
+  2.0.1  21 19.11.2023 added serial id
   -->
 
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
   <uses-feature android:name="android.hardware.location.gps" />
 
   <application
@@ -26,7 +30,7 @@
       android:theme="@style/AppTheme">
 
     <activity
-        android:name=".MainActivity"
+        android:name="truewatcher.signaltrackwriter.MainActivity"
         android:label="@string/app_name">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
@@ -35,10 +39,10 @@
       </intent-filter>
     </activity>
     <activity
-        android:name=".SettingsActivity" />
+        android:name="truewatcher.signaltrackwriter.SettingsActivity" />
 
     <service
-        android:name=".ForegroundService"
+        android:name="truewatcher.signaltrackwriter.ForegroundService"
         android:enabled="true"
         android:exported="true" />
   </application>

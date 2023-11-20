@@ -1,11 +1,16 @@
-package truewatcher.trackwriter;
+package truewatcher.signaltrackwriter;
 
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+
+import org.json.JSONObject;
+
+import androidx.annotation.RequiresApi;
 
 public class TrackListener implements LocationListener {
 
@@ -15,6 +20,8 @@ public class TrackListener implements LocationListener {
   public long prevUpdateTime=0;
   public long updateTime=0;
   public long startUpdatesTime=0;
+  private String mPrevCellInfo="";
+  private Trackpoint mPrevTrackpoint=new Trackpoint("0","0");
   private LocationManager mLocationManager=null;// same instance for startListening and stopListening !
   //private Model.LocationReceiver mLocationReceiver = new Model.LocationReceiver();
   private MyRegistry mRg = MyRegistry.getInstance();
@@ -34,7 +41,7 @@ public class TrackListener implements LocationListener {
 
   public void startListening(Context ct) {
     long minTimeMs=1000*mRg.getInt("gpsMinDelayS");//U.minFixDelayS;
-    float minDistanceM=mRg.getInt("gpsMinDistance");//0;
+    float minDistanceM=0;//mRg.getInt("gpsMinDistance");// get updates by timer, check signal
     try {
       mLocationManager = (LocationManager) ct.getSystemService(Context.LOCATION_SERVICE);
       mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTimeMs, minDistanceM,
@@ -53,6 +60,7 @@ public class TrackListener implements LocationListener {
     catch (SecurityException e) { throw new U.RunException(e.getMessage()); }
   }
 
+  @RequiresApi(api = Build.VERSION_CODES.Q)
   public void onLocationChanged(Location loc) {
     if (U.DEBUG) Log.i(U.TAG, "LocationReceiver:"+"got a location " + loc.toString());
     incCounter();
@@ -78,8 +86,41 @@ public class TrackListener implements LocationListener {
   @Override
   public void onProviderDisabled(String provider) {}
 
+  @RequiresApi(api = Build.VERSION_CODES.Q)
   private void onPointavailable(Location loc) {
-    mTrackStorage.simplySave(new Trackpoint(loc));
+    Trackpoint tp=new Trackpoint(loc);
+    JSONObject cellData = Model.getInstance().getCellInformer().getInfo();
+    tp.addCell(cellData);
+    if (U.DEBUG) Log.i(U.TAG, "got a fix");
+    if (farEnough(tp, mPrevTrackpoint)) {
+      mPrevTrackpoint = tp;
+      mTrackStorage.simplySave(tp);
+      if (U.DEBUG) Log.i(U.TAG, "new point "+String.valueOf(mTrackStorage.getLastId()));
+      return;
+    }
+    if (signalChanged(tp, mPrevTrackpoint)) {
+      mPrevTrackpoint = tp;
+      mTrackStorage.updateLast(tp);
+      if (U.DEBUG) Log.i(U.TAG, "update "+String.valueOf(mTrackStorage.getLastId())+":"
+          +String.valueOf(tp.data)+", "+tp.data1);
+      return;
+    }
+    if (U.DEBUG) Log.i(U.TAG, "noop");
+    return;
+  }
+
+  private boolean farEnough(LatLon x, LatLon y) {
+    int delta = (int)  Math.floor(U.proximityM(x,y));
+    if (U.DEBUG) Log.i(U.TAG, "delta:"+String.valueOf(delta ));
+    return (delta >= mRg.getInt("gpsMinDistance"));
+  }
+
+  private boolean signalChanged(Trackpoint x, Trackpoint y) {
+    //return true;
+    if ( ! x.data1.equals(y.data1)) return true; // cell handover
+    int minDbmDelta=5;
+    if ( Math.abs(Integer.valueOf(x.data) - Integer.valueOf(y.data)) >= minDbmDelta )  return true;
+    return false;
   }
 
 }

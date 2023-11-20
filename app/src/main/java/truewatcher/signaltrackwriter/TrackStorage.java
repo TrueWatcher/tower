@@ -1,7 +1,6 @@
-package truewatcher.trackwriter;
+package truewatcher.signaltrackwriter;
 
 import android.content.Context;
-import android.support.v4.util.ArrayMap;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -13,11 +12,13 @@ import java.util.Map;
 
 public class TrackStorage {
   private String mTargetPath;
-  private String mMyFileExt = "currentTrack.csv";
+  private String mMyFileExt = "currentSignalTrack.csv";
   private boolean mShouldStartNewSegment = false;
   private long mTotalPointCount =0;
   public Trackpoint latestStoredTrackpoint = null;
   private MyRegistry mRg = MyRegistry.getInstance();
+  private int mLastNl=0;
+  private int mLastId=0;
 
   public void demandNewSegment() {
     mShouldStartNewSegment = true;
@@ -47,6 +48,13 @@ public class TrackStorage {
     }
   }
 
+  private int detectLastId() throws U.FileException, IOException, U.DataException {
+    U.Summary2 res=visitStored(new Numerator());
+    return Integer.valueOf(res.segMap);
+  }
+
+  public int getLastId() { return mLastId; }
+
   public String getTowerDir(String nativeDir) {
     String changedDir = nativeDir.replace("truewatcher.trackwriter","truewatcher.tower");
     if (false == new File(changedDir).exists()) return "";
@@ -65,6 +73,8 @@ public class TrackStorage {
       p.setNewSegment();
       mShouldStartNewSegment = false;
     }
+    mLastId += 1;
+    p.setIdInt(mLastId);
     String line = p.toCsv().concat(Trackpoint.NL);
     try {
       U.filePutContents(mTargetPath, mMyFileExt, line, true);
@@ -73,6 +83,36 @@ public class TrackStorage {
       throw new U.RunException("IOException" + e.getMessage());
     }
     if (p.getType().equals("T")) mTotalPointCount += 1;
+  }
+
+  public void updateLast(Trackpoint p) {
+    if ( ! mRg.getBool("trackShouldWrite")) return;
+    String buf= "";
+    try {
+      buf=U.fileGetContents(mTargetPath, mMyFileExt);
+      buf = buf.trim();
+      p.setNewSegment(detectNewSegment(buf));
+      p.setIdInt(mLastId);
+      String line = p.toCsv().concat(Trackpoint.NL);
+      buf=buf.substring(0,mLastNl+1);
+      buf=buf.concat(line);
+      U.filePutContents(mTargetPath, mMyFileExt, buf, false);
+    }
+    catch (IOException e) {
+      throw new U.RunException("IOException:" + e.getMessage());
+    }
+    catch (U.DataException e) {
+      throw new U.RunException("DataException:" + e.getMessage() + "Trace:" + e.getStackTrace());
+    }
+  }
+
+  private String detectNewSegment(String buf) throws U.DataException {
+    buf = buf.trim();
+    mLastNl=buf.lastIndexOf(Trackpoint.NL);
+    String lastLine=buf.substring(mLastNl+1);
+    if (U.DEBUG) Log.i(U.TAG, "lastLine:"+lastLine+"===");
+    String ns=(new Trackpoint()).fromCsv(lastLine).getNewSegment();
+    return ns;
   }
 
   //adb pull /sdcard/Android/data/truewatcher.trackwriter/files/currentTrack.csv
@@ -86,6 +126,9 @@ public class TrackStorage {
     U.Summary2 res=visitStored(new Counter());
     U.Summary2 mil=visitStored(new Mileage());
     res.segMap=res.segMap+Point.NL+mil.segMap;
+    U.Summary2 res2=visitStored(new Numerator());
+    mLastId=Integer.valueOf(res2.segMap);
+    if (U.DEBUG) Log.i(U.TAG, "found last ID:"+mLastId);
     return res;
   }
 
@@ -194,6 +237,49 @@ public class TrackStorage {
         }
       }
       return map;
+    }
+  }
+
+  public class Numerator extends Visitor {
+    private int mCurrentId = 0;
+    //private int mLastId = 0;
+    private String mError = "";
+
+    @Override
+    void onNewtrackpoint(int lineNumber, int segNumber, Trackpoint p, String[] lines) {
+      String foundId = p.id;
+      int foundIdInt = -1;
+      if (foundId.isEmpty()) {
+        mError += " Empty id at " + String.valueOf(lineNumber) + " ";
+        return;
+      }
+      try {
+        foundIdInt = Integer.parseInt(foundId);
+      }
+      catch (NumberFormatException e) {}
+      if (foundIdInt < 0) {
+        mError += " Wrong id:" + foundId + " " + String.valueOf(lineNumber) + " ";
+        return;
+      }
+      if (foundIdInt <= mCurrentId) mError += " Non-order id:" + foundId + " " + String.valueOf(lineNumber) + " ";
+      mCurrentId = foundIdInt;
+    }
+
+    /*
+    void onNewtrackpoint__(int lineNumber, int segNumber, Trackpoint p, String[] lines) {
+      p.setIdInt(mCurrentId);
+      mCurrentId += 1;
+    }
+
+    @Override
+    void onEnd(int lineNumber, int segNumber, Trackpoint p, String[] lines) throws U.DataException {
+      mCurrentId -= 1;
+    }*/
+
+    @Override
+    String presentResult() {
+      if ( ! mError.isEmpty()) Log.e(U.TAG, "Numerator errors:"+mError+" ");
+      return String.valueOf(mCurrentId);
     }
   }
 

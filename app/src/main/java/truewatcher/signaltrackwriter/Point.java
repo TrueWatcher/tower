@@ -1,4 +1,4 @@
-package truewatcher.trackwriter;
+package truewatcher.signaltrackwriter;
 
 public class Point extends Trackpoint {
   //public Point() { super(); }

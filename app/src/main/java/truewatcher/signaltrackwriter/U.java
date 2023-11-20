@@ -1,6 +1,6 @@
-package truewatcher.trackwriter;
+package truewatcher.signaltrackwriter;
 
-import android.support.v4.util.ArrayMap;
+import androidx.collection.ArrayMap;
 import android.util.Log;
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 
 public class U {
 
-  public static final String TAG="trackwriter";
+  public static final String TAG="signaltrackwriter_";
 
   public static final boolean DEBUG=true;
 
