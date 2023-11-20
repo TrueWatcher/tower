@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="truewatcher.trackwriter"
+    android:versionCode="8"
+    android:versionName="1.4.3" >
+  <!--
+  1.4.0 5 18.02.2020 added saving to the truewatcher.tower folder
+  1.4.1 6 19.02.2020 fixed starting new segment after deleteLastSegment
+  1.4.2 7 28.02.2020 bugfix
+  1.4.3 8 01.03.2020 code improvements in TrackStorage
+  1.4.4 9 06.03.2020 tefactoring
+  -->
+
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+  <uses-feature android:name="android.hardware.location.gps" />
+
+  <application
+      android:allowBackup="true"
+      android:icon="@mipmap/ic_launcher"
+      android:label="@string/app_name"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:supportsRtl="true"
+      android:theme="@style/AppTheme">
+
+    <activity
+        android:name=".MainActivity"
+        android:label="@string/app_name">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+    <activity
+        android:name=".SettingsActivity" />
+
+    <service
+        android:name=".ForegroundService"
+        android:enabled="true"
+        android:exported="true" />
+  </application>
+
+</manifest>
