@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.tower"
-    android:versionCode="71"
-    android:versionName="2.9.2" >
+    android:versionCode="72"
+    android:versionName="2.9.3" >
 <!--
 2.8.0  65 16.11.2020 updated WebMaps, track-delete bug fix
 2.8.1  66 24.11.2020 updated metadata
@@ -11,6 +11,7 @@
 2.9.0  69 16.11.2023 signal dbm in CellInformer, 5G, targetApi > 30
 2.9.1  70 18.11.2023 added cell info service "none"
 2.9.2  71 20.11.2023 improvements on CellInformer
+2.9.3  72 21.11.2023  more improvements on CellInformer
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

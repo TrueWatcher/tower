@@ -46,10 +46,14 @@ public class GpsInformer extends PointFetcher {
     mStatus="enabled";
     mPi.addProgress("Ok, connecting");
     try {
-      //the permission is checked in PointFetcher; just to make Lint happy
+      //the permission is checked in PointFetcher
       mLocnManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
     }
-    catch (SecurityException e) { throw new U.RunException(e.getMessage()); }
+    catch (SecurityException e) {
+      mStatus="forbidden";
+      mPi.addProgress((mActivity.getResources().getString(R.string.permissionfailure)));
+      return;
+    }
   }
 
 

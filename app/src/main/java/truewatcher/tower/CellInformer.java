@@ -20,6 +20,7 @@ import android.telephony.CellInfoCdma;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoNr;
+import android.telephony.CellInfoTdscdma;
 import android.telephony.CellInfoWcdma;
 import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthNr;
@@ -42,15 +43,20 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
   @Override
   public void afterLocationPermissionOk() {
     String cd=getInfo();
-    if (! mStatus.equals("available") && ! mStatus.equals("mocking")) {
-      mStatus="error";
-      mPi.addProgress("failed to get cell info");
-      return;
-    }
     if (mStatus.equals("forbidden")) {
       mPi.addProgress(mActivity.getResources().getString(R.string.permissionfailure));
       return;
     }
+    if (mStatus.indexOf("unsupported") == 0) {
+      mPi.addProgress(mStatus);
+      return;
+    }
+    if (! mStatus.equals("available") && ! mStatus.equals("mocking") && ! mStatus.equals("noService")) {
+      mStatus="error";
+      mPi.addProgress("failed to get cell info");
+      return;
+    }
+
     mPoint=new Point("cell");
     mPoint.cellData=cd;
     mPi.showData(JsonHelper.filterQuotes(cd));
@@ -103,10 +109,14 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
     catch (JSONException e) { 
       Log.e(U.TAG,"Wrong point.cellData");
       Log.e(U.TAG,e.getMessage());
-      mStatus="Wrong point.cellData";
+      mPi.addProgress("Wrong point.cellData");
       onPointavailable(mPoint);
+      return;
     }
     try {
+      if ( ! cellData.has("CID") || "".equals(cellData.optString("CID"))) {
+        throw new U.DataException("No cell id");
+      }
       mCellResolver = CellResolverFactory.getResolver(MyRegistry.getInstance().get("cellResolver"));
       resolverUri = mCellResolver.makeResolverUri(cellData);
       reqData = mCellResolver.makeResolverData(cellData);
@@ -114,6 +124,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
     catch (U.DataException e) {
       Log.e(U.TAG,e.getMessage());
       mStatus="Failure:"+e.getMessage();
+      mPi.addProgress(mStatus);
       onPointavailable(mPoint);
       return;
     }
@@ -161,25 +172,29 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
     TelephonyManager tm = (TelephonyManager) mActivity.getSystemService(Context.TELEPHONY_SERVICE);
     List<CellInfo> cellInfos = new ArrayList<>();
     try {
-    // the permission is checked in PointFetcher; just to make Lint happy
+    // the permission is checked in PointFetcher
       cellInfos = tm.getAllCellInfo();
+      // also https://stackoverflow.com/questions/61075598/what-is-proper-usage-of-requestcellinfoupdate
     }
     catch (SecurityException e) {
       //throw new U.RunException(e.getMessage());
       mStatus="forbidden";
       return cellData.toString();
     }
+
     if (null == cellInfos || cellInfos.size() == 0) {
       if (U.DEBUG) Log.d(U.TAG,"got null cell info");
-      cellData = getMockParams();
-      mStatus="mocking";
+      //cellData=getMockParams();
+      //mStatus="mocking";
+      cellData=getNoService();
+      mStatus="noService";
     }
     else {
       int cellCount = cellInfos.size();
       if (U.DEBUG) Log.d(U.TAG,"got "+cellCount+" cell infos");
-      cellData = getMyCellParams(cellInfos.get(0));
       if (U.DEBUG) Log.d(U.TAG,"0th cellInfo is registered:"+cellInfos.get(0).isRegistered()+
           ", cellInfos registered:"+countRegisteres(cellInfos));
+      cellData = getMyCellParams(cellInfos.get(0));
     }
     return cellData.toString();    
   }
@@ -197,6 +212,13 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
     JSONObject data=new JSONObject();
     JSONObject err=new JSONObject();
     try {
+      int age = (int) ( cellInfo.getTimeStamp() - System.currentTimeMillis()/1000 );
+      if (age >= 0) data.accumulate("age", age );//age);
+      if (U.classHasMethod(CellInfo.class, "getCellConnectionStatus")) {
+        int s = cellInfo.getCellConnectionStatus();
+        int isPrimary = s == CellInfo.CONNECTION_PRIMARY_SERVING ? 1 : 0;
+        data.accumulate("primary", isPrimary);
+      }
       if (cellInfo instanceof CellInfoGsm) {
         CellInfoGsm cellInfoGsm = (CellInfoGsm) cellInfo;
         CellIdentityGsm cellIdentityGsm = cellInfoGsm.getCellIdentity();
@@ -231,7 +253,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
         // Get the RSCP as dBm value -120..-24dBm or UNAVAILABLE
         data.accumulate("dBm", dbm);
       }
-      else if (cellInfo instanceof CellInfoLte) {
+      else if (U.classExists("android.telephony.CellInfoLte") && cellInfo instanceof CellInfoLte) {
         CellInfoLte cellInfoLte = (CellInfoLte) cellInfo;
         CellIdentityLte cellIdentityLte = cellInfoLte.getCellIdentity();
         data.accumulate("type", "LTE");
@@ -251,7 +273,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
           data.accumulate("RSSI", ss.getRssi());
         }
       }
-      else if (cellInfo instanceof CellInfoNr) {
+      else if (U.classExists("android.telephony.CellInfoNr") && cellInfo instanceof CellInfoNr) {
         CellInfoNr cellInfoNr = (CellInfoNr) cellInfo;
         CellIdentityNr cellIdentityNr = (CellIdentityNr) cellInfoNr.getCellIdentity();
         data.accumulate("type", "NR");
@@ -270,6 +292,9 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
           data.accumulate("SsRSRP", ss.getSsRsrp());
         }
       }
+      else if (U.classExists("android.telephony.CellInfoTdscdma") && cellInfo instanceof CellInfoTdscdma) {
+        mStatus="unsupported type Tdscdma";
+      }
       else {
         Log.e(U.TAG,"Wrong cellInfo");
         mStatus="error";
@@ -285,7 +310,20 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
       return err;
     }
   }
-  
+  private JSONObject getNoService() {
+    JSONObject data=new JSONObject();
+    try {
+      data.accumulate("type", "noService");
+      data.accumulate("dBm", -999);
+    }
+    catch (JSONException e) {
+      Log.e(U.TAG, e.getStackTrace().toString());
+      return new JSONObject();
+    }
+    cellData=data;
+    return data;
+  }
+
   private JSONObject getMockParams() {
     JSONObject data=new JSONObject();
     try {
