@@ -108,7 +108,7 @@ public class MyRegistry {
   }
   
   private static String getDefaultsString() {
-    String defs="{\"cellResolver\":\"mylnikov\",\"mapProvider\":\"osm map\",\"mapZoom\":\"17\",\"maxPoints\":\"30\","
+    String defs="{\"cellResolver\":\"none\",\"mapProvider\":\"osm map\",\"mapZoom\":\"17\",\"maxPoints\":\"30\","
     + "\"useTrash\":\"false\",\"gpsAcceptableAccuracy\":\"8\",\"gpsMaxFixCount\":\"10\","
     + "\"myFile\":\"current.csv\","    
     + "\"yandexMapKey\":\"\", \"yandexLocatorKey\":\"\", \"isKeylessDistro\":\"false\","

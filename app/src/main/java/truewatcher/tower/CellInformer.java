@@ -24,6 +24,7 @@ import android.telephony.CellInfoTdscdma;
 import android.telephony.CellInfoWcdma;
 import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthNr;
+import android.telephony.CellSignalStrengthTdscdma;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -70,7 +71,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
 
   private boolean shouldNotResolve() {
     if ("none".equals( MyRegistry.getInstance().get("cellResolver") ) ) {
-      mPi.addProgress("location service is off");
+      mPi.addProgress("location service is off (see Settings)");
       return true;
     }
     //if (U.DEBUG) Log.i(U.TAG,"network on:"+U.isNetworkOn(mActivity));
@@ -212,8 +213,10 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
     JSONObject data=new JSONObject();
     JSONObject err=new JSONObject();
     try {
-      int age = (int) ( cellInfo.getTimeStamp() - System.currentTimeMillis()/1000 );
-      if (age >= 0) data.accumulate("age", age );//age);
+      if (U.classHasMethod(CellInfo.class, "getTimeStamp")) {
+        int age = (int) (cellInfo.getTimeStamp() - System.currentTimeMillis() / 1000);
+        if (age >= 0) data.accumulate("age", age);
+      }
       if (U.classHasMethod(CellInfo.class, "getCellConnectionStatus")) {
         int s = cellInfo.getCellConnectionStatus();
         int isPrimary = s == CellInfo.CONNECTION_PRIMARY_SERVING ? 1 : 0;
@@ -228,17 +231,6 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
         data.accumulate("LAC", cellIdentityGsm.getLac());
         data.accumulate("CID",  cellIdentityGsm.getCid());
         int dbm = cellInfoGsm.getCellSignalStrength().getDbm();
-        data.accumulate("dBm", dbm);
-      }
-      else if (cellInfo instanceof CellInfoCdma) {
-        CellInfoCdma cellInfoCdma = (CellInfoCdma) cellInfo;
-        CellIdentityCdma cellIdentityCdma = cellInfoCdma.getCellIdentity();
-        data.accumulate("type", "CDMA");
-        data.accumulate("MCC", cellIdentityCdma.getSystemId());
-        data.accumulate("MNC", cellIdentityCdma.getNetworkId());
-        data.accumulate("LAC", 0); // cellIdentityCdma.getLac());
-        data.accumulate("CID", cellIdentityCdma. getBasestationId());
-        int dbm = cellInfoCdma.getCellSignalStrength().getDbm();
         data.accumulate("dBm", dbm);
       }
       else if (cellInfo instanceof CellInfoWcdma) {
@@ -291,9 +283,38 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
         if (U.classHasMethod(CellSignalStrengthNr.class, "getSsRsrp")) {
           data.accumulate("SsRSRP", ss.getSsRsrp());
         }
+        if (U.classHasMethod(CellSignalStrengthNr.class, "getCsiRsrq")) {
+          data.accumulate("CsiRSRQ", ss.getCsiRsrq ());
+        }
+        if (U.classHasMethod(CellSignalStrengthNr.class, "getSsRsrq")) {
+          data.accumulate("SsRSRQ", ss.getSsRsrq());
+        }
+        if (U.classHasMethod(CellSignalStrengthNr.class, "getCsiRsrq")) {
+          data.accumulate("CsiRSRQ", ss.getCsiRsrq ());
+        }
+        if (U.classHasMethod(CellSignalStrengthNr.class, "getSsSinr")) {
+          data.accumulate("SsSINR", ss.getSsSinr());
+        }
+        if (U.classHasMethod(CellSignalStrengthNr.class, "getCsiSinr")) {
+          data.accumulate("CsiSINR", ss.getCsiSinr());
+        }
       }
       else if (U.classExists("android.telephony.CellInfoTdscdma") && cellInfo instanceof CellInfoTdscdma) {
-        mStatus="unsupported type Tdscdma";
+        data.accumulate("type", "TDSCDMA");
+        CellInfoTdscdma cellInfoTdscdma = (CellInfoTdscdma) cellInfo;
+        CellSignalStrengthTdscdma ss = (CellSignalStrengthTdscdma)  cellInfoTdscdma.getCellSignalStrength();
+        data.accumulate("dBm", ss.getDbm());
+      }
+      else if (U.classExists("android.telephony.CellInfoCdma") && cellInfo instanceof CellInfoCdma) {
+        CellInfoCdma cellInfoCdma = (CellInfoCdma) cellInfo;
+        CellIdentityCdma cellIdentityCdma = cellInfoCdma.getCellIdentity();
+        data.accumulate("type", "CDMA");
+        data.accumulate("MCC", cellIdentityCdma.getSystemId());
+        data.accumulate("MNC", cellIdentityCdma.getNetworkId());
+        data.accumulate("LAC", 0); // cellIdentityCdma.getLac());
+        data.accumulate("CID", cellIdentityCdma. getBasestationId());
+        int dbm = cellInfoCdma.getCellSignalStrength().getDbm();
+        data.accumulate("dBm", dbm);
       }
       else {
         Log.e(U.TAG,"Wrong cellInfo");

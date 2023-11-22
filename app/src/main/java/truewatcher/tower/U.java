@@ -384,7 +384,7 @@ public abstract class U {
     Class<?> objectClass;
     try {
       objectClass = Class.forName(className);
-    } catch (ClassNotFoundException e) {
+    } catch (ClassNotFoundException | SecurityException e) {
       return false;
     }
     return true;
