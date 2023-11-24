@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<!--
+This is a free software by TrueWatcher rosc71@hotmail.com
+1.10.0 12.10.2020 added: colored viewTracks, "hide" button, coords in address
+1.10.2 13.10.2020 tests and code improvements
+1.11.0 14.10.2020 added track labels with file names
+1.11.1 14.10.2020 removed Add button
+1,12.0 14,10,2020 added multiselect and Back button
+1.12.1 07.11.2020 refactoring
+1.12.2 09.11.2020 new tests
+1.12.3 16.11.2020 factored out MyJSbridge.trackNames (backsync with tower_2_8_0)
+1.12.4 09.01.2021 fixed OpenTopoMap http > https
+1.12.5 03.11.2023 fixed webMaps/leafletjs.html self-test, updated the leaflet library to 1.9
+-->
+<head>
+  <title>View GPX and CSV tracks and waypoints over online maps</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <style>
+    body { margin: 0; width: 99%; background-color: #ddd; }
+    
+    #wmIframe { width: 100%; height: 90%; margin: 0; }
+
+    #panelTable * { font-family: Arial,sans-serif; font-size: 1em; margin: 0; padding: 0.05em; }
+
+    #panelTable { width: 98%; text-align: center; }
+
+    #alertTd { text-align: left; }
+  </style>
+</head>
+
+<body>
+  <div id="panelTable">
+    <p id="alertTd">Loading...</p>
+    <p>
+      <input type="hidden" id="formHasDataInp" value="" />
+      <input type="file" id="fileInput" name="fileInput" title="choose files to load" multiple />
+      <label for="resizeInput" title="rescale the map to fit all data">resize</label>
+      <input type="checkbox" id="resizeInput" name="resizeInput" checked />
+      &nbsp;&nbsp;&nbsp;
+      <button id="backBtn" title="dismiss the latest file" disabled >Back</button>
+      &nbsp;&nbsp;&nbsp;
+      <select id="providerSelect" name="providerSelect" title="map service">
+        <option value="osm map" selected>OpenStreetMap</option>
+        <option value="opentopo map">OpenTopoMap</option>
+        <option value="google hyb">Google hybrid</option>
+        <option value="google sat">Google sat</option>
+        <option value="marshruty.ru map">marshruty.ru</option>
+        <option value="blank map">blank</option>
+        <option value="yandex hyb">Yandex hybrid</option>
+      </select>
+    </p>
+  </div>
+  
+  <iframe id="wmIframe" src="webMaps/wallpaper.html"></iframe>
+  
+  <script src="webMaps/utils.js"></script>
+  <script src="fileBox/Parser.js"></script>
+  <script src="fileBox/MyJSbridge.js"></script>
+  <script src="fileBox/controller.js"></script>
+  <script>
+    // handle reload correctly
+    if ($("formHasDataInp").value) $("wmIframe").src="webMaps/wallpaper.html";
+    else $("formHasDataInp").value="yes";
+        
+    var JSbridge;
+    var v=new wm.fb.View();
+    v.adjust();
+    var c=new wm.fb.Controller(v);
+    v.setHandlers(c.addFiles, c.reloadMap, c.stepBack);
+  </script>
+</body>
+</html>

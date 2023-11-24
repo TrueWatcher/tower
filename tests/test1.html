@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <title>webMapsView unit test</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+</head>
+<body>
+
+<script src="../webMaps/utils.js"></script>
+<script src="../fileBox/Parser.js"></script>
+<script src="../fileBox/MyJSbridge.js"></script>
+<!--<script src="../fileBox/controller.js"></script>-->
+<script src="testUtils.js"></script>
+<script src="data.js"></script>
+<script>
+"use strict";
+var parser,data01,trkpts,trkJson,wpts,wptJson,data02,data03,
+    jsb,limEmpty,limEmpty2,lim01,lim02,lim03,lim04,lim05,lim06,lim07,lim08,lim09,lim10,l01,l02;
+    
+var testGpxTrackWpt=getTestTrackGpx(),
+    testCsvList1=getTestCsv1(),
+    testCsvTrack=getTestTrackCsv(),
+    testCsvSinglePoint=getTestCsv3();
+
+var jsonEmpty="[]", 
+    jsonEmpty2d="[[]]",
+    jsonEmpty3d="[[[]]]",
+    json01='[[["1","2"],["3","4"],["5","6"]],[["7","8"],["9","10"],["-1.10","1.11"],["12","13"]]]',
+    json02='[["mark","11","21","01.first wpt"],["gpx","12","22",""]]',
+    json03='[["cell","55.75321578979492","37.62250518798828","1.Москва"],["mark","55.767812811849424","37.80133621206915","2.Sh_E_br"],["gps","56.023113333333335","37.12359166666667","8.G8"]]',
+    json04='{"minLat":11,"minLon":21,"maxLat":12,"maxLon":22}',
+    json05='{"minLat":-1.1,"minLon":1.11,"maxLat":12,"maxLon":13}',
+    json06='{"minLat":-1.1,"minLon":1.11,"maxLat":12,"maxLon":22}',
+    json07='{"minLat":-1.1,"minLon":1.11,"maxLat":56.023113333333335,"maxLon":37.80133621206915}',
+    json08='{"minLat":11,"minLon":21,"maxLat":56.023113333333335,"maxLon":37.80133621206915}',
+    json09='[["cell","55.75551986694336","37.64715957641602","1.Cell275"]]',
+    json10='{"minLat":55.75551986694336,"minLon":37.64715957641602,"maxLat":55.75551986694336,"maxLon":37.64715957641602}',
+    json11='[[["-20","2.1"],["-30","3.1"]],[["10","11"],["9","8"],["7","6"]]]',
+    json12='['+json11+']',
+    json13='{"minLat":-30,"minLon":2.1,"maxLat":10,"maxLon":11}',
+    json14='[[[["-20","2.1"],["-30","3.1"]],[["10","11"],["9","8"],["7","6"]]],[[["1","2"],["3","4"],["5","6"]],[["7","8"],["9","10"],["-1.10","1.11"],["12","13"]]]]',
+    json15='{"minLat":-30,"minLon":1.11,"maxLat":12,"maxLon":13}';
+
+var testScript=[
+  ' println("\\nTesting parse gpx string");\
+    parser=new wm.fb.Parser;\
+    data01=parser.go(testGpxTrackWpt);',
+  ' trkJson=JSON.stringify(data01.trkPoints);\
+    println(trkJson);\
+    wptJson=JSON.stringify(data01.wayPoints);\
+    println(wptJson);\
+    println(data01.res);',
+  ' trkpts=data01.trkPoints;\
+    assertEqualsPrim(2,trkpts.length,"wrong segment count", trkpts.length+" segments");\
+    assertEqualsPrim(3,trkpts[0].length,"wrong 1st segment count", trkpts[0].length+" trackpoints");\
+    assertEqualsPrim(4,trkpts[1].length,"wrong 2nd segment count", trkpts[1].length+" trackpoints");\
+    assertEqualsPrim(2,trkpts[1][3].length,"wrong field count 1-3", trkpts[1][3].length+" coords");\
+    assertEqualsPrim(json01, trkJson, "wrong track data", "track data OK");\
+    wpts=data01.wayPoints;\
+    assertEqualsPrim(2,wpts.length,"wrong waypoint count", wpts.length+" waypoints");\
+    assertEqualsPrim(4,wpts[1].length,"wrong field count 1", wpts[1].length+" fields");\
+    assertEqualsPrim(json02, wptJson, "wrong waypoint data", "waypoint data OK");\
+  ',
+  ' println("\\nTesting parse csv list");\
+    parser=new wm.fb.Parser;\
+    data02=parser.go(testCsvList1);',
+  ' wptJson=JSON.stringify(data02.wayPoints);\
+    println(wptJson);\
+    println(data02.res);\
+    assertEqualsPrim(0, data02.trkPoints.length, "unexpected track data", "no trackpoints");\
+    assertEqualsPrim(3, data02.wayPoints.length, "wrong waypoint count", data02.wayPoints.length+" waypoints");\
+    assertEqualsPrim(json03, wptJson, "wrong waypoint data", "waypoint data OK");\
+  ' ,
+  ' println("\\nTesting parse csv track");\
+    parser=new wm.fb.Parser;\
+    data03=parser.go(testCsvTrack);',
+  ' trkJson=JSON.stringify(data03.trkPoints);\
+    println(trkJson);\
+    println(data03.res);\
+    assertEqualsPrim(0, data03.wayPoints.length, "unexpected waypoint data", "no waypoints");\
+    trkpts=data03.trkPoints;\
+    assertEqualsPrim(2,trkpts.length,"wrong segment count", trkpts.length+" segments");\
+    assertEqualsPrim(3,trkpts[0].length,"wrong 1st segment count", trkpts[0].length+" trackpoints");\
+    assertEqualsPrim(4,trkpts[1].length,"wrong 2ndt segment count", trkpts[1].length+" trackpoints");\
+    assertEqualsPrim(json01, trkJson, "wrong track data", "track data OK");\
+  ',
+  ' println("\\nTesting LimitFinder");\
+    jsb=new wm.fb.MyJSbridge("osm map");\
+    jsb.setBounded("*");\
+    limEmpty=(new wm.utils.LimitFinder()).go(jsb);\
+    assertTrue(false === limEmpty, "fresh JSbridge result="+limEmpty, "fresh JSbridge gives false");\
+  ',
+  ' jsb.addMarkers(json02);\
+    jsb.setBounded("*");\
+    lim01=(new wm.utils.LimitFinder()).go(jsb);\
+    println("markers:"+json02);\
+    println(JSON.stringify(lim01));\
+    assertEqualsPrim(json04, JSON.stringify(lim01), "wrong limits from json02 markers", "limits from json02 markers OK");\
+    jsb.setBounded("vt");\
+    limEmpty2=(new wm.utils.LimitFinder()).go(jsb);\
+    assertTrue(false === limEmpty2, "markers-only in vt mode result="+limEmpty, "vt mode ignores markers and gives false");\
+    jsb.setBounded("w");\
+    lim02=(new wm.utils.LimitFinder()).go(jsb);\
+    assertEqualsPrim(json04, JSON.stringify(lim02), "wrong limits from w mode", "w mode limits from markers OK");\
+  ',
+  ' jsb.replaceCurrentTrackLatLonJson(json01);\
+    println("added ct:"+json01);\
+    jsb.setBounded("ct");\
+    lim03=(new wm.utils.LimitFinder()).go(jsb);\
+    println("ct: "+JSON.stringify(lim03));\
+    assertEqualsPrim(json05, JSON.stringify(lim03), "wrong limits from json01 track in ct mode", "limits from json01 track in ct mode OK");\
+    jsb.setBounded("*");\
+    lim04=(new wm.utils.LimitFinder()).go(jsb);\
+    println("*: "+JSON.stringify(lim04));\
+    assertEqualsPrim(json06, JSON.stringify(lim04), "wrong limits from wpt+track mix", "limits from wpt+track OK");\
+  ',
+  ' jsb.addMarkers(json03);\
+    jsb.setBounded("*");\
+    lim05=(new wm.utils.LimitFinder()).go(jsb);\
+    println("added more markers:"+json03);\
+    println("*: "+JSON.stringify(lim05));\
+    assertEqualsPrim(json07, JSON.stringify(lim05), "wrong limits from new wpt+track mix", "limits from new wpt+track OK");\
+    jsb.setBounded("w");\
+    lim06=(new wm.utils.LimitFinder()).go(jsb);\
+    println("w: "+JSON.stringify(lim06));\
+    assertEqualsPrim(json08, JSON.stringify(lim06), "wrong limits from new wpt in w mode", "limits from new wpt in w mode OK");\
+  ',
+  ' jsb=new wm.fb.MyJSbridge("osm map");\
+    jsb.setBounded("*");\
+    limEmpty=(new wm.utils.LimitFinder()).go(jsb);\
+    assertTrue(false === limEmpty, "fresh JSbridge result="+limEmpty, "fresh JSbridge gives false");\
+    println("added one marker:"+json09);\
+    jsb.addMarkers(json09);\
+    lim07=(new wm.utils.LimitFinder()).go(jsb);\
+    println(JSON.stringify(lim07));\
+    assertEqualsPrim(json10, JSON.stringify(lim07), "wrong limits from single wpt", "single wpt gives expected doubled limits");\
+  ',
+  
+  ' println("\\nTesting pushViewTrack");\
+    jsb=new wm.fb.MyJSbridge("osm map");\
+    jsb.setBounded("t");\
+    limEmpty=(new wm.utils.LimitFinder()).go(jsb);\
+    assertTrue(false === limEmpty, "fresh JSbridge result="+limEmpty, "fresh JSbridge gives false");\
+    jsb.pushViewTrack(jsonEmpty);\
+    assertEqualsPrim(jsonEmpty, jsb.importViewTrackLatLonJson(), "wrong result on pushing empty json", "empty json is not pushed");\
+    jsb.pushViewTrack(json11);\
+    assertEqualsPrim(json12, jsb.importViewTrackLatLonJson(), "wrong result on pushing json11", "valid json is pushed");\
+    lim08=(new wm.utils.LimitFinder()).go(jsb);\
+    println(JSON.stringify(lim08));\
+    assertEqualsPrim(json13, JSON.stringify(lim08), "wrong limits from pushed json11", "pushed viewTrack gives expected limits");\
+    l01=JSON.parse( jsb.importViewTrackLatLonJson());\
+    assertEqualsPrim(1, l01.length, "wrong track count from pushed json11", "pushed viewTrack gives 1 track");\
+    assertEqualsPrim(2, l01[0].length, "wrong segment count from pushed json11", "pushed viewTrack gives 2 segments");\
+    assertEqualsPrim(2, l01[0][0].length, "wrong point count from pushed json11", "2 trackpoints");\
+    assertEqualsPrim(3, l01[0][1].length, "wrong point count from pushed json11", "3 trackpoints");\
+    assertEqualsPrim(2, l01[0][1][2].length, "wrong coord count 0-1-2", "2 coords");\
+  ',
+  ' jsb.pushViewTrack(jsonEmpty);\
+    assertEqualsPrim(json12, jsb.importViewTrackLatLonJson(), "wrong result on pushing empty json", "empty json is not pushed");\
+    jsb.pushViewTrack(jsonEmpty2d);\
+    assertEqualsPrim(json12, jsb.importViewTrackLatLonJson(), "wrong result on pushing empty 2d json", "empty 2d json is not pushed");\
+    jsb.pushViewTrack(jsonEmpty3d);\
+    assertEqualsPrim(json12, jsb.importViewTrackLatLonJson(), "wrong result on pushing empty 3d json", "empty 3d json is not pushed");\
+    jsb.pushViewTrack(json01);\
+    assertEqualsPrim(json14, jsb.importViewTrackLatLonJson(), "wrong result on pushing json01", "another valid json is pushed");\
+    lim09=(new wm.utils.LimitFinder()).go(jsb);\
+    println(JSON.stringify(lim09));\
+    assertEqualsPrim(json15, JSON.stringify(lim09), "wrong limits from pushed second viewTrack", "pushed second viewTrack gives expected limits");\
+  ',
+  ' l02=JSON.parse( jsb.importViewTrackLatLonJson());\
+    assertEqualsPrim(2, l02.length, "wrong track count from pushed json11", "pushed viewTrack gives 2 tracks");\
+    assertEqualsPrim(2, l02[0].length, "wrong segment count from 0", "0: 2 segments");\
+    assertEqualsPrim(2, l02[0][0].length, "wrong point count 0-0", "2 trackpoints");\
+    assertEqualsPrim(3, l02[0][1].length, "wrong point count 0-1", "3 trackpoints");\
+    assertEqualsPrim(2, l02[1].length, "wrong segment count from 1", "1: 2 segments");\
+    assertEqualsPrim(3, l02[1][0].length, "wrong point count 1-0", "3 trackpoints");\
+    assertEqualsPrim(4, l02[1][1].length, "wrong point count 1-1", "4 trackpoints");\
+    assertEqualsPrim(2, l02[1][1][3].length, "wrong coord count 1-1-3", "2 coords");\
+  ',
+  ' jsb.setBounded("w");\
+    limEmpty=(new wm.utils.LimitFinder()).go(jsb);\
+    assertTrue(false === limEmpty, "w mode result="+limEmpty, "w mode still gives false");\
+    jsb.setBounded("*");\
+    lim10=(new wm.utils.LimitFinder()).go(jsb);\
+    println(JSON.stringify(lim10));\
+    assertEqualsPrim(json15, JSON.stringify(lim10), "wrong result in the * mode", "* mode gives same as t");\
+  ',
+  
+  ' println("\\nCompleted SUCCESSFULLY !");'
+
+];
+
+print(">page");
+var ci=new CommandIterator(testScript, 200);
+commandsRun(ci);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Yandex Map</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <script src="utils.js"></script>
+</head>
+
+<body style="margin: 0; padding:0;">
+  <p id="ind">Starting Yandex Map view...</p>
+  <div id="mapDiv" style="width: 600px; height: 400px; position: relative; margin: 0; padding:0;">
+    <div style="margin: 0; padding:0; position: absolute; top: 50%; left: 50%; margin-right: -50%; transform: translate(-50%, -50%); z-index:10;">
+      <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1.5em" height="1.5em" viewbox="0 0 13 13" >
+        <polyline fill="none" stroke="magenta" stroke-width="1" points="6,6 0,6 12,6 6,6 6,0 6,12 " />
+      </svg>
+    </div>
+  </div>
+<script>
+  "use strict";
+  var currentTrack=[],
+      trackThicknessPx=2,
+      myMap = {},
+      ind=new wm.utils.Ind(document.getElementById("ind")),
+      scrInfo=wm.utils.getViewportParams();
+
+  function loadApiScripts(yainit) {
+    var starter="https://api-maps.yandex.ru/2.1/?apikey="+JSbridge.getKey()+"&lang=en_RU";
+    ind.say("loading API");  
+    var apiScript=document.createElement("script");
+    apiScript.onerror=function() { ind.fail("failed to load API, is your network OK? ") };
+    apiScript.onload=function() {
+      ind.say("OK");
+      ymaps.ready(yainit);
+    };
+    document.head.appendChild(apiScript);
+    apiScript.src=starter;
+    // further initializations are inside yainit
+  }
+  
+  function addEvents() {
+    window.onDatareloadEvent = new Event('onDatareload');
+    window.addEventListener('onDatareload', function() { if (myMap) { myMap.destroy(); yainit(); } }, false);
+    window.onTrackreloadEvent = new Event('onTrackreload');
+    window.addEventListener('onTrackreload', function() { if (myMap) { updateCenter(myMap); replaceCurrentTrack(myMap,"#f00"); } }, false);
+  }
+  
+  function yainit() {
+    var params;
+    try {
+      params=paramsBuilder("hyb");
+    }
+    catch (e) { ind.fail(" PARAMS error: ".concat(e)); };
+    ind.say("Params:"+JSON.stringify(params)+",creating map ");
+    try {
+      myMap = new ymaps.Map("mapDiv", params);
+      //var p;
+      //for (p in myMap) console.log(p+">>"+myMap[p]);
+      if (params.bounds) resetIsBounded(myMap);
+    }
+    catch (e) { ind.fail("API failed: "+e); return; };
+    
+    addViewTrack(myMap, "#ff00ff");
+    replaceCurrentTrack(myMap, "#ff0000");
+    drawNamelessMarker(myMap, JSbridge.getNamelessMarker(), addMark);
+    //ind.say("markers:"+JSbridge.getMarkers());
+    drawMarkers(myMap);
+    // if the map is moved, read the new center coords
+    myMap.events.add('actionend', function (e) { 
+      // https://tech.yandex.ru/maps/doc/jsapi/2.1/ref/reference/Map-docpage/#Map__events-summary
+      JSbridge.exportCenterLatLon(myMap.getCenter()[0], myMap.getCenter()[1]);
+      JSbridge.saveZoom(""+myMap.getZoom());
+      if (JSbridge.onMoveend && typeof JSbridge.onMoveend == "function") JSbridge.onMoveend();
+    });
+    ind.hide();
+  }
+  
+  function paramsBuilder(type) {
+    if (type.charAt(0) == "s") type="yandex#satellite";
+    else if (type.charAt(0) == "h") type="yandex#hybrid";
+    else type="yandex#map";
+    var params={type: type};
+    
+    if (JSbridge.getIsBounded()) {
+      var limits=(new wm.utils.LimitFinder()).go(JSbridge);
+      if (limits) { 
+        params = addBounds(params,limits);
+        ind.say(" drawn by bounds ");
+      }
+      else throw new Error("No objects to align map to");
+    }
+    else { 
+      params = addLatLonZoom(params,JSbridge.importLatLon(), JSbridge.importZoom());
+      ind.say(JSbridge.importLatLon()+",z="+JSbridge.importZoom());
+    }
+    return params;
+  }
+  
+  function addLatLonZoom(params,latlon,zoom) {
+    if ( ! latlon) throw new Error("Empty LATLON");
+    if (typeof latlon == "string") {
+      latlon=latlon.split(",");
+      if (latlon.length != 2) { throw new Error("Wrong LATLON string"); }
+      latlon=[ parseFloat(latlon[0]), parseFloat(latlon[1]) ];
+    }    
+    if ( ! (latlon instanceof Array) || latlon.length != 2 || Number(latlon[0]) !== latlon[0] ) {
+      throw new Error( "Wrong LATLON array("+latlon.length+","+(Number(latlon[0]) === latlon[0]) +") ");
+    }
+    if (zoom <= 1 || zoom > 25) throw new Error("Wrong ZOOM=".concat(zoom));
+    params.center=latlon;
+    params.zoom=zoom;
+    return params;
+  }
+  
+  function addBounds(params,limits) {
+    if ( ! (limits instanceof wm.utils.Limits)) throw new Error("Wrong LIMITS");
+    var bounds = [ [limits.minLat,limits.minLon], [limits.maxLat,limits.maxLon] ];
+    params.bounds=bounds;
+    return params;
+  }
+  
+  function resetIsBounded(oMap) {
+    JSbridge.exportCenterLatLon(myMap.getCenter()[0], myMap.getCenter()[1]);
+    // avoid overzoom on single point
+    var dz=parseFloat(JSbridge.importDefaultZoom());
+    if (oMap.getZoom() > dz) oMap.setZoom(dz);
+    JSbridge.saveZoom(""+myMap.getZoom());
+    JSbridge.setBounded("");
+  }
+  
+  function addViewTrack(oMap, aColor) {
+    var title="";
+    var track=JSbridge.importViewTrackLatLonJson();
+    if (! track) return;
+    var trackNames=JSbridge.importViewTrackNamesJson();
+    if (trackNames) trackNames=JSON.parse(trackNames);
+    track=JSON.parse(track);
+    if (! (track instanceof Array) || track.length == 0 ) return;
+    if ( ! (track[0] instanceof Array) || track[0].length == 0) return;// missing or empty segments
+    if ((track[0][0][0] instanceof Array) && track[0][0][0].length == 2) {
+      //console.log("draw as track array");
+      for (var itr=0; itr < track.length; itr += 1) {
+        //console.log("aColor="+wm.utils.getTrackColor(itr));
+        if (trackNames && (trackNames.length == track.length)) title=trackNames[itr];
+        drawSegment(oMap, track[itr], wm.utils.getTrackColor(itr), title);
+      }
+    }
+    else {
+      //console.log("draw as segment array");
+      drawSegment(oMap,track,aColor,"");
+    }
+  }
+  
+  function drawSegment(oMap,track,aColor,title) {
+    var segCount=track.length;
+    var i=0,seg;
+    for (;i < segCount; i+=1) {
+      seg=new ymaps.Polyline(track[i],{balloonContentBody: title},{strokeColor: aColor, strokeWidth: trackThicknessPx} );
+      oMap.geoObjects.add(seg);
+      //console.log("added a segment");
+    }
+  }
+  
+  function replaceCurrentTrack(oMap, aColor) {
+    if (currentTrack instanceof Array) {
+      currentTrack.forEach(function(seg) {
+        if (typeof seg == "object") {
+          oMap.geoObjects.remove(seg);
+          seg=null;
+        }
+      }); 
+      currentTrack=[];
+    }
+    if ( ! JSbridge.importViewCurrentTrack()) return;
+    var track=JSbridge.importCurrentTrackLatLonJson();
+    if (! track) return;
+    track=JSON.parse(track);
+    if (! (track instanceof Array) || track.length == 0 ) return;
+    track.forEach(function(segment) {
+      var seg=new ymaps.Polyline(segment,{},{strokeColor: aColor, strokeWidth: trackThicknessPx});
+      oMap.geoObjects.add(seg);
+      currentTrack.push(seg);
+    });
+  }
+  
+  function updateCenter(oMap) {
+    if ( ! JSbridge.importFollowCurrentTrack()) return;
+    var ll=JSbridge.importLatLon();
+    var lls=ll.split(",");
+    var lat=lls[0];
+    var lon=lls[1];
+    oMap.setCenter([lat,lon]);
+  }
+  
+  function addMark(oMap,markData) {
+    // [ pointType, lat, lon, text ]
+    if ( ! markData || markData.length < 3) return;
+    if ( ! markData || ! markData[0]) return;
+    var type=markData[0];
+    var text="";
+    if (markData[3]) {
+      text=markData[3];
+    }
+    var center=[ parseFloat(markData[1]), parseFloat(markData[2]) ];
+    var props={};
+    var iconType="islands#circleDotIcon";
+    if (text) {
+      props.iconContent=text;
+      iconType="islands#stretchyIcon";
+    }  
+    var params={ preset:iconType, iconColor: wm.utils.getColor(type) };
+    var m=new ymaps.Placemark(center, props, params);
+    oMap.geoObjects.add(m);
+  }
+  
+  function drawNamelessMarker(oMap, nmJson, addMark) {
+    //alert(nmJson);
+    if ( ! nmJson || nmJson.length < 3) return; 
+    var nm=JSON.parse(nmJson);
+    if ( ! nm || ! nm[0]) return;
+    nm[3]="";
+    drawNamelessMarker.marker=addMark(oMap,nm);
+  }
+  
+  function drawMarkers(map) { wm.utils.putMarkers(map, ind, JSbridge.getMarkers(), addMark); }
+      
+  wm.utils.findJSbridge(ind,"yandex hyb");
+  wm.utils.adjustScreen();
+  loadApiScripts(yainit);
+  addEvents();
+  if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();
+  
+</script>    
+</body>
+</html>

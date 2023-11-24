@@ -1,0 +1,288 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <title>leafletjs</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <script src="utils.js"></script>
+  <link rel="stylesheet" type="text/css" href="leafletjs_1_9/leaflet.css" />
+  <script src="leafletjs_1_9/leaflet.js"></script>
+  <style>
+    #attributionDiv a:link, #attributionDiv a:visited { color: inherit; }
+  </style>
+</head>
+
+<body style="margin: 0; padding:0;">
+  <p id="ind">Starting leafletjs view...</p>
+  <div id="mapDiv" style="width: 600px; height: 400px; position: relative; margin: 0; padding:0;">
+    <div style="margin: 0; padding:0; position: absolute; top: 50%; left: 50%; margin-right: -50%; transform: translate(-50%, -50%); z-index:990;">
+      <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1.5em" height="1.5em" viewbox="0 0 13 13" >
+        <polyline fill="none" stroke="magenta" stroke-width="1" points="6,6 0,6 12,6 6,6 6,0 6,12 " />
+      </svg>
+    </div>
+  </div>
+  <div id="attributionDiv" style="margin: 0; padding: 0.5em; position: fixed; bottom: 0%; left: 0%; z-index:990; color: #888; text-align: left; font-family: Arial, Helvetica, sans-serif; font-size: 70%">Something is wrong if you see this
+  </div>
+  <div id="myControlDiv" style="margin: 0; padding: 0.5em; position: fixed; top: 3%; right: 0%; z-index:999; text-align: left; font-family: Arial, Helvetica, sans-serif; font-size: 100%">
+    <button id="visBtn" style="margin: 0; padding: 0.3em; font-size: 80%; font-weight: bold; background-color: #fff;" title="hide/show points and tracks">Hide</button>
+  </div>
+
+<script>
+  'use strict';
+  var map,
+      currentTrack=false,
+      trackThicknessPx=2,
+      scrInfo=wm.utils.getViewportParams(),
+      ind=new wm.utils.Ind(document.getElementById("ind")),
+      visBtn;
+
+  function initmap() {
+    var ll=JSbridge.importLatLon();
+    var zoom=JSbridge.importZoom();
+    var mapProvider=JSbridge.importMapType();
+    map = new L.Map('mapDiv');
+    setViewArea(map, ll, zoom);
+    addViewTrackColored(map, wm.utils.getColor("mark"));
+    replaceCurrentTrack(map, wm.utils.getColor("gps"));
+    drawNamelessMarker(map);
+    //ind.say("markers:"+JSbridge.getMarkers());
+    drawMarkers(map);
+    addTileLayer(mapProvider, map);
+    map.on('moveend', function(e) {
+      JSbridge.exportCenterLatLon(""+map.getCenter().lat, ""+map.getCenter().lng);
+      JSbridge.saveZoom(""+map.getZoom());
+      if (JSbridge.onMoveend && typeof JSbridge.onMoveend == "function") JSbridge.onMoveend();
+    } );
+  }
+
+  function setViewArea(oMap,ll,zoom) {
+    if ( JSbridge.getIsBounded() ) {
+      var limits = (new wm.utils.LimitFinder()).go(JSbridge);
+      if (limits) {
+        applyBounds(limits, oMap);
+        ind.say("drawn by bounds, "+JSbridge.importLatLon()+", z="+JSbridge.importZoom());
+      }
+      else ind.fail("No objects to adjust map to");
+    }
+    else {
+      applyLatLonZoom(ll, zoom);
+      ind.say(ll+",z="+zoom);
+    }
+  }
+
+  function applyBounds(limits, oMap) {
+    if ( ! (limits instanceof wm.utils.Limits)) throw new Error ("Wrong LIMITS");
+    var bounds=L.latLngBounds( [ limits.minLat,limits.minLon ], [ limits.maxLat,limits.maxLon ] );
+    oMap.fitBounds(bounds);
+    //alert(""+oMap.getCenter().lat);
+    // avoid overzoom on single point
+    var dz=parseFloat(JSbridge.importDefaultZoom());
+    if (oMap.getZoom() > dz) oMap.setZoom(dz);
+    JSbridge.exportCenterLatLon(""+oMap.getCenter().lat, ""+oMap.getCenter().lng);
+    JSbridge.saveZoom(""+oMap.getZoom());
+    JSbridge.setBounded("");
+  }
+
+  function applyLatLonZoom(latLonStr, z) {
+    var lls=latLonStr.split(",");
+    var lat=lls[0];
+    var lon=lls[1];
+    map.setView(new L.LatLng(lat,lon),z);
+  }
+
+  function addTileLayer(mapProvider,map) {
+    var s=getService(mapProvider);
+    var l=s.make(s.url);
+    if (l) map.addLayer(l);
+    addAttribution(s.attrib, s.attribsColor);
+  }
+
+  function getService(mapProvider) {
+    var year=new Date().getFullYear();
+    var attribOsm='Map data © <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a> contributors '+year;
+    var attribOtm='Map data © <a href="https://opentopomap.org" target="_blank">OpenTopoMap</a> contributors '+year;
+    var attribGoogle='Imagery © CNES / Airbus, Landsat / Copernicus, Maxar Technologies, '+year+',\
+    Map data © <a href="https://maps.google.com" target="_blank">Google</a> '+year;
+    var services={
+      "osm map": {
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', provider: "osm",
+        attrib: attribOsm, attribColor: "black",
+        make: function(url) { return new L.TileLayer(url, { minZoom: 1, maxZoom: 19 }); }
+      },
+      "opentopo map": {
+        url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', provider: "opentopo",
+        attrib: attribOtm, attribColor: "black",
+        make: function(url) { return new L.TileLayer(url, { minZoom: 1, maxZoom: 17 }); }
+      },
+      "google hyb": {
+        url: 'http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', provider: "google",
+        attrib: attribGoogle, attribColor: "#eee",
+        make: function(url) { return new L.TileLayer(url, { maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'] }); }
+      },
+      "google sat": {
+        url: 'http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', provider: "google",
+        attrib: attribGoogle, attribColor: "#fff",
+        make: function(url) { return new L.TileLayer(url, { maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'] }); }
+      },
+      "marshruty.ru map": {
+        url: 'http://maps.marshruty.ru/ml.ashx?al=1&x={x}&y={y}&z={z}&i=1', provider: "marshruty.ru",
+        attrib: 'Map data © <a href="http://maps.marshruty.ru" target="_blank">maps.marshruty.ru</a>', attribColor: "black",
+        make: function(url) { return new L.TileLayer(url, { minZoom: 1, maxZoom: 18 }); }
+      },
+      "blank map": {
+        url: '', provider: "blank", attrib: "", attribColor: "black", make: function(url) { return false; }
+      }
+    };
+    // lyrs= Hybrid: s,h; Satellite: s; Streets: m; Terrain: p;
+    // https://stackoverflow.com/questions/9394190/leaflet-map-api-with-google-satellite-layer
+    if (! services.hasOwnProperty(mapProvider)) throw new Error("Unknown mapProvider="+mapProvider);
+    return services[mapProvider];
+  }
+
+  function addMark(oMap,type,lat,lon,text) {
+    if (type instanceof Array && type.length == 4) {
+      text=type[3];
+      lon=type[2];
+      lat=type[1];
+      type=type[0];
+    }
+    var color=wm.utils.getColor(type);
+    var center;
+    if ( lat && lon) {
+      center=[lat,lon];
+    }
+    else { center=oMap.getCenter(); }
+    var radius=scrInfo.emPx*0.5;
+    //alert(radius);
+    var params={ color: color, fillColor: color, fillOpacity: 0.3, radius: radius };
+    var circle = L.circleMarker(center, params).addTo(oMap);
+    if (text) circle.bindTooltip(text, {permanent: true, offset: [-5, 0]} ); direction: 'right'
+    return circle;
+  }
+
+  function drawNamelessMarker(map) {
+    var nmJson=JSbridge.getNamelessMarker();
+    //alert(nmJson);
+    if ( ! nmJson || nmJson.length < 5) return;
+    var nm=JSON.parse(nmJson);
+    if ( ! nm || ! nm[0]) return;
+    drawNamelessMarker.marker=addMark(map,nm[0],nm[1],nm[2]);
+  }
+
+  function drawMarkers(map) { wm.utils.putMarkers(map, ind, JSbridge.getMarkers(), addMark); }
+
+  function addViewTrack(map, aColor) {
+    var track = JSbridge.importViewTrackLatLonJson();
+    if (! track) return;
+    track=JSON.parse(track);
+    if ( ! (track instanceof Array) || track.length == 0 ) return;
+    L.polyline(track, {color: aColor, weight: trackThicknessPx}).addTo(map);
+  }
+
+  function addViewTrackColored(map, aColor) {
+    var pl;
+    var track = JSbridge.importViewTrackLatLonJson();
+    if (! track) return;
+    var trackNames = JSbridge.importViewTrackNamesJson();
+    //ind.say("Got trackNames"+trackNames);
+    if (trackNames) trackNames=JSON.parse(trackNames);
+    //console.log("trackNames[0]="+trackNames[0]);
+    track=JSON.parse(track);
+    if ( ! (track instanceof Array) || track.length == 0 ) return;// track is invalid or empty
+    if ( ! (track[0] instanceof Array) || track[0].length == 0) return;// missing or empty segments
+    if ((track[0][0][0] instanceof Array) && track[0][0][0].length == 2) {
+      //console.log("draw as track array");
+      for (var itr=0; itr < track.length; itr += 1) {
+        //console.log("aColor="+wm.utils.getTrackColor(itr));
+        pl=L.polyline(track[itr], {color: wm.utils.getTrackColor(itr), weight: trackThicknessPx}).addTo(map);
+        if (trackNames && (trackNames.length == track.length)) pl.bindPopup(trackNames[itr]);
+      }
+    }
+    else {
+      //console.log("draw as segment array");
+      L.polyline(track, {color: aColor, weight: trackThicknessPx}).addTo(map);
+    }
+  }
+
+  function replaceCurrentTrack(map, aColor) {
+    if (currentTrack) { currentTrack.remove(); currentTrack=false; }
+    if ( ! JSbridge.importViewCurrentTrack()) return;
+    var track = JSbridge.importCurrentTrackLatLonJson();
+    if (! track) return;
+    track=JSON.parse(track);
+    if ( ! (track instanceof Array) || track.length == 0 ) return;
+    currentTrack=L.polyline(track, {color: aColor, weight: trackThicknessPx}).addTo(map);
+  }
+
+  function updateCenter(map) {
+    if ( ! JSbridge.importFollowCurrentTrack()) return;
+    var ll=JSbridge.importLatLon();
+    var lls=ll.split(",");
+    var lat=lls[0];
+    var lon=lls[1];
+    map.panTo(new L.LatLng(lat,lon));
+  }
+
+  function addAttribution(html, color) {
+    var leafletAttr='<a href="http://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>'+"<br />";
+    var el=document.getElementById("attributionDiv");
+    el.innerHTML=html;//leafletAttr+html;
+    el.style.color=color;
+    // disable scrolling <body> through this element
+    el.addEventListener('touchmove', function(e) { e.preventDefault(); }, false);
+  }
+
+  function addEvents() {
+    window.onDatareloadEvent = new Event('onDatareload');
+    window.addEventListener('onDatareload', function() {
+      if (map) {
+        ind.init(); map.off(); map.remove(); initmap(); ind.hide(); visBtn.reapply();
+      } },
+      false);
+
+    window.onTrackreloadEvent = new Event('onTrackreload');
+    window.addEventListener('onTrackreload', function() {
+      if (map) {
+        updateCenter(map); replaceCurrentTrack(map, "#f00"); visBtn.reapply();
+      } },
+      false);
+  }
+
+  function LayerToggler(button) {
+    var isVisible=true,
+        _this=this;
+
+    button.onclick=function toggleObjects() {
+      isVisible= ! isVisible;
+      _this.reapply();
+    };
+
+    this.reapply=function() {
+      var overlayPane=document.querySelector("div.leaflet-overlay-pane g");
+      var tooltipPane=document.querySelector("div.leaflet-tooltip-pane");
+      if ( ! overlayPane || ! tooltipPane) { return; }
+      if (isVisible) {
+        overlayPane.style.visibility=tooltipPane.style.visibility="visible";
+        button.innerHTML="Hide";
+        button.style.color="#000";
+      }
+      else {
+        overlayPane.style.visibility=tooltipPane.style.visibility="hidden";
+        button.innerHTML="Show";
+        button.style.color=wm.utils.getTrackColor(0);
+      }
+    };
+  }
+
+  wm.utils.findJSbridge(ind,"opentopo map");
+  wm.utils.adjustScreen();
+  initmap();
+  addEvents();
+  visBtn=new LayerToggler(document.getElementById("visBtn"));
+  if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();
+  ind.hide();
+
+
+</script>
+</body>
+</html>

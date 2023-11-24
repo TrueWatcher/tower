@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <title>webMapsView controller test</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+</head>
+<body>
+
+<script src="../webMaps/utils.js"></script>
+<script src="../fileBox/Parser.js"></script>
+<script src="../fileBox/MyJSbridge.js"></script>
+<script src="../fileBox/controller.js"></script>
+<script src="testUtils.js"></script>
+<script src="data.js"></script>
+<script>
+"use strict";
+function MockView() {
+  var renderedLevel=0, testFileList=[];
+  
+  this.getProvider=function() { return "blank map"; };
+  
+  //this.getFile=function() { return fileInput.files[0]; };
+  this.setFiles=function(fileList) {
+    testFileList=[];
+    var f,a;
+    for (var i=0; i < fileList.length; i+=1) {
+      if ( ! (typeof( fileList[i].content ) == "string" )) throw new Error("Not a string:"+ typeof( fileList[i].content ) );
+      a=[]; a.push(fileList[i].content);
+      f=new File( a, fileList[i].name );
+      //if ( ! f.exists) throw new Error("No such file:"+fileList[i]);
+      testFileList.push(f);
+    }
+  };
+    
+  this.getFiles=function() { return testFileList; };
+  
+  this.alert=function(str) { println(str); };
+  
+  this.getShouldResize=function() { return true; };
+  
+  this.disableBackBtn=function() {};
+  this.enableBackBtn=function() {};
+  
+  this.render=function(dataForMap) {
+    if ( ! (dataForMap instanceof wm.fb.MyJSbridge)) throw new Error("Rendering from non-JSbridge");
+    var provider=dataForMap.importMapType();
+    var mapFrame=window.frames[0];
+    switch ( dataForMap.getDirty() ) {
+    case 0:
+      console.log("doing nothing");
+      break;
+      
+    case 2:
+      JSbridge=dataForMap;
+      console.log("firing onDatareloadEvent");
+      //mapFrame.dispatchEvent(mapFrame.onDatareloadEvent);
+      break;
+      
+    case 3:
+      JSbridge=dataForMap;
+      console.log("loading map:"+provider);
+      //this.loadUri(getUri(provider));
+      break;
+      
+    default: 
+      throw new Error("Wrong level="+dirty);
+    }
+    renderedLevel=dataForMap.getDirty();
+    dataForMap.clearDirty();
+  };
+  
+  this.getRenderedLevel=function() { return renderedLevel; };
+}; 
+
+var defProv="blank map", nullProv="wallpaper";
+var t1,t2,t3,tEmpty,m,vt,bak,r;
+
+var testScript=[
+  ' println("\\nTesting pack file reading (over zero-phaze)");\
+    assertTrue(false === c.getBackup(), "Backup is not false", "Backup is empty" );\
+    assertEqualsPrim(0, mv.getRenderedLevel(), "Wrong initial RenderedLevel", "RenderedLevel is did-nothing");\
+    t1={ content : getTestCsv1(), name : "testCsv1.csv" };\
+    t2={ content : getTestTrackGpx(), name : "testTrack.gpx" };\
+    mv.setFiles([ t1,t2 ]);\
+    c.addFiles();',
+  ' assertEqualsPrim(3, mv.getRenderedLevel(), "Wrong RenderedLevel after reading over zero", "RenderedLevel is uri");\
+    m=JSbridge.getMarkers();\
+    println(m);\
+    assertEqualsPrim(234, m.length, "Wrong MARKERS", "Imported 1st file OK" );\
+    vt=JSbridge.importViewTrackLatLonJson();\
+    println(vt);\
+    assertEqualsPrim(87, vt.length, "Wrong VIEWTRACK", "Imported 2nd file OK" );\
+    assertEqualsPrim(defProv, JSbridge.importMapType(), "Wrong PROVIDER", "PROVIDER is updated" );\
+    bak=c.getBackup();\
+    assertEqualsPrim("object", typeof(bak), "Backup is not an object", "Backup is updated" );\
+    assertTrue(bak instanceof wm.fb.MyJSbridge, "Backup is not a MyJSbridge", "Backup is MyJSbridge" );\
+    assertEqualsPrim(nullProv, bak.importMapType(), "Wrong backup PROVIDER", "The Zero-phaze PROVIDER is stored" );\
+  ',
+  
+  ' println("\\nTesting the BACK command to zero-phase");\
+    c.stepBack();\
+    assertEqualsPrim(3, mv.getRenderedLevel(), "Wrong RenderedLevel after return to zero", "RenderedLevel is uri");\
+    m=JSbridge.getMarkers();\
+    println(m);\
+    assertEqualsPrim(2, m.length, "Non-empty MARKERS", "Removed 1st file OK" );\
+    vt=JSbridge.importViewTrackLatLonJson();\
+    println(vt);\
+    assertEqualsPrim(2, vt.length, "Non-empty VIEWTRACK", "Removed 2nd file OK" );\
+    assertEqualsPrim(nullProv, JSbridge.importMapType(), "Non-zero PROVIDER", "PROVIDER is flushed" );\
+    assertTrue(false === c.getBackup(), "Backup is not cleared", "Backup is cleared" );\
+  ',
+  
+  ' println("\\nTesting the BACK command over some data");\
+    mv.setFiles([ t1,t2 ]);\
+    c.addFiles();\
+  ',
+  ' m=JSbridge.getMarkers();\
+    assertEqualsPrim(234, m.length, "Wrong MARKERS", "Imported 1st file OK" );\
+    vt=JSbridge.importViewTrackLatLonJson();\
+    assertEqualsPrim(87, vt.length, "Wrong VIEWTRACK", "Imported 2nd file OK" );\
+    t3={ content : getTestCsv3(), name : "testCsv3.csv" };\
+    /*alert(t3.content);*/\
+    mv.setFiles([ t3 ]);\
+    c.addFiles();\
+  ',
+  ' assertEqualsPrim(2, mv.getRenderedLevel(), "Wrong RenderedLevel after reading over data", "RenderedLevel is data");\
+    m=JSbridge.getMarkers();\
+    assertEqualsPrim(295, m.length, "Wrong MARKERS", "Imported 3rd file OK" );\
+    bak=c.getBackup();\
+    assertTrue(bak instanceof wm.fb.MyJSbridge, "Backup is not a MyJSbridge", "Backup is MyJSbridge" );\
+    m=bak.getMarkers();\
+    assertEqualsPrim(234, m.length, "Wrong backup MARKERS", "MARKERS backed up OK" );\
+    vt=bak.importViewTrackLatLonJson();\
+    assertEqualsPrim(87, vt.length, "Wrong backup VIEWTRACK", "VIEWTRACK backed up OK" );\
+    assertEqualsPrim(defProv, bak.importMapType(), "Wrong backup PROVIDER", "PROVIDER backed up OK" );\
+    c.stepBack();\
+  ',
+  ' assertEqualsPrim(2, r=mv.getRenderedLevel(), "Wrong RenderedLevel after stepback to data", "RenderedLevel is "+r);\
+    m=JSbridge.getMarkers();\
+    assertEqualsPrim(234, m.length, "Wrong restored MARKERS", "Restored MARKERS OK" );\
+    vt=JSbridge.importViewTrackLatLonJson();\
+    assertEqualsPrim(87, vt.length, "Wrong restored VIEWTRACK", "Restored VIEWTRACK OK" );\
+    assertEqualsPrim(defProv, JSbridge.importMapType(), "Wrong restored PROVIDER", "PROVIDER restored OK" );\
+    assertTrue(false === c.getBackup(), "Backup is not cleared", "Backup is cleared" );\
+  ',
+  
+  ' println("\\nTesting recovery after reading 1 wrong file");\
+    tEmpty={ content : "", name : "tEmpty.csv" };\
+    mv.setFiles([ tEmpty ]);\
+    c.addFiles();\
+  ',
+  ' assertEqualsPrim(2, r=mv.getRenderedLevel(), "Wrong RenderedLevel after recovery to data", "RenderedLevel is "+r);\
+    m=JSbridge.getMarkers();\
+    assertEqualsPrim(234, m.length, "Wrong restored MARKERS", "Restored MARKERS OK" );\
+    vt=JSbridge.importViewTrackLatLonJson();\
+    assertEqualsPrim(87, vt.length, "Wrong restored VIEWTRACK", "Restored VIEWTRACK OK" );\
+    assertEqualsPrim(defProv, JSbridge.importMapType(), "Wrong restored PROVIDER", "PROVIDER restored OK" );\
+    assertTrue(false === c.getBackup(), "Backup is not empty", "Backup is not created" );\
+  ',
+  
+  ' println("\\nTesting recovery after reading several files prior to error");\
+    mv.setFiles([ t3, t2, tEmpty ]);\
+    c.addFiles();\
+  ',
+  ' assertEqualsPrim(2, r=mv.getRenderedLevel(), "Wrong RenderedLevel after recovery to data", "RenderedLevel is "+r);\
+    m=JSbridge.getMarkers();\
+    assertEqualsPrim(234, m.length, "Wrong restored MARKERS", "Restored MARKERS OK" );\
+    vt=JSbridge.importViewTrackLatLonJson();\
+    assertEqualsPrim(87, vt.length, "Wrong restored VIEWTRACK", "Restored VIEWTRACK OK" );\
+    assertEqualsPrim(defProv, JSbridge.importMapType(), "Wrong restored PROVIDER", "PROVIDER restored OK" );\
+    assertTrue(false === c.getBackup(), "Backup is not empty", "Backup is not created" );\
+  ',
+  
+  ' println("\\nTesting reading after recovery");\
+    t3={ content : getTestCsv3(), name : "testCsv3.csv" };\
+    /*alert(t3.content);*/\
+    mv.setFiles([ t3 ]);\
+    c.addFiles();\
+  ',
+  ' assertEqualsPrim(2, mv.getRenderedLevel(), "Wrong RenderedLevel after recovery to data", "RenderedLevel is data");\
+    m=JSbridge.getMarkers();\
+    assertEqualsPrim(295, m.length, "Wrong MARKERS", "Imported 3rd file OK" );\
+    bak=c.getBackup();\
+    assertTrue(bak instanceof wm.fb.MyJSbridge, "Backup is not a MyJSbridge", "Backup is MyJSbridge" );\
+    m=bak.getMarkers();\
+    assertEqualsPrim(234, m.length, "Wrong backup MARKERS", "MARKERS backed up OK" );\
+    vt=bak.importViewTrackLatLonJson();\
+    assertEqualsPrim(87, vt.length, "Wrong backup VIEWTRACK", "VIEWTRACK backed up OK" );\
+    assertEqualsPrim(defProv, bak.importMapType(), "Wrong backup PROVIDER", "PROVIDER backed up OK" );\
+  ',
+  
+  ' println("\\nCompleted SUCCESSFULLY !");'
+  ];
+
+var JSbridge;
+var mv=new MockView();
+//v.adjust();
+var c=new wm.fb.Controller(mv);
+//v.setHandlers(c.addFiles, c.reloadMap, c.stepBack);
+
+print(">page");
+var ci=new CommandIterator(testScript, 200);
+commandsRun(ci);
+
+</script>
+</body>
+</html>
