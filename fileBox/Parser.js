@@ -6,12 +6,15 @@ wm.fb.Parser=function() {
       segMap=[],
       csv={ SEP:";", NL:"\n"},
       names={ LAT:"lat", LON:"lon", NEW_TRACK:"new_track", ID:"id", TYPE:"type", COMMENT:"comment", CELLDATA:"cellData", DATA:"data", DATA1:"data1" },
-      header={};
+      header={},
+      lines=[],
+      parsedLines=[];
 
   // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
   this.go=function(text) {
     segMap=[];
     header={};
+    lines=[];
     var data=false;
     type=deduceType(text);
     //console.log("typed as "+type);
@@ -132,7 +135,7 @@ wm.fb.Parser=function() {
 
   // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
   function getDataFromCsv(text) {
-    var lines=splitCsv(text);
+    if (! lines.length) lines=splitCsv(text);
     var r=readCsvLines(lines);
     return r;
   }
@@ -173,7 +176,12 @@ wm.fb.Parser=function() {
     getPointData=function() { return false; }, onExtraData=function(x) { return x; };
 
     if (type == "csv_wpt") { makeEntry=makeMarker; }
-    else { makeEntry=makeTrackLatLon; getPointData=searchSignalData; onExtraData=packSignalData; }
+    else if (type == "csv_track") {
+      makeEntry=makeTrackLatLon;
+      getPointData=searchSignalData;
+      onExtraData=packSignalData;
+    }
+    else { alert("Possibly wrong type:"+type); }
 
     for (i=1; i<lines.length; i+=1) {
       line=lines[i].trim();
@@ -181,6 +189,7 @@ wm.fb.Parser=function() {
       parts=line.split(csv.SEP);
       //console.log(wm.utils.dumpArray(parts));
       if (parts.length != header.count) throw new Error("Line "+i+": "+parts.length+" fields instead of "+header.count);
+      parsedLines[i-1] = parts;
       lat=parts[header.LAT];
       lon=parts[header.LON];
       if ( ! lat || ! lon) continue;
@@ -196,15 +205,16 @@ wm.fb.Parser=function() {
       res = type+" , "+res.total+" lines, found "+res.processed+" waypoints";
       ret = { trkPoints : [], wayPoints : arr, res : res };
     }
-    else {
+    else if (type == "csv_track") {
       //console.log(wm.utils.dumpArray(segPositions));
-      var segmented=cutToSegments(arr,segPositions,res);
+      var segmented = cutToSegments(arr,segPositions,res);
       //console.log(wm.utils.dumpArray(segPositions));
       var sum = wm.utils.sumUp(segMap);
       if (sum != res.processed) throw new Error("Processed "+res.processed+" points, segments give "+sum);
       res = type+" , "+res.total+" lines, found "+res.processed+" trackpoints ("+res.segments+" segments: "+res.segMap.join(" ")+")";
       ret = { trkPoints : segmented, wayPoints : [], res : res };
     }
+    else { alert("Possibly wrong type:"+type); }
     console.log("Parsed lengths:"+extras.length+"/"+arr.length);
     if (extras.length == arr.length) ret = onExtraData(ret, extras);
     return ret;
@@ -282,6 +292,40 @@ wm.fb.Parser=function() {
     }
     res.segMap=segMap;
     return segmented;
+  }
+
+  function findLineByCoords(lat,lon) {
+    var i=0,parts,d,foundI=-1,minDistance=1.0E+20;
+    if (! parsedLines?.length) throw new Error("Empty PARSEDlINES");
+    //alert("length="+parsedLines.length);
+    for ( ;i < parsedLines.length; i+=1) {
+      //alert("i="+i);
+      parts = parsedLines[i];
+      if (! parts?.length) throw new Error("Empty PARTS at "+i);
+      d = squareDistance(lat,lon,parts[header.LAT],parts[header.LON]);
+      if (d >= minDistance) continue;
+      minDistance = d;
+      foundI = i;
+    }
+    if (foundI < 0) {
+      throw new Error("No valid coords");
+    }
+    return parsedLines[foundI];
+  }
+
+  function squareDistance(lat0,lon0,lat1,lon1) {
+    var far = 1.0E+25;
+    if (! lat1 || ! lon1) return far;
+    var dla = lat0-lat1;
+    var dlo = lon0-lon1;
+    if (dla != dla) throw new Error("Latitude is NaN");
+    if (dlo != dlo) throw new Error("Longitude is NaN");
+    return dla*dla + dlo*dlo;
+  }
+
+  this.getDataForCoords = function(lat,lon) {
+    var l = findLineByCoords(lat,lon);
+    return { id: l[header.ID], data: l[header.DATA], data1: l[header.DATA1] };
   }
 
   this.getSegMap=function() { return segMap; };

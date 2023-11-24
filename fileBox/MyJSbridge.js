@@ -11,7 +11,7 @@ wm.fb.MyJSbridge=function(aProvider) {
       viewTrackJson="[]",
       viewTrackNamesJson="[]",
       currentTrackJson='[]',
-      signalTrack={ latLons:"[]", colors:"[]", breaks:"[]" },
+      signalTrack={ trkPoints:"[]", colors:"[]", breaks:"[]" },
       provider=aProvider,
       isDirty=3;
 
@@ -88,6 +88,8 @@ wm.fb.MyJSbridge=function(aProvider) {
     for (f of fields) { st[f]=JSON.stringify(st[f]); }
     signalTrack = st;
   };
+  this.getSignalTrack=function() { return signalTrack; };
+  this.setSignalTrack=function(st) { signalTrack=st; };
 
   this.setBounded=function(str) { isBounded=str; };
   this.getIsBounded=function() { return isBounded; };
@@ -118,6 +120,7 @@ wm.fb.MyJSbridge.copy=function(obj, target) {
   target.exportCenterLatLon(ll[0],ll[1]);// string
   //target.addViewTrackLatLonJson(obj.importViewTrackLatLonJson());// string
   target.setViewTrack(obj.importViewTrackLatLonJson());// string
+  target.setSignalTrack(obj.getSignalTrack());// dictionary<string>
   //target.addMarkers(obj.getMarkers());// string
   target.setMarkers(obj.getMarkers());// string
   target.onMoveend=obj.onMoveend;// *function

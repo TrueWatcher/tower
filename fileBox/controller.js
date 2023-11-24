@@ -11,6 +11,7 @@ wm.fb.View=function() {
       backBtn=$("backBtn"),
       resizeInput=$("resizeInput"),
       providerSelect=$("providerSelect"),
+      getDataBtn=$("getDataBtn"),
       renderedLevel=0,
       _this=this;
 
@@ -30,6 +31,10 @@ wm.fb.View=function() {
     providerSelect.onchange=doReloadMap;
     backBtn.onclick=doBack;
   };
+
+  this.setHandlers2=function(showDataForCenter) {
+    getDataBtn.onclick=showDataForCenter;
+  }
 
   this.loadUri=function(uri) {
     wmIframe.src=uri;
@@ -103,6 +108,9 @@ wm.fb.Controller=function(view) {
   var _this=this,
       dataForMap=new wm.fb.MyJSbridge("wallpaper"),
       dataForMapBak=false,
+      loadedFileNames=[],
+      lastLoadedFileName="",
+      parsers=[],
       mapFrame=window.frames[0],
       fileIndex=0,
       dataFile, files;
@@ -143,10 +151,11 @@ wm.fb.Controller=function(view) {
   };
 
   function afterFileIsRead(text, onSuccess) {
-    var data=false;
+    var data=false, parser=false;
     //alert(text)
     try {
-      data = (new wm.fb.Parser()).go(text);
+      parser = new wm.fb.Parser();
+      data = parser.go(text);
     }
     catch (e) {
       view.alert("Cannot parse "+dataFile.name+": "+e);
@@ -164,6 +173,9 @@ wm.fb.Controller=function(view) {
       rollBack();
       return;
     }
+    lastLoadedFileName=dataFile.name;
+    loadedFileNames.push(dataFile.name);
+    parsers[dataFile.name] = parser;
     afterFileIsParsed(data,onSuccess);
   }
 
@@ -236,8 +248,33 @@ wm.fb.Controller=function(view) {
       dataForMap.setDirty(2);
     }
     view.render(dataForMap);
+    var i = loadedFileNames.indexOf(lastLoadedFileName);
+    if ( i >= 0 ) {
+      loadedFileNames[i] = null;
+      loadedFileNames.splice(i,1);
+      lastLoadedFileName="";
+    }
   }
 
   this.getBackup=function() { return dataForMapBak; };
+
+  this.getDataForCenter = function() {
+    //alert("click\n"+lastLoadedFileName);
+    if (! lastLoadedFileName) return false;
+    var parser = parsers[lastLoadedFileName];
+    if ( ! (parser instanceof wm.fb.Parser)) throw new Error("Invalid parser at "+lastLoadedFileName);
+
+    var ll = dataForMap.importLatLon().split(',');
+    //alert(ll);
+    var lat = + ll[0];
+    var lon = + ll[1];
+    if (lat != lat || lon != lon) {
+      console.log("Center lat or lon is NaN");
+      return false;
+    }
+    var data = parser.getDataForCoords(lat,lon);
+    alert(`id:${data.id},\ncell${data.data1},\nsignal:${data.data}`);
+    return false;
+  };
 
 };// end Controller

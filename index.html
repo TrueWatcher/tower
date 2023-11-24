@@ -15,6 +15,7 @@ This is a free software by TrueWatcher rosc71@hotmail.com
 1.13.0 03.11.2023 experiments with leaflet-polycolor
 1.13.1 04.11.2023 improved polycolor
 1.14.0 20.11.2023 workable signalrack parsing and view
+1.15.0 25.11.2023 added querying point at map center
 -->
 <head>
   <title>View GPX and CSV tracks and waypoints over online maps</title>
@@ -53,6 +54,8 @@ This is a free software by TrueWatcher rosc71@hotmail.com
         <option value="blank map">blank</option>
         <option value="yandex hyb">Yandex hybrid</option>
       </select>
+      &nbsp;&nbsp;&nbsp;
+      <button id="getDataBtn" title="get point at map center">Point</button>
     </p>
   </div>
 
@@ -72,6 +75,7 @@ This is a free software by TrueWatcher rosc71@hotmail.com
     v.adjust();
     var c=new wm.fb.Controller(v);
     v.setHandlers(c.addFiles, c.reloadMap, c.stepBack);
+    v.setHandlers2(c.getDataForCenter);
   </script>
 </body>
 </html>
