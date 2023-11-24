@@ -38,7 +38,7 @@ wm.utils.getScreenParams2=function() {
     if (window.innerHeight > window.innerWidth) {
       realWidth=window.innerHeight; realHeight=window.innerWidth; screenRatio = (window.innerWidth/window.innerHeight);
     }
-    else { 
+    else {
       realWidth=window.innerWidth; realHeight=window.innerHeight; screenRatio = (window.innerHeight/window.innerWidth);
     }
   }
@@ -81,7 +81,7 @@ wm.utils.MockJSbridge=function(provider,ind) {
   this.importZoom=function() { return _zoom; };
   this.importDefaultZoom=function() { return "16"; };
   this.importMapType=function() { return provider; };
-  this.exportCenterLatLon=function(a,o) { 
+  this.exportCenterLatLon=function(a,o) {
     ind.init(); ind.say( ">>>"+a+","+o );
   };
   this.saveZoom=function(z) { _zoom=z; };
@@ -90,7 +90,7 @@ wm.utils.MockJSbridge=function(provider,ind) {
     if (provider.indexOf("yandex") === 0) {
       //if ( ! yaKey) ind.fail("No key found for Yandex");
       return yaKey;
-    }  
+    }
     ind.fail("No key for "+provider);
   };
   this.getNamelessMarker=function() { return '["gps","'+_lat+'","'+_lon+'"]'; };
@@ -113,6 +113,28 @@ wm.utils.MockJSbridge=function(provider,ind) {
   ]'; };
   this.importViewCurrentTrack=function() { return true; };
   this.importFollowCurrentTrack=function() { return true; };
+  this.importSignalTrackLatLonJson=function() { return '[\
+    [[55.7906,37.7780],[55.7912,37.779],[55.7922,37.780],[55.7932,37.781]],\
+    [[55.7912,37.788],[55.7922,37.789],[55.7922,37.790]]\
+  ]'; };// segments are allowed
+  // colors and breaks must be 1D arrays
+  this.importSignalTrackColors=function() {
+    var ca = '[\
+      "rgb(20,0,12)", "rgb(150,0,127)", "rgba(200,0,127,0.4)", "rgb(100,0,127)",\
+      "rgb(20,120,227)", "rgba(150,227,0,1.0)", "rgba(200,0,227,1.0)"\
+    ]';
+    //return ca;
+    var xs = [
+      0.5, 0, 0.05, 1.0,
+      0.01, 1.0, 0.25
+    ];
+    xs = xs.map( (x) => wm.utils.linearRGB2(x) );
+    return JSON.stringify(xs);
+  };
+  this.importSignalTrackBreaks=function() { return '[\
+    "GSM 1234567", "", "", "LTE 99999",\
+     "", "LTE 11111", ""\
+  ]'; };
   this.setBounded=function(str) { _isBounded=str; };
   this.getIsBounded=function() { return _isBounded; };
   this.moveLatLon=function() {
@@ -120,13 +142,13 @@ wm.utils.MockJSbridge=function(provider,ind) {
     _lon=(parseFloat(_lon)-0.001).toString();
   };
   this.setupEventThrower=function() {
-    document.onkeyup=function(e) { 
+    document.onkeyup=function(e) {
       console.log("keyup:"+e.code);
       if (e.code != "Space") return false;
       _this.moveLatLon();
       (function() { window.dispatchEvent(onTrackreloadEvent); }) ();// onDatareloadEvent onTrackreloadEvent
       return false;
-    }    
+    }
   };
 };
 
@@ -146,32 +168,33 @@ wm.utils.putMarkers=function(oMap, ind, markersJson, putOneMarker) {
   for (i=0; i < l; i+=1) {
     m=markersArr[i];
     putOneMarker(oMap,m);
-  }  
+  }
 };
 
 wm.utils.LimitFinder=function() {
-  
+
   this.go=function(JSbridge) {
     var mode = JSbridge.getIsBounded();
     if ( ! mode || mode == "") return false;
-    var currentTracklimits=false, viewTracklimits=false, waypointlimits=false;
+    var currentTracklimits=false, signalTracklimits=false, viewTracklimits=false, waypointlimits=false;
     if (mode == "*" || mode == "t" || mode == "ct") currentTracklimits=findTrackLimits(JSbridge.importCurrentTrackLatLonJson());
+    if (mode == "*" || mode == "t" || mode == "st") signalTracklimits=findTrackLimits(JSbridge.importSignalTrackLatLonJson());
     if (mode == "*" || mode == "t" || mode == "vt") viewTracklimits=findTrackLimits(JSbridge.importViewTrackLatLonJson());
     if (mode == "*" || mode == "w") waypointlimits=findWaypointLimits(JSbridge.getMarkers());
-    var limits = mergeLimits( [ currentTracklimits, viewTracklimits, waypointlimits ] );
+    var limits = mergeLimits( [ currentTracklimits, signalTracklimits, viewTracklimits, waypointlimits ] );
     if ( ! limits) return false;
     //console.log(wm.utils.dumpArray(limits));
     //console.log(JSON.stringify(limits));
-    return limits;    
+    return limits;
   }
-  
+
   function findTrackLimits(trackJson) {
     var ntr=0;
-    var res = new wm.utils.Limits(); 
+    var res = new wm.utils.Limits();
     var track=JSON.parse(trackJson);
     if ( ! track || ! (track instanceof Array) || track.length == 0 ) return false;
     if (! (track[0] instanceof Array) || ! (track[0][0] instanceof Array) ) throw new Error("Malformed track");
-    if (track[0][0][0] instanceof Array && track[0][0][0].length == 2) { 
+    if (track[0][0][0] instanceof Array && track[0][0][0].length == 2) {
       //console.log("limits as array of tracks");
       for (; ntr < track.length; ntr+=1) { processSegmentArray(track[ntr],res); }
     }
@@ -181,7 +204,7 @@ wm.utils.LimitFinder=function() {
     }
     return res;
   }
-  
+
   function processSegmentArray(segArr,res) {
     var nseg, np;
     var segCount=segArr.length;
@@ -191,7 +214,7 @@ wm.utils.LimitFinder=function() {
         res.addLatLon(segArr[nseg][np]);
       }
     }
-    return res; 
+    return res;
   }
 
   function findWaypointLimits(markersJson) {
@@ -212,16 +235,16 @@ wm.utils.LimitFinder=function() {
       //console.log(wm.utils.dumpArray(markersArr[i]));
       latLon = [ markersArr[i][1], markersArr[i][2] ];
       res.addLatLon(latLon);
-    } 
+    }
     //console.log(wm.utils.dumpArray(res));
-    return res;  
+    return res;
   }
 
   function mergeLimits(limArr) {
     var res = new wm.utils.Limits();
     var emptyCount=0;
     for (var i=0; i < limArr.length; i+=1) {
-      if ( ! limArr[i] ) { 
+      if ( ! limArr[i] ) {
         emptyCount+=1;
         continue;
       }
@@ -237,7 +260,7 @@ wm.utils.Limits=function() {
   this.minLon=999;
   this.maxLat=-999;
   this.maxLon=-999;
-  
+
   this.addLatLon=function(latLon) {
     if (latLon === false) return this;
     if ( ! (latLon instanceof Array) || latLon.length != 2) throw new Error("Wrong latLon="+latLon+"!");
@@ -258,7 +281,7 @@ wm.utils.Limits=function() {
     this.addLatLon( [limits.minLat, limits.minLon] )
         .addLatLon( [limits.maxLat, limits.maxLon] );
     return this;
-  };  
+  };
 };
 
 wm.utils.dumpArray=function(x) {
@@ -268,12 +291,12 @@ wm.utils.dumpArray=function(x) {
     for (i in x) {
       if (x.hasOwnProperty(i)) {
         res+=" "+i+":"+wm.utils.dumpArray(x[i]);
-      }  
+      }
     }
     res+=" }";
   }
   else res+=""+x;
-  return res;  
+  return res;
 };
 
 wm.utils.joinJsonArrays=function(a1, a2) {
@@ -321,7 +344,7 @@ wm.utils.adjustScreen=function() {
   var dWidthEm=0, dHeightEm=0;
   if (JSbridge.hasOwnProperty("dWidthEm")) dWidthEm=JSbridge.dWidthEm;
   if (JSbridge.hasOwnProperty("dHeightEm")) dHeightEm=JSbridge.dHeightEm;
-  
+
   var w=""+Math.min(scrInfo.width-dWidthEm*scrInfo.emPx, 2000);// no exact limit known
   var h=""+Math.min(scrInfo.height-dHeightEm*scrInfo.emPx, 2000);
   //alert(w+"/"+h);
@@ -352,7 +375,7 @@ wm.utils.shiftColor=function(aColor,serial,colorStep) {
   }
   //alert(">>"+shiftedColor);
   //console.log("shiftedColor="+shiftedColor);
-  if ( shiftedColor.length != 7 ) { 
+  if ( shiftedColor.length != 7 ) {
     console.log("Wrong shiftedColor="+shiftedColor);
     shiftedColor=aColor;
   }
@@ -375,3 +398,35 @@ wm.utils.truncateAfterPoint=function(str,digits) {
   if (pointPosition < 0) return str;
   return str.substring(0, pointPosition+digits+1);
 };
+
+wm.utils.linearRGB=function(x) {
+  var start=[0,0,0], end=[256,127,0], res=[0,0,0], i=0;
+  if (! x) x=0;
+  else if (x < 0) x=0;
+  if (x > 0) x = 0.2+x*0.8; // highlight low values over void value
+  if (x > 1) x=1.0;
+  for (; i<3; i+=1) { res[i] = Math.floor(start[i] + x * (end[i]-start[i]) ); }
+  return `rgb(${res[0]},${res[1]},${res[2]})`;
+};
+
+wm.utils.linearRGB2=function(x) {
+  var none=[0,0,0], start=[127,0,0], end=[256,127,0], res=[0,0,0], i=0;
+  if (! x) x=0;
+  else if (x < 0) x=0;
+  if (x > 1) x=1.0;
+  if (x == 0) res=none; // highlight low values over void value
+  else {
+    for (; i<3; i+=1) { res[i] = Math.floor(start[i] + x * (end[i]-start[i]) ); }
+  }
+  return `rgb(${res[0]},${res[1]},${res[2]})`;
+};
+
+wm.utils.total=function(arr) {
+  if (! (arr instanceof Array)) throw new Error("Not an array");
+  if (arr[0] instanceof Array) {
+    var t=0,subarr;
+    for (subarr of arr) { t += subarr.length; }
+    return t;
+  }
+  return arr.length;
+}

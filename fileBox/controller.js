@@ -13,10 +13,10 @@ wm.fb.View=function() {
       providerSelect=$("providerSelect"),
       renderedLevel=0,
       _this=this;
-  
+
   var emPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
   var viewportHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-  
+
   this.adjust=function() {
     var panelHeight=panelTable.clientHeight;
     var remainder=viewportHeight-panelHeight-0.5*emPx;
@@ -24,33 +24,33 @@ wm.fb.View=function() {
     wmIframe.style.height=remainder+"px";
     alertTd.innerHTML="Choose a GPX or CSV file";
   };
-  
+
   this.setHandlers=function(doAdd, doReloadMap, doBack) {
     fileInput.onchange=doAdd;
     providerSelect.onchange=doReloadMap;
     backBtn.onclick=doBack;
   };
-  
+
   this.loadUri=function(uri) {
     wmIframe.src=uri;
     // running from local files, Firefox >= 68 require privacy.file_unique_origin be set to false
   };
-  
+
   this.getProvider=function() {
     return providerSelect.options[providerSelect.selectedIndex].value;
   };
-  
+
   this.getFile=function() { return fileInput.files[0]; };
-  
+
   this.getFiles=function() { return fileInput.files; };
-  
+
   this.alert=function(str) { alertTd.innerHTML=str; };
-  
+
   this.getShouldResize=function() { return resizeInput.checked; };
-  
+
   this.disableBackBtn=function() { backBtn.disabled=true; };
   this.enableBackBtn=function() { backBtn.disabled=false; };
-  
+
   this.render=function(dataForMap) {
     if ( ! (dataForMap instanceof wm.fb.MyJSbridge)) throw new Error("Rendering from non-JSbridge");
     var provider=dataForMap.importMapType();
@@ -59,26 +59,26 @@ wm.fb.View=function() {
     case 0:
       console.log("doing nothing");
       break;
-      
+
     case 2:
       //JSbridge=dataForMap; // does not work without reloading !
       console.log("firing onDatareloadEvent");
       mapFrame.dispatchEvent(mapFrame.onDatareloadEvent);
       break;
-      
+
     case 3:
       JSbridge=dataForMap;
       console.log("loading map:"+provider);
       this.loadUri(getUri(provider));
       break;
-      
-    default: 
+
+    default:
       throw new Error("Wrong level="+dirty);
     }
     renderedLevel=dataForMap.getDirty();
     dataForMap.clearDirty();
   };
-  
+
   function getUri(aProvider) {
     var isLeaflet=["osm","opentopo","google","marshruty.ru","blank"];
     var isYandex=["yandex"];
@@ -88,15 +88,15 @@ wm.fb.View=function() {
     if (pr == "wallpaper") return "webMaps/wallpaper.html";
     throw new Error("Unknown provider="+pr);
   }
-  
+
   this.getRenderedLevel=function() { return renderedLevel; };
-  
+
   this.showCoords=function() {
     var latLon=JSbridge.importLatLon().split(",");
     var hash="lat="+wm.utils.truncateAfterPoint(latLon[0],7)+"&lon="+wm.utils.truncateAfterPoint(latLon[1],7);
     window.location.hash=hash;
   };
-  
+
 }; // end View
 
 wm.fb.Controller=function(view) {
@@ -106,7 +106,7 @@ wm.fb.Controller=function(view) {
       mapFrame=window.frames[0],
       fileIndex=0,
       dataFile, files;
-  
+
   this.addFiles=function() {
     files=view.getFiles();
     if ( ! files || files.length == 0) {
@@ -120,7 +120,7 @@ wm.fb.Controller=function(view) {
     if (files.length == 1) { addFile(files[0], commitToMap); }
     else { addFile(files[0], getAnotherFile); }
   };
-  
+
   function getAnotherFile() {
     fileIndex += 1;
     if (fileIndex == files.length) {
@@ -130,7 +130,7 @@ wm.fb.Controller=function(view) {
     }
     addFile(files[fileIndex], getAnotherFile);
   }
-      
+
   function addFile(aFile, onSuccess) {
     if ( ! (aFile instanceof File)) throw new Error("Wrong AFILE");
     if ( ! (typeof onSuccess == "function")) throw new Error("Wrong ONSUCCESS");
@@ -141,7 +141,7 @@ wm.fb.Controller=function(view) {
     reader.readAsText(dataFile);
     return;
   };
-  
+
   function afterFileIsRead(text, onSuccess) {
     var data=false;
     //alert(text)
@@ -153,8 +153,8 @@ wm.fb.Controller=function(view) {
       rollBack();
       throw e;
     }
-    if ( ! data) { 
-      rollBack(); 
+    if ( ! data) {
+      rollBack();
       throw new Error("Parser returned no data");
     }
     //console.log(wm.utils.dumpArray(data));
@@ -166,11 +166,16 @@ wm.fb.Controller=function(view) {
     }
     afterFileIsParsed(data,onSuccess);
   }
-    
+
   function afterFileIsParsed(data,onSuccess) {
-    if (data.trkPoints instanceof Array && data.trkPoints.length > 0) { 
-      dataForMap.pushViewTrack(data.trkPoints);
-      dataForMap.pushViewTrackName(dataFile.name);
+    if (data.trkPoints instanceof Array && data.trkPoints.length > 0) {
+      if (data.colors instanceof Array && data.colors.length > 0) {
+        dataForMap.exportSignalTrack(data);
+      }
+      else {
+        dataForMap.pushViewTrack(data.trkPoints);
+        dataForMap.pushViewTrackName(dataFile.name);
+      }
     }
     dataForMap.addMarkers(JSON.stringify(data.wayPoints));
     view.alert(dataFile.name+": "+data.res);
@@ -178,7 +183,7 @@ wm.fb.Controller=function(view) {
     else { dataForMap.setBounded(""); }
     onSuccess();
   }
-  
+
   function rollBack() {
     if ( fileIndex == 0 ) {
       dataForMapBak=false;
@@ -189,7 +194,7 @@ wm.fb.Controller=function(view) {
     fileIndex=0;
     doStepBack();
   }
-  
+
   function commitToMap() {
     if (dataForMap.hasNoCoords()) {
       dataForMap.setMapType( view.getProvider() );
@@ -202,21 +207,21 @@ wm.fb.Controller=function(view) {
     }
     view.render(dataForMap);
   }
-  
+
   this.reloadMap=function() {
     if (dataForMap.hasNoCoords()) return;
     dataForMap.setMapType( view.getProvider() );
     dataForMap.setDirty(3);
     view.render(dataForMap);
   };
-  
+
   this.stepBack=function() {
     if (dataForMap.hasNoCoords()) { view.alert("No data to dismiss"); return; }
     if (dataForMapBak === false) { view.alert("This goes only one step"); return; }
     view.alert("Dismissing last addition");
     doStepBack();
   };
-  
+
   function doStepBack() {
     if (! (dataForMap instanceof wm.fb.MyJSbridge)) throw new Error("Wrong backup");
     //dataForMap=dataForMapBak; // work only with reloading the bloody iframe
@@ -232,7 +237,7 @@ wm.fb.Controller=function(view) {
     }
     view.render(dataForMap);
   }
-  
+
   this.getBackup=function() { return dataForMapBak; };
 
 };// end Controller

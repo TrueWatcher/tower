@@ -7,6 +7,9 @@
   <script src="utils.js"></script>
   <link rel="stylesheet" type="text/css" href="leafletjs_1_9/leaflet.css" />
   <script src="leafletjs_1_9/leaflet.js"></script>
+  <script src="./leaflet-polycolor-plus.min.js"></script>
+  <!--  https://oliv.github.io/leaflet-polycolor/js/leaflet-polycolor.min.js -->
+  <!--<script src="./leaflet-polycolor-from_master-.min.js"></script>-->
   <style>
     #attributionDiv a:link, #attributionDiv a:visited { color: inherit; }
   </style>
@@ -29,8 +32,13 @@
 
 <script>
   'use strict';
+  // import the plugin from leaflet-polycolor.min.js
+  var leafletPolycolor = require('leaflet-polycolor');
+  leafletPolycolor.default(L);
+  // -----------------------------------------------
   var map,
       currentTrack=false,
+      signalTrack=false,
       trackThicknessPx=2,
       scrInfo=wm.utils.getViewportParams(),
       ind=new wm.utils.Ind(document.getElementById("ind")),
@@ -44,6 +52,7 @@
     setViewArea(map, ll, zoom);
     addViewTrackColored(map, wm.utils.getColor("mark"));
     replaceCurrentTrack(map, wm.utils.getColor("gps"));
+    replaceSignalTrack(map);
     drawNamelessMarker(map);
     //ind.say("markers:"+JSbridge.getMarkers());
     drawMarkers(map);
@@ -253,25 +262,69 @@
         _this=this;
 
     button.onclick=function toggleObjects() {
+      //alert("click");
       isVisible= ! isVisible;
       _this.reapply();
     };
 
     this.reapply=function() {
-      var overlayPane=document.querySelector("div.leaflet-overlay-pane g");
+      var overlayPane=document.querySelector("div.leaflet-overlay-pane");
       var tooltipPane=document.querySelector("div.leaflet-tooltip-pane");
       if ( ! overlayPane || ! tooltipPane) { return; }
       if (isVisible) {
         overlayPane.style.visibility=tooltipPane.style.visibility="visible";
+        if (signalTrack) { signalTrack.addTo(map); }
         button.innerHTML="Hide";
         button.style.color="#000";
       }
       else {
         overlayPane.style.visibility=tooltipPane.style.visibility="hidden";
+        if (signalTrack) { signalTrack.remove(); }
         button.innerHTML="Show";
         button.style.color=wm.utils.getTrackColor(0);
       }
     };
+  }
+
+  function replaceSignalTrack(map) {
+    if ( ! JSbridge.hasOwnProperty("importSignalTrackLatLonJson") || ! JSbridge.hasOwnProperty("importSignalTrackColors")) {
+      console.log("JSbridge does not support signalTrack");
+      return;
+    }
+    var track = JSbridge.importSignalTrackLatLonJson();
+    if (! track) {
+      if (signalTrack) { signalTrack.remove(); signalTrack=false; }
+      return;
+    }
+    track=JSON.parse(track);
+    if ( ! (track instanceof Array) || track.length == 0 ) {
+      if (signalTrack) { signalTrack.remove(); signalTrack=false; }
+      return;
+    }
+    //signalTrack=L.polyline(track, {color: "rgb(0,0,256)", weight: trackThicknessPx}).addTo(map);
+    var colors = JSbridge.importSignalTrackColors();
+    //alert(colors);
+    colors=JSON.parse(colors);
+    if (! colors || ! (colors  instanceof Array) || colors.length == 0) {
+      ind.fail("Invalid colors array");
+      return;
+    }
+    if (colors.length < track.length) {
+      ind.fail("Too short colors array");
+      return;
+    }
+    //console.log("tr0:"+track[0]);
+    var breaks = Array.from({length: track.length}, ()=>"");
+    if (JSbridge.hasOwnProperty("importSignalTrackBreaks")) {
+      breaks=JSbridge.importSignalTrackBreaks();
+      breaks=JSON.parse(breaks);
+    }
+    if (breaks.length < track.length) {
+      ind.fail("Too short breaks array");
+      return;
+    }
+    signalTrack=L.polycolor(track, {colors: colors, breaks: breaks, weight: trackThicknessPx });
+    signalTrack.addTo(map);
   }
 
   wm.utils.findJSbridge(ind,"opentopo map");

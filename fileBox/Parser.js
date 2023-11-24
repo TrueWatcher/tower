@@ -5,10 +5,10 @@ wm.fb.Parser=function() {
   var type="",
       segMap=[],
       csv={ SEP:";", NL:"\n"},
-      names={ LAT:"lat", LON:"lon", NEW_TRACK:"new_track", ID:"id", TYPE:"type", COMMENT:"comment", CELLDATA:"cellData" },
+      names={ LAT:"lat", LON:"lon", NEW_TRACK:"new_track", ID:"id", TYPE:"type", COMMENT:"comment", CELLDATA:"cellData", DATA:"data", DATA1:"data1" },
       header={};
-  
-  // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };      
+
+  // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
   this.go=function(text) {
     segMap=[];
     header={};
@@ -16,9 +16,9 @@ wm.fb.Parser=function() {
     type=deduceType(text);
     //console.log("typed as "+type);
     switch (type) {
-      case "gpx": 
+      case "gpx":
         var domparser = new DOMParser();
-        var doc = domparser.parseFromString(text, "text/xml");    
+        var doc = domparser.parseFromString(text, "text/xml");
         if (parsingFailed(doc)) {
           reportErr(doc);
           return;
@@ -34,7 +34,7 @@ wm.fb.Parser=function() {
     }
     return data;
   };
-      
+
   function deduceType(buf) {
     if ( ! buf) return "empty file";
     if (buf.includes("<gpx") && buf.includes("</gpx>")) return "gpx";
@@ -48,18 +48,18 @@ wm.fb.Parser=function() {
     }
     return "unknown format";
   }
-  
+
   function parsingFailed(doc) {
     return ( doc.getElementsByTagName('parsererror').length > 0 );
   }
-  
+
   function reportErr(doc) {
     var errors=doc.getElementsByTagName('parsererror');
     var report="";
     for (var i=0; i < errors.length; i+=1) { report += errors[i].innerHTML+"<br />"; }
     throw new Error(report);
   }
-  
+
   // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
   function getDataFromDom(doc) {
     var seg,points=[],pCount,pt,tpCount=0,trkPoints=[],wayPoints=[],pointGroup,
@@ -76,7 +76,7 @@ wm.fb.Parser=function() {
     res+=" , found "+tpCount+" trackpoints";
     if (tpCount) {
       var sum = wm.utils.sumUp(segMap);
-      if (sum != tpCount) throw new Error("Processed "+tpCount+" points, segments give "+sum);  
+      if (sum != tpCount) throw new Error("Processed "+tpCount+" points, segments give "+sum);
       res += "("+tsCount+" segments:"+segMap.join(" ")+")";
     }
     points=doc.getElementsByTagName("wpt");
@@ -103,19 +103,19 @@ wm.fb.Parser=function() {
   function parseWayPointGroup(points) {
     var pt,wpt,arr=[],lat,lon,type,text,s,cmts,cmt,t,ext,te,
         pCount=points.length;
-        
+
     for (pt=0; pt < pCount; pt+=1) {
       wpt=points[pt];
       lat=wpt.getAttribute("lat");
       lon=wpt.getAttribute("lon");
       s=wpt.getElementsByTagName("name");
       if ( ! lat || ! lon || ! s) continue;
-      
+
       text="";
       cmt="";
       if (s.length) text=s[0].innerHTML;
       cmts=wpt.getElementsByTagName("cmt");
-      if (cmts.length) { 
+      if (cmts.length) {
         cmt=cmts[0].innerHTML;
         if (cmt) text += "."+cmt;
       }
@@ -129,14 +129,14 @@ wm.fb.Parser=function() {
     }
     return arr;
   }
-  
+
   // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
   function getDataFromCsv(text) {
     var lines=splitCsv(text);
     var r=readCsvLines(lines);
     return r;
   }
-  
+
   // @returns String[]
   function splitCsv(text) {
     if ( ! text) throw new Error("Empty TEXT");
@@ -146,13 +146,13 @@ wm.fb.Parser=function() {
     header=parseCsvHeader(headline);
     return lines;
   }
-  
+
   // @returns { ::: }
   function parseCsvHeader(headline) {
     var i,
         found={},
         fields=headline.split(csv.SEP);
-        
+
     //console.log("header fields:"+wm.utils.dumpArray(fields));
     if (fields.length < 2) throw new Error('Too few fields, SEP must be "'+names.SEP+'"');
     for (i in names) {
@@ -161,19 +161,20 @@ wm.fb.Parser=function() {
     }
     //console.log(wm.utils.dumpArray(found));
     if (found.LAT < 0 || found.LON < 0) throw new Error("Missing "+names.LAT+" or "+names.LON+" from the header");
-    if (type == "csv_wpt" && found.ID < 0) throw new Error("Missing "+names.ID+" from the header");  
+    if (type == "csv_wpt" && found.ID < 0) throw new Error("Missing "+names.ID+" from the header");
     found.count=fields.length;
     found.fields=fields;
     return found;
   }
-  
+
   // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
   function readCsvLines(lines) {
-    var i,processedCount=0,line,parts,lat,lon,newTrack,arr=[],segPositions=[],res,entry,makeEntry;
-    
-    if (type == "csv_wpt") makeEntry=makeMarker;
-    else makeEntry=makeTrackLatLon;
-    
+    var i,processedCount=0,line,parts,lat,lon,newTrack,arr=[],segPositions=[],res,entry,makeEntry,extras=[],pointData,ret,
+    getPointData=function() { return false; }, onExtraData=function(x) { return x; };
+
+    if (type == "csv_wpt") { makeEntry=makeMarker; }
+    else { makeEntry=makeTrackLatLon; getPointData=searchSignalData; onExtraData=packSignalData; }
+
     for (i=1; i<lines.length; i+=1) {
       line=lines[i].trim();
       if ( ! line) continue;
@@ -185,31 +186,36 @@ wm.fb.Parser=function() {
       if ( ! lat || ! lon) continue;
       entry=makeEntry(lat,lon,parts);
       arr.push(entry);
-      processedCount+=1;      
+      pointData=getPointData(parts);
+      if (pointData) extras.push(pointData);
+      processedCount+=1;
     }
     res={total:lines.length, processed:processedCount, segments:1, segMap:[]};
-    
+
     if (type == "csv_wpt") {
       res = type+" , "+res.total+" lines, found "+res.processed+" waypoints";
-      return { trkPoints : [], wayPoints : arr, res : res };
+      ret = { trkPoints : [], wayPoints : arr, res : res };
     }
-    else { 
+    else {
       //console.log(wm.utils.dumpArray(segPositions));
       var segmented=cutToSegments(arr,segPositions,res);
       //console.log(wm.utils.dumpArray(segPositions));
       var sum = wm.utils.sumUp(segMap);
-      if (sum != res.processed) throw new Error("Processed "+res.processed+" points, segments give "+sum);     
+      if (sum != res.processed) throw new Error("Processed "+res.processed+" points, segments give "+sum);
       res = type+" , "+res.total+" lines, found "+res.processed+" trackpoints ("+res.segments+" segments: "+res.segMap.join(" ")+")";
-      return { trkPoints : segmented, wayPoints : [], res : res };
+      ret = { trkPoints : segmented, wayPoints : [], res : res };
     }
-    
+    console.log("Parsed lengths:"+extras.length+"/"+arr.length);
+    if (extras.length == arr.length) ret = onExtraData(ret, extras);
+    return ret;
+
     function makeTrackLatLon(lat,lon,parts) {
       if (header.NEW_TRACK >= 0) {
         if (parts[header.NEW_TRACK]) segPositions.push(processedCount);
       }
       return [lat,lon];
     }
-    
+
     function makeMarker(lat,lon,parts) {
       var wtype="mark";
       if (header.TYPE >= 0 && parts[header.TYPE]) wtype=parts[header.TYPE];
@@ -217,8 +223,42 @@ wm.fb.Parser=function() {
       if (header.COMMENT >= 0 && parts[header.COMMENT]) text += "."+parts[header.COMMENT];
       return [wtype, lat, lon, text];
     }
+
+    function searchSignalData(parts) {
+      if (parts[header.COMMENT] != 'S') return false;
+      if (parts[header.DATA] == "") return false;
+      //alert(parts[header.ID]+": "+parts[header.DATA]+", "+parts[header.DATA1]);
+      return [parts[header.DATA], parts[header.DATA1]];
+    }
+
+    function packSignalData(ret,extras) {
+      var i=0, prevCell='', extra, colors=[], breaks=[];
+      for (; i<extras.length; i+=1) {
+        extra=extras[i]; // [ dBm, cell ]
+        colors.push( normalize(extra[0]) );
+        if (extra[1] != prevCell) {
+          prevCell=extra[1];
+          breaks.push(extra[1]);
+        }
+        else { breaks.push(""); }
+      }
+      ret.colors=colors;
+      ret.breaks=breaks;
+      return ret;
+    }
+
+    function normalize(x) {
+      var low=-120, high=-50, y;
+      x = parseInt(x);
+      if (x <= low) return 0;
+      if (x == 0) return 0;
+      if (x >= high) return 1;
+      y = (x-low)/(high-low);
+      //alert(x+" > "+y);
+      return y;
+    }
   }
-   
+
   // @returns [lat,lon][][]
   function cutToSegments(arr,segPositions,res) {
     var segCount=1,i,slice,segmented=[];
@@ -234,7 +274,7 @@ wm.fb.Parser=function() {
     segPositions.push(arr.length);
     segCount=segPositions.length-1;
     res.segments=segCount;
-    
+
     for (i=0; i < segCount; i+=1) {
       slice=arr.slice( segPositions[i], segPositions[i+1] );
       segmented.push(slice);
@@ -243,9 +283,9 @@ wm.fb.Parser=function() {
     res.segMap=segMap;
     return segmented;
   }
-      
+
   this.getSegMap=function() { return segMap; };
   this.getType=function() { return type; };
   this.getHeader=function() { return header; };
-  
+
 };// end Parser
