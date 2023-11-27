@@ -30,12 +30,12 @@ public class TrackStorage {
 
   public void initTargetDir(Context context) throws IOException, U.FileException {
     String nativeFolder = context.getExternalFilesDir(null).getPath();
+    mTargetPath = nativeFolder;
     if (mRg.getBool("useTowerFolder")) {
       String towerFolder = getTowerDir(nativeFolder);
       if (towerFolder.isEmpty()) throw new U.FileException("Cannot find truewatcher.tower");
       mTargetPath = towerFolder;
     }
-    else { mTargetPath = nativeFolder; }
     if (U.DEBUG) Log.i(U.TAG, "My path=" + mTargetPath);
     initMyFile();
   }
@@ -56,7 +56,7 @@ public class TrackStorage {
   public int getLastId() { return mLastId; }
 
   public String getTowerDir(String nativeDir) {
-    String changedDir = nativeDir.replace("truewatcher.trackwriter","truewatcher.tower");
+    String changedDir = nativeDir.replace("truewatcher.signaltrackwriter","truewatcher.tower");
     if (false == new File(changedDir).exists()) return "";
     return changedDir;
   }
@@ -264,17 +264,6 @@ public class TrackStorage {
       if (foundIdInt <= mCurrentId) mError += " Non-order id:" + foundId + " " + String.valueOf(lineNumber) + " ";
       mCurrentId = foundIdInt;
     }
-
-    /*
-    void onNewtrackpoint__(int lineNumber, int segNumber, Trackpoint p, String[] lines) {
-      p.setIdInt(mCurrentId);
-      mCurrentId += 1;
-    }
-
-    @Override
-    void onEnd(int lineNumber, int segNumber, Trackpoint p, String[] lines) throws U.DataException {
-      mCurrentId -= 1;
-    }*/
 
     @Override
     String presentResult() {

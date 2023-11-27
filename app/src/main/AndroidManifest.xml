@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.signaltrackwriter"
-    android:versionCode="21"
-    android:versionName="2.0.1" >
+    android:versionCode="22"
+    android:versionName="2.1.1" >
   <!--
   trackwriter
   1.4.0 5 18.02.2020 added saving to the truewatcher.tower folder
@@ -13,6 +13,7 @@
   signaltrackwriter
   2.0.0  20 18.11.2023 added CellInformer
   2.0.1  21 19.11.2023 added serial id
+  2.1.1  22 27.11.2023 signal data as json
   -->
 
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -43,8 +44,10 @@
 
     <service
         android:name="truewatcher.signaltrackwriter.ForegroundService"
+        android:foregroundServiceType="location"
         android:enabled="true"
         android:exported="true" />
+
   </application>
 
 </manifest>

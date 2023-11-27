@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import androidx.annotation.RequiresApi;
@@ -15,7 +16,8 @@ import androidx.annotation.RequiresApi;
 public class TrackListener implements LocationListener {
 
   private boolean mOn=false;
-  private int mCounter=0;
+  private int mCounter=0; // GPS fixes
+  private int mCounter2=0; // new points
   public String status=" new ";
   public long prevUpdateTime=0;
   public long updateTime=0;
@@ -38,6 +40,9 @@ public class TrackListener implements LocationListener {
   public void clearCounter() { mCounter=0; }
   public void incCounter() { mCounter+=1; }
   public int getCounter() { return mCounter; }
+  public void clearCounter2() { mCounter2=0; }
+  public void incCounter2() { mCounter2+=1; }
+  public int getCounter2() { return mCounter2; }
 
   public void startListening(Context ct) {
     long minTimeMs=1000*mRg.getInt("gpsMinDelayS");//U.minFixDelayS;
@@ -63,7 +68,7 @@ public class TrackListener implements LocationListener {
   @RequiresApi(api = Build.VERSION_CODES.Q)
   public void onLocationChanged(Location loc) {
     if (U.DEBUG) Log.i(U.TAG, "LocationReceiver:"+"got a location " + loc.toString());
-    incCounter();
+    incCounter();// counting GPS fixes
     prevUpdateTime=updateTime;
     updateTime = U.getTimeStamp();
     if (prevUpdateTime > 0) {
@@ -95,6 +100,7 @@ public class TrackListener implements LocationListener {
     if (farEnough(tp, mPrevTrackpoint)) {
       mPrevTrackpoint = tp;
       mTrackStorage.simplySave(tp);
+      incCounter2(); // counting new points
       if (U.DEBUG) Log.i(U.TAG, "new point "+String.valueOf(mTrackStorage.getLastId()));
       return;
     }
@@ -119,8 +125,27 @@ public class TrackListener implements LocationListener {
     //return true;
     if ( ! x.data1.equals(y.data1)) return true; // cell handover
     int minDbmDelta=5;
-    if ( Math.abs(Integer.valueOf(x.data) - Integer.valueOf(y.data)) >= minDbmDelta )  return true;
+    try {
+      if (Math.abs(extractStrength(x.data) -  extractStrength(y.data)) >= minDbmDelta) return true;
+    }
+    catch (U.DataException e) {
+      Log.e(U.TAG, "Cannot extract signal strength:"+e.getMessage());
+    }
     return false;
+  }
+
+  private int extractStrength(String sd) throws U.DataException {
+    final String FIELD = "dBm";
+    JSONObject signal = new JSONObject();
+    int ss = 0;
+    try {
+      signal = new JSONObject(sd);
+      if ( ! signal.has(FIELD) ) { throw new U.DataException("No "+FIELD+" field"); }
+      ss = Integer.parseInt( signal.optString(FIELD));
+    }
+    catch (JSONException e) { throw new U.DataException( "Malformed JSON:"+ e.getMessage() ); }
+    catch (NumberFormatException e) { throw new U.DataException( "Malformed strength:"+ e.getMessage() ); }
+    return ss;
   }
 
 }

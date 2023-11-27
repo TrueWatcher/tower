@@ -1,7 +1,9 @@
 package truewatcher.signaltrackwriter;
 
+import java.util.Iterator;
 import java.util.Set;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.location.Location;
@@ -59,14 +61,29 @@ public class Trackpoint extends LatLon implements Cloneable {
 
   public void addCell(JSONObject cellData) {
     this.setComment("S");
-    this.setData(cellData.optString("dBm"));
-    cellData.remove("dBm");
-    this.setData1(cellData.toString());
+    JSONObject[] signalCellData = this.separateSignalFromCell(cellData);
+    this.setData(signalCellData[0].toString());
+    this.setData1(signalCellData[1].toString());
   }
 
-  public void setComment(String c) { comment=c; }
-  public void setData(String d) { data=d; }
-  public void setData1(String d) { data1=d; }
+  private JSONObject[] separateSignalFromCell(JSONObject cellData) {
+    JSONObject signalData =  new JSONObject();
+    JSONObject cellOnlyData =  new JSONObject();
+    try {
+      signalData =  new JSONObject(cellData.toString());
+      cellOnlyData =  new JSONObject(cellData.toString());
+      for (Iterator<String> it = cellData.keys(); it.hasNext(); ) {
+        String key = it.next();
+        if (CellInformer.CELL_PARAMS.indexOf(key) >= 0) { signalData.remove(key); }
+        else { cellOnlyData.remove(key); }
+      }
+    }
+    catch (JSONException e) {
+      Log.e(U.TAG, "JSOM error:"+e.getMessage());
+      return new JSONObject[] { signalData, cellOnlyData };
+    }
+    return new JSONObject[] { signalData, cellOnlyData };
+  }
 
   public Object clone() {
     try { return super.clone(); }
@@ -93,6 +110,10 @@ public class Trackpoint extends LatLon implements Cloneable {
     String fd = df.format(Calendar.getInstance().getTime());
     return fd;
   }
+
+  public void setComment(String c) { comment=c; }
+  public void setData(String d) { data=d; }
+  public void setData1(String d) { data1=d; }
 
   public JSONArray makeJsonPresentation() {
     JSONArray ja=new JSONArray();

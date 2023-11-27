@@ -48,7 +48,7 @@ public class MainActivity extends SingleFragmentActivity {
     private TrackStorage mTrackStorage=Model.getInstance().getTrackStorage();
     private TrackListener mTrackListener=Model.getInstance().getTrackListener();
     private CellInformer mCellInformer=Model.getInstance().getCellInformer();
-    private TextView tvState, tvData, tvCount, tvPrevInterval, tvTime;
+    private TextView tvState, tvData, tvCount, tvCount2, tvPrevInterval, tvTime;
     private Button bRefresh, bOn, bOnSegm, bOff, bSettings;
     private TableLayout tlTable1;
     private DataWatcher mDataWatcher=new DataWatcher();
@@ -108,6 +108,7 @@ public class MainActivity extends SingleFragmentActivity {
       tvState = (TextView) v.findViewById(R.id.tvState);
       tvData = (TextView) v.findViewById(R.id.tvData);
       tvCount = (TextView) v.findViewById(R.id.tvCount);
+      tvCount2 = (TextView) v.findViewById(R.id.tvCount2);
       tvPrevInterval = (TextView) v.findViewById(R.id.tvPrevInterval);
       tvTime = (TextView) v.findViewById(R.id.tvTime);
       bOn = (Button) v.findViewById(R.id.bOn);
@@ -201,6 +202,7 @@ public class MainActivity extends SingleFragmentActivity {
         String storageIbfo=displayStorageStat(mTrackStorage.statStored());
         mCellInformer.bindAxtivity(getActivity());
         mTrackListener.clearCounter();
+        mTrackListener.clearCounter2();
         mTrackListener.startListening(getActivity());
         mTrackListener.setOn();
         tvState.setText("STARTED");
@@ -370,7 +372,8 @@ public class MainActivity extends SingleFragmentActivity {
       public void run() {
         long waitingS=U.getTimeStamp() - mTrackListener.updateTime;
         long prevUpdateIntervalS=mTrackListener.updateTime - mTrackListener.prevUpdateTime;
-        tvCount.setText(Integer.toString(mTrackListener.getCounter()));
+        tvCount.setText(Integer.toString(mTrackListener.getCounter()));// fixes
+        tvCount2.setText(Integer.toString(mTrackListener.getCounter2()));// points
         tvPrevInterval.setText(Long.toString(prevUpdateIntervalS));
         tvTime.setText(Long.toString(waitingS));
         mWatchHandler.postDelayed(this, mWatchIntervalMS);
