@@ -245,7 +245,7 @@ wm.fb.Parser=function() {
       var i=0, prevCell='', extra, colors=[], breaks=[];
       for (; i<extras.length; i+=1) {
         extra=extras[i]; // [ dBm, cell ]
-        colors.push( normalize(extra[0]) );
+        colors.push( makeSignalColor(extra[0],"dBm") );
         if (extra[1] != prevCell) {
           prevCell=extra[1];
           breaks.push(extra[1]);
@@ -257,9 +257,30 @@ wm.fb.Parser=function() {
       return ret;
     }
 
-    function normalize(x) {
+    function makeSignalColor(dataField, targetFieldName) {
+      var asInt = parseInt(dataField);
+      if (asInt != asInt || (typeof asInt) == "undefined") {
+        var asJson = JSON.parse(dataField);
+        if ( ! asJson.hasOwnProperty(targetFieldName)) {
+          console.log("failed to find Z data "+targetFieldName+" in json");
+          return false;
+        }
+        asInt = parseInt(asJson[targetFieldName]);
+        if (asInt != asInt || (typeof asInt) == "undefined") {
+          console.log("failed to get Z data "+targetFieldName+" from json");
+          return false;
+        }
+      }
+      return normalize(asInt, {low: -120, high: -90});
+    }
+
+    function normalize(x, bounds) {
       var low=-120, high=-50, y;
+      if (bounds && bounds?.high && bounds?.low) {
+        low = bounds.low; high = bounds.high;
+      }
       x = parseInt(x);
+      if (x != x || (typeof x) == "undefined") return false;
       if (x <= low) return 0;
       if (x == 0) return 0;
       if (x >= high) return 1;
@@ -324,8 +345,20 @@ wm.fb.Parser=function() {
   }
 
   this.getDataForCoords = function(lat,lon) {
-    var l = findLineByCoords(lat,lon);
-    return { id: l[header.ID], data: l[header.DATA], data1: l[header.DATA1] };
+    var line = findLineByCoords(lat,lon);
+    return this.UniPoint(line,header);
+    //return { id: l[header.ID], data: l[header.DATA], data1: l[header.DATA1] };
+  }
+
+  this.UniPoint=function(line,header) {
+    var field, ret={};
+    for (field in names) {
+      if (! names.hasOwnProperty(field)) continue;
+      if (! header.hasOwnProperty(field)) continue;
+      ret[names[field]] = line[header[field]];
+      // { id: l[header.ID], data: l[header.DATA], data1: l[header.DATA1] };
+    }
+    return ret;
   }
 
   this.getSegMap=function() { return segMap; };

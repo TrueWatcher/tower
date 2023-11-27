@@ -102,15 +102,28 @@ wm.fb.View=function() {
     window.location.hash=hash;
   };
 
+  this.presentUniPoint=function(uniPoint) {
+    var res="", k, resKeys=[];
+    if (uniPoint.id) resKeys.push("id");
+    if (uniPoint.type && ["gpx","cell","mark"].indexOf(uniPoint.type) >= 0) {
+      if (uniPoint.name) resKeys.push("name");
+      if (uniPoint.comment) resKeys.push("comment");
+    }
+    if (uniPoint.cellData) resKeys.push("cellData");
+    if (uniPoint.data) resKeys.push("data");
+    if (uniPoint.data1) resKeys.push("data1");
+    if (resKeys.length == 0) return "No useful data";
+    for (k of resKeys) { res = res.concat(""+k+": "+uniPoint[k]+"\n"); }
+    //for (k in uniPoint) { res = res.concat(""+k+": "+uniPoint[k]+"\n"); }
+    return res;
+  }
+
 }; // end View
 
 wm.fb.Controller=function(view) {
   var _this=this,
       dataForMap=new wm.fb.MyJSbridge("wallpaper"),
       dataForMapBak=false,
-      loadedFileNames=[],
-      lastLoadedFileName="",
-      parsers=[],
       mapFrame=window.frames[0],
       fileIndex=0,
       dataFile, files;
@@ -173,13 +186,10 @@ wm.fb.Controller=function(view) {
       rollBack();
       return;
     }
-    lastLoadedFileName=dataFile.name;
-    loadedFileNames.push(dataFile.name);
-    parsers[dataFile.name] = parser;
-    afterFileIsParsed(data,onSuccess);
+    afterFileIsParsed(parser,data,onSuccess);
   }
 
-  function afterFileIsParsed(data,onSuccess) {
+  function afterFileIsParsed(parser,data,onSuccess) {
     if (data.trkPoints instanceof Array && data.trkPoints.length > 0) {
       if (data.colors instanceof Array && data.colors.length > 0) {
         dataForMap.exportSignalTrack(data);
@@ -193,6 +203,12 @@ wm.fb.Controller=function(view) {
     view.alert(dataFile.name+": "+data.res);
     if (view.getShouldResize()) { dataForMap.setBounded("*"); }
     else { dataForMap.setBounded(""); }
+    var loadedFileNames=dataForMap.getLoadedFiles();
+    loadedFileNames.push(dataFile.name);
+    dataForMap.setLoadedFiles(loadedFileNames);
+    var parsers=dataForMap.getUsedParsers();
+    parsers[dataFile.name] = parser;
+    dataForMap.setUsedParsers(parsers);
     onSuccess();
   }
 
@@ -248,22 +264,13 @@ wm.fb.Controller=function(view) {
       dataForMap.setDirty(2);
     }
     view.render(dataForMap);
-    var i = loadedFileNames.indexOf(lastLoadedFileName);
-    if ( i >= 0 ) {
-      loadedFileNames[i] = null;
-      loadedFileNames.splice(i,1);
-      lastLoadedFileName="";
-    }
   }
 
   this.getBackup=function() { return dataForMapBak; };
 
   this.getDataForCenter = function() {
-    //alert("click\n"+lastLoadedFileName);
-    if (! lastLoadedFileName) return false;
-    var parser = parsers[lastLoadedFileName];
-    if ( ! (parser instanceof wm.fb.Parser)) throw new Error("Invalid parser at "+lastLoadedFileName);
-
+    //alert("click\n");
+    var parser = getLastParser(dataForMap);
     var ll = dataForMap.importLatLon().split(',');
     //alert(ll);
     var lat = + ll[0];
@@ -273,8 +280,20 @@ wm.fb.Controller=function(view) {
       return false;
     }
     var data = parser.getDataForCoords(lat,lon);
-    alert(`id:${data.id},\ncell${data.data1},\nsignal:${data.data}`);
+    alert(view.presentUniPoint(data));
+    //alert(`id:${data.id},\ncell${data.data1},\nsignal:${data.data}`);
     return false;
   };
+
+  function getLastParser(dataForMap) {
+    var loadedFileNames=dataForMap.getLoadedFiles();
+    var lastLoadedFile=loadedFileNames[loadedFileNames.length-1];
+    if (! lastLoadedFile) throw new Error("No files loaded");
+    var parsers = dataForMap.getUsedParsers();
+    //alert(parsers);
+    var parser = parsers[lastLoadedFile];
+    if ( ! (parser instanceof wm.fb.Parser)) throw new Error("Invalid parser at "+lastLoadedFile+":"+parser);
+    return parser;
+  }
 
 };// end Controller

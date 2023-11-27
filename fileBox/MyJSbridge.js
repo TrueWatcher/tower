@@ -12,6 +12,9 @@ wm.fb.MyJSbridge=function(aProvider) {
       viewTrackNamesJson="[]",
       currentTrackJson='[]',
       signalTrack={ trkPoints:"[]", colors:"[]", breaks:"[]" },
+      zColorFn = wm.utils.linearRGB2,
+      loadedFiles=[],
+      usedParsers={},
       provider=aProvider,
       isDirty=3;
 
@@ -84,12 +87,33 @@ wm.fb.MyJSbridge=function(aProvider) {
     if (wm.utils.total(st[fields[0]]) != st[fields[1]].length) {
       throw new Error("Lengths are different:"+wm.utils.total(st[fields[0]])+"/"+st[fields[1]].length);
     }
-    st.colors = st.colors.map( (x) => wm.utils.linearRGB2(x) );
-    for (f of fields) { st[f]=JSON.stringify(st[f]); }
+    for (f of fields) {
+      if (f != 'colors') st[f]=JSON.stringify(st[f]);
+    }
     signalTrack = st;
+    this.exportSignalTrackColors(st.colors);
+  };
+  this.exportSignalTrackColors=function(colors) {
+    if ( ! (typeof zColorFn) === "function") throw new Error("Color scheme must be a function");
+    colors = colors.map( zColorFn );
+    signalTrack.colors = JSON.stringify(colors);
   };
   this.getSignalTrack=function() { return signalTrack; };
   this.setSignalTrack=function(st) { signalTrack=st; };
+
+  this.setLoadedFiles=function(loadedFileList) {
+    if (! (loadedFileList instanceof Array)) throw new Error("Not an array");
+    loadedFiles = loadedFileList.slice(0);
+  };
+  this.getLoadedFiles=function() { return loadedFiles; };
+
+  this.setUsedParsers=function(parserList) {
+    var k;
+    if (! (parserList instanceof Object)) throw new Error("Not a dictionary");
+    usedParsers = {};
+    for (k in parserList) usedParsers[k] = parserList[k];
+  };
+  this.getUsedParsers=function() { return usedParsers; };
 
   this.setBounded=function(str) { isBounded=str; };
   this.getIsBounded=function() { return isBounded; };
@@ -125,5 +149,7 @@ wm.fb.MyJSbridge.copy=function(obj, target) {
   target.setMarkers(obj.getMarkers());// string
   target.onMoveend=obj.onMoveend;// *function
   target.setViewTrackNamesJson(obj.importViewTrackNamesJson());// string
+  target.setLoadedFiles(obj.getLoadedFiles()); // array<string>
+  target.setUsedParsers(obj.getUsedParsers()); // array<Object>
   return;
 };
