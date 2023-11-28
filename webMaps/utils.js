@@ -421,6 +421,18 @@ wm.utils.linearRGB2=function(x) {
   return `rgb(${res[0]},${res[1]},${res[2]})`;
 };
 
+wm.utils.linearTranslucent=function(x) {
+  var none=[256,256,256,0], start=[256,0,0,0], end=[256,0,0,1], res=[0,0,0,0], i=0;
+  if (! x) x=0;
+  else if (x < 0) x=0;
+  if (x > 1) x=1.0;
+  if (x == 0) res=none; // highlight low values over void value
+  else {
+    for (; i<4; i+=1) { res[i] = Math.floor(start[i] + x * (end[i]-start[i]) ); }
+  }
+  return `rgba(${res[0]},${res[1]},${res[2]},${res[3]})`;
+};
+
 wm.utils.total=function(arr) {
   if (! (arr instanceof Array)) throw new Error("Not an array");
   if (arr[0] instanceof Array) {

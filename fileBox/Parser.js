@@ -5,10 +5,15 @@ wm.fb.Parser=function() {
   var type="",
       segMap=[],
       csv={ SEP:";", NL:"\n"},
-      names={ LAT:"lat", LON:"lon", NEW_TRACK:"new_track", ID:"id", TYPE:"type", COMMENT:"comment", CELLDATA:"cellData", DATA:"data", DATA1:"data1" },
+      names={ LAT:"lat", LON:"lon", NEW_TRACK:"new_track", ID:"id", TYPE:"type", COMMENT:"comment", NOTE:"note",  CELLDATA:"cellData", DATA:"data", DATA1:"data1" },
       header={},
       lines=[],
-      parsedLines=[];
+      zPlugin=false;
+
+  this.addZplugin=function(p) {
+    if (! p.searchCsvParts || ! (p.searchCsvParts instanceof Function)) throw new Error("Invalid ZPLUGIN");
+    zPlugin = p;
+  };
 
   // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
   this.go=function(text) {
@@ -173,29 +178,27 @@ wm.fb.Parser=function() {
   // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
   function readCsvLines(lines) {
     var i,processedCount=0,line,parts,lat,lon,newTrack,arr=[],segPositions=[],res,entry,makeEntry,extras=[],pointData,ret,
-    getPointData=function() { return false; }, onExtraData=function(x) { return x; };
+    getPointExtraData=function() { return false; }, onExtraData=function(x) { return x; };
 
     if (type == "csv_wpt") { makeEntry=makeMarker; }
-    else if (type == "csv_track") {
-      makeEntry=makeTrackLatLon;
-      getPointData=searchSignalData;
-      onExtraData=packSignalData;
-    }
+    else if (type == "csv_track") { makeEntry=makeTrackLatLon; }
     else { alert("Possibly wrong type:"+type); }
+    if (zPlugin && (type == "csv_track")) {
+      //alert(zPlugin+"/"+zPlugin.searchCsvParts);
+      getPointExtraData=zPlugin.searchCsvParts;
+      onExtraData=zPlugin.packSignalData;
+    }
 
     for (i=1; i<lines.length; i+=1) {
-      line=lines[i].trim();
-      if ( ! line) continue;
-      parts=line.split(csv.SEP);
+      parts=cutCsvLine(lines[i]);
+      if ( ! parts) continue;
       //console.log(wm.utils.dumpArray(parts));
-      if (parts.length != header.count) throw new Error("Line "+i+": "+parts.length+" fields instead of "+header.count);
-      parsedLines[i-1] = parts;
       lat=parts[header.LAT];
       lon=parts[header.LON];
       if ( ! lat || ! lon) continue;
       entry=makeEntry(lat,lon,parts);
       arr.push(entry);
-      pointData=getPointData(parts);
+      pointData=getPointExtraData(parts, header);
       if (pointData) extras.push(pointData);
       processedCount+=1;
     }
@@ -215,8 +218,11 @@ wm.fb.Parser=function() {
       ret = { trkPoints : segmented, wayPoints : [], res : res };
     }
     else { alert("Possibly wrong type:"+type); }
-    console.log("Parsed lengths:"+extras.length+"/"+arr.length);
-    if (extras.length == arr.length) ret = onExtraData(ret, extras);
+    //console.log("Parsed lengths:"+extras.length+"/"+arr.length);
+    if (extras.length && (extras.length == arr.length)) {
+      console.log("signal data detected ("+extras.length+"), preparing polycolor view");
+      ret = onExtraData(ret, extras);
+    }
     return ret;
 
     function makeTrackLatLon(lat,lon,parts) {
@@ -233,61 +239,15 @@ wm.fb.Parser=function() {
       if (header.COMMENT >= 0 && parts[header.COMMENT]) text += "."+parts[header.COMMENT];
       return [wtype, lat, lon, text];
     }
+  }
 
-    function searchSignalData(parts) {
-      if (parts[header.COMMENT] != 'S') return false;
-      if (parts[header.DATA] == "") return false;
-      //alert(parts[header.ID]+": "+parts[header.DATA]+", "+parts[header.DATA1]);
-      return [parts[header.DATA], parts[header.DATA1]];
-    }
-
-    function packSignalData(ret,extras) {
-      var i=0, prevCell='', extra, colors=[], breaks=[];
-      for (; i<extras.length; i+=1) {
-        extra=extras[i]; // [ dBm, cell ]
-        colors.push( makeSignalColor(extra[0],"dBm") );
-        if (extra[1] != prevCell) {
-          prevCell=extra[1];
-          breaks.push(extra[1]);
-        }
-        else { breaks.push(""); }
-      }
-      ret.colors=colors;
-      ret.breaks=breaks;
-      return ret;
-    }
-
-    function makeSignalColor(dataField, targetFieldName) {
-      var asInt = parseInt(dataField);
-      if (asInt != asInt || (typeof asInt) == "undefined") {
-        var asJson = JSON.parse(dataField);
-        if ( ! asJson.hasOwnProperty(targetFieldName)) {
-          console.log("failed to find Z data "+targetFieldName+" in json");
-          return false;
-        }
-        asInt = parseInt(asJson[targetFieldName]);
-        if (asInt != asInt || (typeof asInt) == "undefined") {
-          console.log("failed to get Z data "+targetFieldName+" from json");
-          return false;
-        }
-      }
-      return normalize(asInt, {low: -120, high: -90});
-    }
-
-    function normalize(x, bounds) {
-      var low=-120, high=-50, y;
-      if (bounds && bounds?.high && bounds?.low) {
-        low = bounds.low; high = bounds.high;
-      }
-      x = parseInt(x);
-      if (x != x || (typeof x) == "undefined") return false;
-      if (x <= low) return 0;
-      if (x == 0) return 0;
-      if (x >= high) return 1;
-      y = (x-low)/(high-low);
-      //alert(x+" > "+y);
-      return y;
-    }
+  function cutCsvLine(line) {
+    line=line.trim();
+    if ( ! line) return false;
+    var parts=line.split(csv.SEP);
+      //console.log(wm.utils.dumpArray(parts));
+    if (parts.length != header.count) throw new Error("Line "+i+": "+parts.length+" fields instead of "+header.count);
+    return parts;
   }
 
   // @returns [lat,lon][][]
@@ -317,12 +277,15 @@ wm.fb.Parser=function() {
 
   function findLineByCoords(lat,lon) {
     var i=0,parts,d,foundI=-1,minDistance=1.0E+20;
-    if (! parsedLines?.length) throw new Error("Empty PARSEDlINES");
-    //alert("length="+parsedLines.length);
-    for ( ;i < parsedLines.length; i+=1) {
+    if (! lines.length) throw new Error("Empty LINES");
+    //alert("length="+lines.length);
+    for (i=1 ;i < lines.length; i+=1) {
       //alert("i="+i);
-      parts = parsedLines[i];
-      if (! parts?.length) throw new Error("Empty PARTS at "+i);
+      parts=cutCsvLine(lines[i]);
+      if ( ! parts || ! parts.length) {
+        //console.log("Empty PARTS at "+i);
+        continue;
+      }
       d = squareDistance(lat,lon,parts[header.LAT],parts[header.LON]);
       if (d >= minDistance) continue;
       minDistance = d;
@@ -331,7 +294,7 @@ wm.fb.Parser=function() {
     if (foundI < 0) {
       throw new Error("No valid coords");
     }
-    return parsedLines[foundI];
+    return cutCsvLine(lines[foundI]);
   }
 
   function squareDistance(lat0,lon0,lat1,lon1) {
@@ -347,19 +310,18 @@ wm.fb.Parser=function() {
   this.getDataForCoords = function(lat,lon) {
     var line = findLineByCoords(lat,lon);
     return this.UniPoint(line,header);
-    //return { id: l[header.ID], data: l[header.DATA], data1: l[header.DATA1] };
-  }
+  };
 
-  this.UniPoint=function(line,header) {
+  this.UniPoint=function(parts,header) {
     var field, ret={};
     for (field in names) {
       if (! names.hasOwnProperty(field)) continue;
       if (! header.hasOwnProperty(field)) continue;
-      ret[names[field]] = line[header[field]];
+      ret[names[field]] = parts[header[field]];
       // { id: l[header.ID], data: l[header.DATA], data1: l[header.DATA1] };
     }
     return ret;
-  }
+  };
 
   this.getSegMap=function() { return segMap; };
   this.getType=function() { return type; };

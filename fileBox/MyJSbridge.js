@@ -88,14 +88,11 @@ wm.fb.MyJSbridge=function(aProvider) {
       throw new Error("Lengths are different:"+wm.utils.total(st[fields[0]])+"/"+st[fields[1]].length);
     }
     for (f of fields) {
-      if (f != 'colors') st[f]=JSON.stringify(st[f]);
+      st[f]=JSON.stringify(st[f]);
     }
     signalTrack = st;
-    this.exportSignalTrackColors(st.colors);
   };
-  this.exportSignalTrackColors=function(colors) {
-    if ( ! (typeof zColorFn) === "function") throw new Error("Color scheme must be a function");
-    colors = colors.map( zColorFn );
+  this.exportSignalTrackColors=function(colors) {// the color scheme seats in Zmanager
     signalTrack.colors = JSON.stringify(colors);
   };
   this.getSignalTrack=function() { return signalTrack; };
