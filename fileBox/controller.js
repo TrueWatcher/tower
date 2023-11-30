@@ -7,6 +7,7 @@ wm.fb.Controller=function(view) {
       dataForMapBak=false,
       mapFrame=window.frames[0],
       fileIndex=0,
+      zManager=false,
       dataFile, files;
 
   this.addFiles=function() {
@@ -14,6 +15,10 @@ wm.fb.Controller=function(view) {
     if ( ! files || files.length == 0) {
       view.alert("Choose a GPX or CSV file");
       return;
+    }
+    if (files.length == 1 && isLatestReloading(files[0])) {
+      console.log("about to load the latest file again -- stepping back");
+      _this.stepBack();
     }
     fileIndex=0;
     dataForMapBak=wm.fb.MyJSbridge.clone(dataForMap);
@@ -44,12 +49,24 @@ wm.fb.Controller=function(view) {
     return;
   };
 
+  function isLatestReloading(aFile) {
+    var loadedFileNames=dataForMap.getLoadedFiles();
+    console.log("now are loaded:"+wm.utils.dumpArray(loadedFileNames));
+    if ( ! loadedFileNames || ! loadedFileNames.length) return false;
+    var lastLoadedFile=loadedFileNames[loadedFileNames.length-1];
+    if (! lastLoadedFile) throw new Error("Empty lastLoadedFile");
+    return lastLoadedFile == aFile.name;
+  }
+
   function afterFileIsRead(text, onSuccess) {
     var data=false, parser=false;
     //alert(text)
     try {
       parser = new wm.fb.Parser();
-      parser.addZplugin(new wm.fb.Zmanager);
+      if (wm.fb.Zmanager) {
+        zManager = new wm.fb.Zmanager();
+        parser.addZplugin(zManager);
+      }
       data = parser.go(text);
     }
     catch (e) {
@@ -73,7 +90,9 @@ wm.fb.Controller=function(view) {
 
   function afterFileIsParsed(parser,data,onSuccess) {
     if (data.trkPoints instanceof Array && data.trkPoints.length > 0) {
-      if (data.colors instanceof Array && data.colors.length > 0) {
+      //if (data.colors instanceof Array && data.colors.length > 0) {
+      if (parser.hasZdata()) {
+        if (! (data.colors instanceof Array && data.colors.length > 0)) throw new Error("Invalid color data");
         dataForMap.exportSignalTrack(data);
       }
       else {
@@ -91,6 +110,7 @@ wm.fb.Controller=function(view) {
     var parsers=dataForMap.getUsedParsers();
     parsers[dataFile.name] = parser;
     dataForMap.setUsedParsers(parsers);
+    if (parser.hasZdata()) view.enableZcontrols();
     onSuccess();
   }
 
@@ -115,6 +135,7 @@ wm.fb.Controller=function(view) {
     else {
       dataForMap.setDirty(2);
     }
+    //view.enableBackBtn();
     view.render(dataForMap);
   }
 
@@ -133,7 +154,8 @@ wm.fb.Controller=function(view) {
   };
 
   function doStepBack() {
-    if (! (dataForMap instanceof wm.fb.MyJSbridge)) throw new Error("Wrong backup");
+    if (! (dataForMapBak instanceof wm.fb.MyJSbridge)) throw new Error("Wrong backup");
+    if (! (dataForMap instanceof wm.fb.MyJSbridge)) throw new Error("Wrong dataForMap");
     //dataForMap=dataForMapBak; // work only with reloading the bloody iframe
     wm.fb.MyJSbridge.copy(dataForMapBak,dataForMap);
     dataForMapBak=false;
@@ -176,5 +198,25 @@ wm.fb.Controller=function(view) {
     if ( ! (parser instanceof wm.fb.Parser)) throw new Error("Invalid parser at "+lastLoadedFile+":"+parser);
     return parser;
   }
+
+  this.updateSignalTrackColors = function() {
+    var zscaleOpt, parser, extras, colors = false;
+    if (! zManager) {
+      console.log("controller :: updateSignalTrackColors: no zManager attached");
+      return false;
+    }
+    zscaleOpt = view.getZscale();
+    zManager.setZscale(zscaleOpt);
+    parser = getLastParser(dataForMap);
+    extras = parser.getExtras();
+    colors = zManager.updateSignalColors(extras);
+    if (! colors || ! colors.length) {
+      console.log("Failed to produce new colors");
+      return false;
+    }
+    dataForMap.exportSignalTrackColors(colors);
+    dataForMap.setDirty(2);
+    view.render(dataForMap);
+  };
 
 };// end Controller

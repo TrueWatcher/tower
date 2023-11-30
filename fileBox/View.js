@@ -4,14 +4,15 @@ if ( ! wm.hasOwnProperty("fb")) wm.fb={};
 function $(id) { return document.getElementById(id); }
 
 wm.fb.View=function() {
-  var panelTable=$("panelTable"),
-      wmIframe=$("wmIframe"),
-      alertTd=$("alertTd"),
-      fileInput=$("fileInput"),
-      backBtn=$("backBtn"),
-      resizeInput=$("resizeInput"),
-      providerSelect=$("providerSelect"),
-      getDataBtn=$("getDataBtn"),
+  var panelTable=$('panelTable'),
+      wmIframe=$('wmIframe'),
+      alertTd=$('alertTd'),
+      fileInput=$('fileInput'),
+      backBtn=$('backBtn'),
+      resizeInput=$('resizeInput'),
+      providerSelect=$('providerSelect'),
+      getDataBtn=$('getDataBtn'),
+      zscaleSelect=$('zscaleSelect'),
       renderedLevel=0,
       _this=this;
 
@@ -32,8 +33,9 @@ wm.fb.View=function() {
     backBtn.onclick=doBack;
   };
 
-  this.setHandlers2=function(showDataForCenter) {
+  this.setHandlers2=function(showDataForCenter, updateSignalTrackColors) {
     getDataBtn.onclick=showDataForCenter;
+    zscaleSelect.onchange=updateSignalTrackColors;
   }
 
   this.loadUri=function(uri) {
@@ -53,8 +55,14 @@ wm.fb.View=function() {
 
   this.getShouldResize=function() { return resizeInput.checked; };
 
+  this.getZscale=function() {
+    return zscaleSelect.options[zscaleSelect.selectedIndex].value;
+  };
+
   this.disableBackBtn=function() { backBtn.disabled=true; };
   this.enableBackBtn=function() { backBtn.disabled=false; };
+
+  this.enableZcontrols=function() { zscaleSelect.style.display=''; };
 
   this.render=function(dataForMap) {
     if ( ! (dataForMap instanceof wm.fb.MyJSbridge)) throw new Error("Rendering from non-JSbridge");
@@ -63,6 +71,12 @@ wm.fb.View=function() {
     switch ( dataForMap.getDirty() ) {
     case 0:
       console.log("doing nothing");
+      break;
+
+    case 1:
+      // not tested in this environment
+      console.log("firing onTrackreloadEvent");
+      mapFrame.dispatchEvent(mapFrame.onTrackreloadEvent);
       break;
 
     case 2:
@@ -110,6 +124,7 @@ wm.fb.View=function() {
       if (uniPoint.comment) resKeys.push("comment");
       if (uniPoint.note) resKeys.push("note");
     }
+    if (uniPoint.alt) resKeys.push("alt");
     if (uniPoint.cellData) resKeys.push("cellData");
     if (uniPoint.data) resKeys.push("data");
     if (uniPoint.data1) resKeys.push("data1");

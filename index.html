@@ -1,15 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 <!--
-This is a free software by TrueWatcher rosc71@hotmail.com
-1.10.0 12.10.2020 added: colored viewTracks, "hide" button, coords in address
-1.10.2 13.10.2020 tests and code improvements
-1.11.0 14.10.2020 added track labels with file names
-1.11.1 14.10.2020 removed Add button
-1,12.0 14,10,2020 added multiselect and Back button
-1.12.1 07.11.2020 refactoring
-1.12.2 09.11.2020 new tests
-1.12.3 16.11.2020 factored out MyJSbridge.trackNames (backsync with tower_2_8_0)
+This is a free software by TrueWatcher https://github.com/TrueWatcher/tower/tree/webmapviewer_exp
 1.12.4 09.01.2021 fixed OpenTopoMap http > https
 1.12.5 03.11.2023 fixed webMaps/leafletjs.html self-test, updated the leaflet library to 1.9
 1.13.0 03.11.2023 experiments with leaflet-polycolor
@@ -18,6 +10,7 @@ This is a free software by TrueWatcher rosc71@hotmail.com
 1.15.0 25.11.2023 added querying point at map center
 1.15.1 28.11.2023 added reading signal data as json
 1.16.0 28.11.2023 refactoring; added Zmanager for signal-specific stuff
+1.16.1 30.11.2023 added zScaleSelect; rollback before reloading latest file
 -->
 <head>
   <title>View GPX and CSV tracks and waypoints over online maps</title>
@@ -52,12 +45,18 @@ This is a free software by TrueWatcher rosc71@hotmail.com
         <option value="opentopo map">OpenTopoMap</option>
         <option value="google hyb">Google hybrid</option>
         <option value="google sat">Google sat</option>
-        <option value="marshruty.ru map">marshruty.ru</option>
+        <!--<option value="marshruty.ru map">marshruty.ru</option>-->
         <option value="blank map">blank</option>
         <option value="yandex hyb">Yandex hybrid</option>
       </select>
       &nbsp;&nbsp;&nbsp;
       <button id="getDataBtn" title="get point at map center">Point</button>
+      &nbsp;&nbsp;&nbsp;
+      <select id="zscaleSelect" name="zscaleSelect" title="Z scale" style="display: none;">
+        <option value="auto" selected>auto</option>
+        <option value="static -130 -30">-130 -30</option>
+        <option value="static -125 -85">-125 -85</option>
+      </select>
     </p>
   </div>
 
@@ -79,7 +78,7 @@ This is a free software by TrueWatcher rosc71@hotmail.com
     v.adjust();
     var c=new wm.fb.Controller(v);
     v.setHandlers(c.addFiles, c.reloadMap, c.stepBack);
-    v.setHandlers2(c.getDataForCenter);
+    v.setHandlers2(c.getDataForCenter, c.updateSignalTrackColors);
   </script>
 </body>
 </html>

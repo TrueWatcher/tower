@@ -5,15 +5,18 @@ wm.fb.Parser=function() {
   var type="",
       segMap=[],
       csv={ SEP:";", NL:"\n"},
-      names={ LAT:"lat", LON:"lon", NEW_TRACK:"new_track", ID:"id", TYPE:"type", COMMENT:"comment", NOTE:"note",  CELLDATA:"cellData", DATA:"data", DATA1:"data1" },
+      names={ LAT:"lat", LON:"lon", ALT:"alt", NEW_TRACK:"new_track", ID:"id", TYPE:"type", COMMENT:"comment", NOTE:"note",  CELLDATA:"cellData", DATA:"data", DATA1:"data1" },
       header={},
       lines=[],
-      zPlugin=false;
+      zPlugin=false,
+      isZdata=false,
+      extras=[];
 
   this.addZplugin=function(p) {
     if (! p.searchCsvParts || ! (p.searchCsvParts instanceof Function)) throw new Error("Invalid ZPLUGIN");
     zPlugin = p;
   };
+  this.hasZdata=function() { return isZdata; };
 
   // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
   this.go=function(text) {
@@ -177,7 +180,7 @@ wm.fb.Parser=function() {
 
   // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
   function readCsvLines(lines) {
-    var i,processedCount=0,line,parts,lat,lon,newTrack,arr=[],segPositions=[],res,entry,makeEntry,extras=[],pointData,ret,
+    var i,processedCount=0,line,parts,lat,lon,newTrack,arr=[],segPositions=[],res,entry,makeEntry,pointData,ret,
     getPointExtraData=function() { return false; }, onExtraData=function(x) { return x; };
 
     if (type == "csv_wpt") { makeEntry=makeMarker; }
@@ -220,6 +223,7 @@ wm.fb.Parser=function() {
     else { alert("Possibly wrong type:"+type); }
     //console.log("Parsed lengths:"+extras.length+"/"+arr.length);
     if (extras.length && (extras.length == arr.length)) {
+      isZdata = true;
       console.log("signal data detected ("+extras.length+"), preparing polycolor view");
       ret = onExtraData(ret, extras);
     }
@@ -322,6 +326,8 @@ wm.fb.Parser=function() {
     }
     return ret;
   };
+
+  this.getExtras=function() { return extras; };
 
   this.getSegMap=function() { return segMap; };
   this.getType=function() { return type; };
