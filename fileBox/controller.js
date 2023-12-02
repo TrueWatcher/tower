@@ -89,21 +89,6 @@ wm.fb.Controller=function(view) {
   }
 
   function afterFileIsParsed(parser,data,onSuccess) {
-    if (data.trkPoints instanceof Array && data.trkPoints.length > 0) {
-      //if (data.colors instanceof Array && data.colors.length > 0) {
-      if (parser.hasZdata()) {
-        if (! (data.colors instanceof Array && data.colors.length > 0)) throw new Error("Invalid color data");
-        dataForMap.addSignalTrack(data); //dataForMap.exportSignalTrack(data);
-      }
-      else {
-        dataForMap.pushViewTrack(data.trkPoints);
-        dataForMap.pushViewTrackName(dataFile.name);
-      }
-    }
-    dataForMap.addMarkers(JSON.stringify(data.wayPoints));
-    view.alert(dataFile.name+": "+data.res);
-    if (view.getShouldResize()) { dataForMap.setBounded("*"); }
-    else { dataForMap.setBounded(""); }
     var loadedFileNames=dataForMap.getLoadedFiles();
     loadedFileNames.push(dataFile.name);
     dataForMap.setLoadedFiles(loadedFileNames);
@@ -111,6 +96,22 @@ wm.fb.Controller=function(view) {
     parsers[dataFile.name] = parser;
     dataForMap.setUsedParsers(parsers);
     if (parser.hasZdata()) view.enableZcontrols();
+    dataForMap.addMarkers(JSON.stringify(data.wayPoints));
+    view.alert(dataFile.name+": "+data.res);
+    if (view.getShouldResize()) { dataForMap.setBounded("*"); }
+    else { dataForMap.setBounded(""); }
+    if (data.trkPoints instanceof Array && data.trkPoints.length > 0) {
+      //if (data.colors instanceof Array && data.colors.length > 0) {
+      if (parser.hasZdata()) {
+        if (! (data.colors instanceof Array && data.colors.length > 0)) throw new Error("Invalid color data");
+        dataForMap.addSignalTrack(data); //dataForMap.exportSignalTrack(data);
+        _this.updateSignalTrackColors("noRender");
+      }
+      else {
+        dataForMap.pushViewTrack(data.trkPoints);
+        dataForMap.pushViewTrackName(dataFile.name);
+      }
+    }
     onSuccess();
   }
 
@@ -135,7 +136,6 @@ wm.fb.Controller=function(view) {
     else {
       dataForMap.setDirty(2);
     }
-    //view.enableBackBtn();
     view.render(dataForMap);
   }
 
@@ -220,24 +220,34 @@ wm.fb.Controller=function(view) {
     return found;
   }
 
-  this.updateSignalTrackColors = function() {
-    var zscaleOpt, parser, extras, colors = false;
+  this.updateSignalTrackColors = function(noRender) {
+    var k, zscaleOpt, parser, extras, colors = [], allColors = [],
+        parsers = dataForMap.getUsedParsers(),
+        loadedFileNames=dataForMap.getLoadedFiles();
     if (! zManager) {
       console.log("controller :: updateSignalTrackColors: no zManager attached");
       return false;
     }
     zscaleOpt = view.getZscale();
     zManager.setZscale(zscaleOpt);
-    parser = getLastParser(dataForMap);
+    for (k of loadedFileNames) {
+      parser = parsers[k];
+      if (! parser) throw new Error("Empty usedParser at "+k);
+      extras = parser.getExtras();
+      if (! extras || extras.length == 0) { console.log("Empty EXTRAS at "+k); }
+      colors = zManager.updateSignalColors(extras);
+      allColors = allColors.concat(colors);
+    }
+    /*parser = getLastParser(dataForMap);
     extras = parser.getExtras();
     colors = zManager.updateSignalColors(extras);
     if (! colors || ! colors.length) {
       console.log("Failed to produce new colors");
       return false;
-    }
-    dataForMap.exportSignalTrackColors(colors);
+    }*/
+    dataForMap.exportSignalTrackColors(allColors);
     dataForMap.setDirty(2);
-    view.render(dataForMap);
+    if (noRender !== "noRender") view.render(dataForMap);// zscaleSelect.onchange vs afterFileIsParsed
   };
 
 };// end Controller

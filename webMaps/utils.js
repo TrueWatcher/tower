@@ -434,7 +434,7 @@ wm.utils.linearTranslucent=function(x) {
 };
 
 wm.utils.total=function(arr) {
-  if (! (arr instanceof Array)) throw new Error("Not an array");
+  if (! (arr instanceof Array)) throw new Error("Not an array:"+typeof arr);
   if (arr[0] instanceof Array) {
     var t=0,subarr;
     for (subarr of arr) { t += subarr.length; }

@@ -93,6 +93,10 @@ wm.fb.MyJSbridge=function(aProvider) {
     signalTrack = st;
   };
   this.exportSignalTrackColors=function(colors) {// the color scheme seats in Zmanager
+    var trkCount = wm.utils.total(JSON.parse(signalTrack.trkPoints));
+    if ( trkCount != colors.length) {
+      throw new Error("Lengths are different:"+trkCount+"/"+colors.length);
+    }
     signalTrack.colors = JSON.stringify(colors);
   };
   this.addSignalTrack=function(st) {

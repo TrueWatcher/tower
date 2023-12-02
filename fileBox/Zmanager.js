@@ -152,24 +152,14 @@ wm.fb.Zmanager=function() {
 
   this.updateSignalColors=function(extras) {
     var colors=[], bounds={};
+    if (! extras || extras.length == 0) {
+      console.log("Empty EXTRAS");
+      return [];
+    }
     bounds = detectBounds(extras);
     colors = makeColors(extras, bounds);
     return colors;
   };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
