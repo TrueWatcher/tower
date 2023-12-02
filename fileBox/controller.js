@@ -64,10 +64,10 @@ wm.fb.Controller=function(view) {
     try {
       parser = new wm.fb.Parser();
       if (wm.fb.Zmanager) {
-        zManager = new wm.fb.Zmanager();
+        if (! zManager) zManager = new wm.fb.Zmanager();
         parser.addZplugin(zManager);
       }
-      data = parser.go(text);
+      data = parser.go(text, dataFile.name);
     }
     catch (e) {
       view.alert("Cannot parse "+dataFile.name+": "+e);
@@ -93,7 +93,7 @@ wm.fb.Controller=function(view) {
       //if (data.colors instanceof Array && data.colors.length > 0) {
       if (parser.hasZdata()) {
         if (! (data.colors instanceof Array && data.colors.length > 0)) throw new Error("Invalid color data");
-        dataForMap.exportSignalTrack(data);
+        dataForMap.addSignalTrack(data); //dataForMap.exportSignalTrack(data);
       }
       else {
         dataForMap.pushViewTrack(data.trkPoints);
@@ -157,6 +157,7 @@ wm.fb.Controller=function(view) {
     if (! (dataForMapBak instanceof wm.fb.MyJSbridge)) throw new Error("Wrong backup");
     if (! (dataForMap instanceof wm.fb.MyJSbridge)) throw new Error("Wrong dataForMap");
     //dataForMap=dataForMapBak; // work only with reloading the bloody iframe
+    console.log("restoring backup");
     wm.fb.MyJSbridge.copy(dataForMapBak,dataForMap);
     dataForMapBak=false;
     view.disableBackBtn();
@@ -174,7 +175,6 @@ wm.fb.Controller=function(view) {
 
   this.getDataForCenter = function() {
     //alert("click\n");
-    var parser = getLastParser(dataForMap);
     var ll = dataForMap.importLatLon().split(',');
     //alert(ll);
     var lat = + ll[0];
@@ -183,7 +183,9 @@ wm.fb.Controller=function(view) {
       console.log("Center lat or lon is NaN");
       return false;
     }
-    var data = parser.getDataForCoords(lat,lon);
+    //var parser = getLastParser(dataForMap);
+    //var data = parser.getDataForCoords(lat,lon);
+    var data = searchAcrossParsers(lat,lon,dataForMap);
     alert(view.presentUniPoint(data));
     return false;
   };
@@ -197,6 +199,25 @@ wm.fb.Controller=function(view) {
     var parser = parsers[lastLoadedFile];
     if ( ! (parser instanceof wm.fb.Parser)) throw new Error("Invalid parser at "+lastLoadedFile+":"+parser);
     return parser;
+  }
+
+  function searchAcrossParsers(lat,lon,dataForMap) {
+    var k,parser,p,
+        minDistance=1E+20,
+        found={},
+        parsers = dataForMap.getUsedParsers(),
+        loadedFileNames=dataForMap.getLoadedFiles();
+
+    for (k of loadedFileNames) {
+      parser = parsers[k];
+      if (! parser) throw new Error("Empty usedParser at "+k);
+      p = parser.getDataForCoords(lat,lon);
+      if (p.range > minDistance) continue;
+      minDistance = p.range;
+      found = p;
+    }
+    if (minDistance > 1E+6) found = {};
+    return found;
   }
 
   this.updateSignalTrackColors = function() {

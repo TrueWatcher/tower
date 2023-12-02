@@ -95,20 +95,35 @@ wm.fb.MyJSbridge=function(aProvider) {
   this.exportSignalTrackColors=function(colors) {// the color scheme seats in Zmanager
     signalTrack.colors = JSON.stringify(colors);
   };
+  this.addSignalTrack=function(st) {
+    var f, fields = ["trkPoints", "colors", "breaks"];
+    for (f of fields) {
+      if (! st.hasOwnProperty(f)) throw new Error("Missing key "+f);
+      if (! (st[f] instanceof Array)) throw new Error("Not an array at key "+f);
+    }
+    if (wm.utils.total(st[fields[0]]) != st[fields[1]].length) {
+      throw new Error("Lengths are different:"+wm.utils.total(st[fields[0]])+"/"+st[fields[1]].length);
+    }
+    for (f of fields) {
+      st[f]=JSON.stringify(st[f]);
+      signalTrack[f]=wm.utils.joinJsonArrays(signalTrack[f],st[f]);
+    }
+  };
   this.getSignalTrack=function() { return signalTrack; };
-  this.setSignalTrack=function(st) { signalTrack=st; };
+  this.setSignalTrack=function(st) {
+    if (! (st instanceof Object)) throw new Error("Not a dictionary");
+    signalTrack = Object.assign({}, st); // clone
+  };
 
   this.setLoadedFiles=function(loadedFileList) {
     if (! (loadedFileList instanceof Array)) throw new Error("Not an array");
-    loadedFiles = loadedFileList.slice(0);
+    loadedFiles = loadedFileList.slice(0); // clone
   };
   this.getLoadedFiles=function() { return loadedFiles; };
 
   this.setUsedParsers=function(parserList) {
-    var k;
     if (! (parserList instanceof Object)) throw new Error("Not a dictionary");
-    usedParsers = {};
-    for (k in parserList) usedParsers[k] = parserList[k];
+    usedParsers = Object.assign({}, parserList); // clone
   };
   this.getUsedParsers=function() { return usedParsers; };
 
@@ -141,7 +156,8 @@ wm.fb.MyJSbridge.copy=function(obj, target) {
   target.exportCenterLatLon(ll[0],ll[1]);// string
   //target.addViewTrackLatLonJson(obj.importViewTrackLatLonJson());// string
   target.setViewTrack(obj.importViewTrackLatLonJson());// string
-  target.setSignalTrack(obj.getSignalTrack());// dictionary<string>
+  //console.log("source colors:"+obj.getSignalTrack().colors.length+", target:"+target.getSignalTrack().colors.length);
+  target.setSignalTrack(obj.getSignalTrack());// dictionary<string,string>
   //target.addMarkers(obj.getMarkers());// string
   target.setMarkers(obj.getMarkers());// string
   target.onMoveend=obj.onMoveend;// *function

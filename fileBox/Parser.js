@@ -2,7 +2,8 @@
 if ( ! wm.hasOwnProperty("fb")) wm.fb={};
 
 wm.fb.Parser=function() {
-  var type="",
+  var fileName="",
+      type="",
       segMap=[],
       csv={ SEP:";", NL:"\n"},
       names={ LAT:"lat", LON:"lon", ALT:"alt", NEW_TRACK:"new_track", ID:"id", TYPE:"type", COMMENT:"comment", NOTE:"note",  CELLDATA:"cellData", DATA:"data", DATA1:"data1" },
@@ -19,10 +20,11 @@ wm.fb.Parser=function() {
   this.hasZdata=function() { return isZdata; };
 
   // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
-  this.go=function(text) {
+  this.go=function(text, aFileName) {
     segMap=[];
     header={};
     lines=[];
+    if (aFileName) fileName=aFileName;
     var data=false;
     type=deduceType(text);
     //console.log("typed as "+type);
@@ -281,7 +283,11 @@ wm.fb.Parser=function() {
 
   function findLineByCoords(lat,lon) {
     var i=0,parts,d,foundI=-1,minDistance=1.0E+20;
-    if (! lines.length) throw new Error("Empty LINES");
+    if (! lines.length) {
+      //throw new Error("Empty LINES");
+      console.log("Empty LINES in "+fileName);
+      return [ [], minDistance ];
+    }
     //alert("length="+lines.length);
     for (i=1 ;i < lines.length; i+=1) {
       //alert("i="+i);
@@ -298,7 +304,7 @@ wm.fb.Parser=function() {
     if (foundI < 0) {
       throw new Error("No valid coords");
     }
-    return cutCsvLine(lines[foundI]);
+    return [ cutCsvLine(lines[foundI]), minDistance ];
   }
 
   function squareDistance(lat0,lon0,lat1,lon1) {
@@ -312,8 +318,12 @@ wm.fb.Parser=function() {
   }
 
   this.getDataForCoords = function(lat,lon) {
-    var line = findLineByCoords(lat,lon);
-    return this.UniPoint(line,header);
+    var line, range, p;
+    [line, range] = findLineByCoords(lat,lon);
+    p = this.UniPoint(line,header);
+    if (fileName) p.file=fileName;
+    p.range=range;
+    return p;
   };
 
   this.UniPoint=function(parts,header) {

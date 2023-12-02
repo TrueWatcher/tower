@@ -118,6 +118,7 @@ wm.fb.View=function() {
 
   this.presentUniPoint=function(uniPoint) {
     var res="", k, resKeys=[];
+    if (uniPoint.file) resKeys.push("file");
     if (uniPoint.id) resKeys.push("id");
     if (uniPoint.type && ["gps","cell","mark"].indexOf(uniPoint.type) >= 0) {
       if (uniPoint.name) resKeys.push("name");
