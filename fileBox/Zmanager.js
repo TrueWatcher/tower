@@ -3,9 +3,10 @@ if ( ! wm.hasOwnProperty("fb")) wm.fb={};
 
 wm.fb.Zmanager=function() {
   var _this = this,
-      defaultParams = { dataField: "dBm", scale: "auto", low: -120, high: -85, lowYetReal:-150, colorScheme: 'orange' },// scale: "static"
+      defaultParams = { dataField: "dBm", scale: "auto", low: -120, high: -85, lowYetReal:-150, colorScheme: 'orange', cellField: 'CID' },// scale: "static"
       params = Object.assign({}, defaultParams),
-      colorSchemes = { orange: wm.utils.linearRGB2, redTrans: wm.utils.linearTranslucent };
+      colorSchemes = { orange: wm.utils.linearRGB2, redTrans: wm.utils.linearTranslucent, poly7: poly7 },
+      cellList = [ 0 ];
 
   this.searchCsvParts = function(parts, header) {
     if (parts[header.COMMENT] != 'S') return false;
@@ -42,7 +43,7 @@ wm.fb.Zmanager=function() {
     var i, low=+1E+20, high=-1E+20, signal=false;
     var statiic = { low: params.low, high: params.high };
     var failSafe = { low: defaultParams.low, high: defaultParams.high };
-    if (params.scale == "static") return statiic;
+    if (params.scale == "static" || params.scale == "cell" ) return statiic;
     for (i=0; i<extras.length; i+=1) {
       signal = getSignalValue(extras[i][0]);
       if (signal === false) continue;
@@ -61,43 +62,30 @@ wm.fb.Zmanager=function() {
   function makeColors(extras, bounds) {
     var i, colors = [];
     for (i=0; i<extras.length; i+=1) {
-      colors.push( makeSignalColor(extras[i][0], bounds) );
+      if (params.scale == "cell") { colors.push( makeCellColor(extras[i][1]) ); }
+      else { colors.push( makeSignalColor(extras[i][0], bounds) ); }
     }
     return colors;
   }
 
   function makeSignalColor(dataField, bounds) {
-    var asInt = getSignalValue(dataField);
+    var asInt = getSignalValue(dataField, params.dataField);
     var as01 = normalize(asInt, bounds);
     var asRgb = colorSchemes[params.colorScheme] (as01);
     return asRgb;
   }
 
-  function getSignalValue_(dataField) {
-    var asInt = parseInt(dataField);
-    if (asInt != asInt || (typeof asInt) == "undefined") {
-      var asJson = JSON.parse(dataField);
-      //alert(typeof asJson);
-      if (! (typeof asJson == "object")) {
-        console.log("failed to parse json");
-        return false;
-      }
-      var targetFieldName = params.dataField;
-      if ( ! asJson.hasOwnProperty(targetFieldName)) {
-        console.log("failed to find Z data "+targetFieldName+" in json");
-        return false;
-      }
-      asInt = parseInt(asJson[targetFieldName]);
-      if (asInt != asInt || (typeof asInt) == "undefined") {
-        console.log("failed to get Z data "+targetFieldName+" from json");
-        return false;
-      }
-    }
-    return asInt;
+  function makeCellColor(cellField) {
+    var asInt = getSignalValue(cellField, params.cellField);
+    var asIndex = indexCells(asInt);
+    console.log("Cells by "+params.cellField+":"+asInt+" ("+cellList.length+")");
+    var asRgb = poly7(asIndex);
+    return asRgb;
   }
 
-  function getSignalValue(dataField) {
-    var asInt, asJson, targetFieldName = params.dataField;
+  function getSignalValue(dataField, targetFieldName) {
+    var asInt, asJson;
+    if (! targetFieldName) targetFieldName = params.dataField;
     asJson = JSON.parse(dataField);
     //alert(typeof asJson);
     if (! (typeof asJson == "object")) {
@@ -131,6 +119,17 @@ wm.fb.Zmanager=function() {
     return y;
   }
 
+  function indexCells(id) {
+    var found;
+    if (! id) return false;
+    found = cellList.indexOf(id);
+    if (found >= 0) return found;
+    cellList.push(id);
+    return cellList.indexOf(id);
+  }
+
+  function resetCellList() { cellList = [ 0 ]; }
+
   this.setZscale=function(optStr) {
     var parts = optStr.split(' ');
     if (parts[0] == "auto") {
@@ -145,6 +144,11 @@ wm.fb.Zmanager=function() {
       params.scale = "static";
       params.low = low;
       params.high = high;
+    }
+    else if (parts[0] == "cell") {
+      params.scale = "cell";
+      params.cellField = parts[1];
+      resetCellList();
     }
     else throw new Error("Wrong SCALE");
     //console.log("params set to "+wm.utils.dumpArray(params));
@@ -161,6 +165,15 @@ wm.fb.Zmanager=function() {
     return colors;
   };
 
+  function poly7(n) {
+    var colors = [
+      "rgba(11,132,165,1)","rgba(246,200,95,1)","rgba(111,78,124,1)",
+      "rgba(157,216,102,1)","rgba(202,71,47,1)","rgba(255,160,86,1)","rgba(141,221,208,1)" ],
+        black = "rgba(0,0,0,1)",
+        count = colors.length;
 
+    if (! n) return black;
+    return colors[ n % count ];
+  }
 
 }

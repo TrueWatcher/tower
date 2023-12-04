@@ -221,33 +221,34 @@ wm.fb.Controller=function(view) {
   }
 
   this.updateSignalTrackColors = function(noRender) {
-    var k, zscaleOpt, parser, extras, colors = [], allColors = [],
-        parsers = dataForMap.getUsedParsers(),
-        loadedFileNames=dataForMap.getLoadedFiles();
+    var  zscaleOpt,  allColors = [], allExtras = [];
+
     if (! zManager) {
       console.log("controller :: updateSignalTrackColors: no zManager attached");
       return false;
     }
     zscaleOpt = view.getZscale();
     zManager.setZscale(zscaleOpt);
+    allExtras = getAllExtras(dataForMap);
+    allColors = zManager.updateSignalColors(allExtras);
+    dataForMap.exportSignalTrackColors(allColors);
+    dataForMap.setDirty(2);
+    if (noRender !== "noRender") view.render(dataForMap);// zscaleSelect.onchange vs afterFileIsParsed
+  };
+
+  function getAllExtras(dataForMap) {
+    var k, parser, extras, allExtras = [],
+        parsers = dataForMap.getUsedParsers(),
+        loadedFileNames=dataForMap.getLoadedFiles();
+
     for (k of loadedFileNames) {
       parser = parsers[k];
       if (! parser) throw new Error("Empty usedParser at "+k);
       extras = parser.getExtras();
       if (! extras || extras.length == 0) { console.log("Empty EXTRAS at "+k); }
-      colors = zManager.updateSignalColors(extras);
-      allColors = allColors.concat(colors);
+      else { allExtras = allExtras.concat(extras); }
     }
-    /*parser = getLastParser(dataForMap);
-    extras = parser.getExtras();
-    colors = zManager.updateSignalColors(extras);
-    if (! colors || ! colors.length) {
-      console.log("Failed to produce new colors");
-      return false;
-    }*/
-    dataForMap.exportSignalTrackColors(allColors);
-    dataForMap.setDirty(2);
-    if (noRender !== "noRender") view.render(dataForMap);// zscaleSelect.onchange vs afterFileIsParsed
-  };
+    return allExtras;
+  }
 
 };// end Controller
