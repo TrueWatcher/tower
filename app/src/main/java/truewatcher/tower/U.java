@@ -384,9 +384,9 @@ public abstract class U {
     Class<?> objectClass;
     try {
       objectClass = Class.forName(className);
-    } catch (ClassNotFoundException | SecurityException e) {
-      return false;
     }
+    catch (ClassNotFoundException | SecurityException e) { return false; }
+    catch (ExceptionInInitializerError e) { return true; }
     return true;
   }
 
@@ -394,9 +394,8 @@ public abstract class U {
     Class<?> objectClass;
     try {
       classClass.getField(fieldName);
-    } catch (NoSuchFieldException | SecurityException e) {
-      return false;
     }
+    catch (NoSuchFieldException | SecurityException e) { return false; }
     return true;
   }
 
@@ -404,7 +403,8 @@ public abstract class U {
     Class<?> objectClass;
     try {
       classClass.getMethod(methodName);
-    } catch (NoSuchMethodException | SecurityException e) {
+    }
+    catch (NoSuchMethodException | SecurityException e) {
       return false;
     }
     return true;

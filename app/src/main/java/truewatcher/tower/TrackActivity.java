@@ -155,6 +155,7 @@ public class TrackActivity extends SingleFragmentActivity {
         mTrackListener.setOn();
         mV.alert("STARTED");
         mV.adjustVisibility(true);
+        //if (U.DEBUG) Log.i(U.TAG, "TrackActivity:"+"10");
         mDataWatcher.run();
       }
       catch (U.UserException e) {
@@ -293,6 +294,7 @@ public class TrackActivity extends SingleFragmentActivity {
         long waitingS=U.getTimeStamp() - mTrackListener.updateTime;
         long prevUpdateIntervalS=mTrackListener.updateTime - mTrackListener.prevUpdateTime;
         mV.row( mTrackListener.getCounter(), prevUpdateIntervalS, waitingS );
+        //if (U.DEBUG) Log.i(U.TAG, "TrackActivity:"+"DataWatcher:"+"run()");
         mWatchHandler.postDelayed(this, mWatchIntervalMS);
       }
 

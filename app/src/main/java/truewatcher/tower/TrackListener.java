@@ -41,8 +41,12 @@ public class TrackListener implements LocationListener {
       mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTimeMs, minDistanceM,
               this);
       prevUpdateTime=updateTime=startUpdatesTime=U.getTimeStamp();
+      //if (U.DEBUG) Log.d(U.TAG,"TrackListener:"+"started");
     }
-    catch (SecurityException e) { throw new U.RunException(e.getMessage()); }
+    catch (SecurityException e) {
+      Log.i(U.TAG, "TrackListener:"+"Security Exception"+e.getMessage());
+      throw new U.RunException(e.getMessage());
+    }
   }
 
   public void stopListening() {
@@ -51,7 +55,9 @@ public class TrackListener implements LocationListener {
       mLocationManager.removeUpdates(this);
       mLocationManager = null;
     }
-    catch (SecurityException e) { throw new U.RunException(e.getMessage()); }
+    catch (SecurityException e) {
+      throw new U.RunException(e.getMessage());
+    }
   }
 
   public void onLocationChanged(Location loc) {

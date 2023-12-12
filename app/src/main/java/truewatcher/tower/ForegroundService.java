@@ -1,17 +1,20 @@
 package truewatcher.tower;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Binder;
+import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
+import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-// https://github.com/android/location-samples/blob/master/LocationUpdatesForegroundService/app/src/main/java/com/google/android/gms/location/sample/locationupdatesforegroundservice/LocationUpdatesService.java
-// https://www.hellsoft.se/how-to-service-on-android---part-2/
+// https://www.here.com/docs/bundle/sdk-for-android-navigate-developer-guide/page/topics/get-locations-enable-background-updates.html
 
 public class ForegroundService extends Service {
 
@@ -24,13 +27,21 @@ public class ForegroundService extends Service {
     if (U.DEBUG) Log.i(U.TAG, "ForegroundService:"+"onCreate");
   }
 
+  @RequiresApi(api = Build.VERSION_CODES.Q)
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     if (U.DEBUG) Log.i(U.TAG, "ForegroundService:"+"onStartCommand");
     Model.getInstance().getTrackStorage().saveNote(
             "onStartCommand",
             String.format("intnt:%b,flags:%d,id:%d",intent,flags,startId));
-    startForeground(NOTIFICATION_ID, getNotification());
+    createNotificationChannel();
+    try {
+      startForeground(NOTIFICATION_ID, getNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+    }
+    catch (NoSuchMethodError e) { // API <= 28
+      startForeground(NOTIFICATION_ID, getNotification());
+    }
+    if (U.DEBUG) Log.i(U.TAG, "ForegroundService:"+"onStartCommand"+": service started!");
     return START_STICKY;
   }
 
@@ -53,16 +64,27 @@ public class ForegroundService extends Service {
     return builder.build();
   }
 
-  private final IBinder mBinder = new LocalBinder();
+  private void createNotificationChannel() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      NotificationChannel serviceChannel = new NotificationChannel(
+              CHANNEL_ID,
+              "Foreground Service Channel",
+              NotificationManager.IMPORTANCE_DEFAULT
+      );
 
-  public class LocalBinder extends Binder {
-    ForegroundService getService() {
-      return ForegroundService.this;
+      NotificationManager manager = getSystemService(NotificationManager.class);
+      manager.createNotificationChannel(serviceChannel);
     }
   }
 
   @Override
+  public void onDestroy() {
+    super.onDestroy();
+  }
+
+  @Nullable
+  @Override
   public IBinder onBind(Intent intent) {
-    return mBinder;
+    return null;
   }
 }
