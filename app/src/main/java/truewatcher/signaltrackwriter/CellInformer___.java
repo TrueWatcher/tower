@@ -1,9 +1,16 @@
 package truewatcher.signaltrackwriter;
-// copied intact from truewatcher.tower 2.9.6
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import org.json.JSONException;
+import org.json.JSONObject;
 import android.content.Context;
 import android.os.Build;
-import android.os.SystemClock;
+import androidx.annotation.RequiresApi;
+import androidx.fragment.app.FragmentActivity;
+
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
@@ -21,83 +28,50 @@ import android.telephony.CellSignalStrengthNr;
 import android.telephony.CellSignalStrengthTdscdma;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import androidx.annotation.RequiresApi;
-import androidx.fragment.app.FragmentActivity;
-import org.json.JSONException;
-import org.json.JSONObject;
-import java.util.ArrayList;
-import java.util.List;
 
-interface CellDataReceiver {
-  public void onCellDataObtained(JSONObject cellData);
-}
+public class CellInformer___ {
 
-public class CellInformer {
+  private JSONObject cellData = new JSONObject();
+  private String mStatus = "fresh";
   private FragmentActivity mActivity;
-  private String mStatus = "not run";
-  private CellDataReceiver mCallback;
-  private int mIsCallback = -1;
+  public static final List<String> CELL_PARAMS = Collections.unmodifiableList(Arrays.asList(
+      new String[] {"type","MCC","MNC","LAC","TAC","CID","PCI"}
+  ));
 
-  public void bindActivity(FragmentActivity a) { mActivity = a; }
-
-  public String getStatus() { return mStatus; }
+  public void bindAxtivity(FragmentActivity activity) { mActivity = activity; }
 
   @RequiresApi(api = Build.VERSION_CODES.Q)
-  public void requestCellInfos(CellDataReceiver aCallback) {
-    mCallback = aCallback;
-    // https://stackoverflow.com/questions/61075598/what-is-proper-usage-of-requestcellinfoupdate
-    List<CellInfo> cellInfos = new ArrayList<>();
-    //if (U.DEBUG) Log.d(U.TAG, "CellInformer:" + "requestCellInfos here");
+  public JSONObject getInfo() {
+    if (U.DEBUG) Log.d(U.TAG,"CellInformer:"+"getInfo here");
     TelephonyManager tm = (TelephonyManager) mActivity.getSystemService(Context.TELEPHONY_SERVICE);
-    //boolean isCallback = U.classHasMethod(TelephonyManager.class, "requestCellInfoUpdate"); // fails
-    if (mIsCallback < 0) mIsCallback = U.classExists(
-            "android.telephony.TelephonyManager$CellInfoCallback") ? 1 : 0;
-    if (U.DEBUG) Log.d(U.TAG, "CellInformer:" + "isCallback=" + mIsCallback);
+    List<CellInfo> cellInfos = new ArrayList<>();
     try {
-      if (mIsCallback > 0) {
-        TelephonyManager.CellInfoCallback cellInfoCallback = new TelephonyManager.CellInfoCallback() {
-          @Override
-          public void onCellInfo(List<CellInfo> cellInfos) {
-            if (U.DEBUG) Log.d(U.TAG, "CellInformer:" + "Calling back");
-            onCellInfosObtained(cellInfos);
-          }
-        };
-        //Log.d(U.TAG, "CellInformer:" + "cellInfoCallback is "+TelephonyManager.CellInfoCallback.class.getName());
-        tm.requestCellInfoUpdate(mActivity.getMainExecutor(), cellInfoCallback);
-      }
-      else {
-        cellInfos = tm.getAllCellInfo();
-        onCellInfosObtained(cellInfos);
-      }
+      // the permission is checked in PointFetcher
+      cellInfos = tm.getAllCellInfo();
+      // also https://stackoverflow.com/questions/61075598/what-is-proper-usage-of-requestcellinfoupdate
     }
     catch (SecurityException e) {
-      // the permission was actually checked in PointFetcher
-      mStatus = "forbidden";
-      Log.e(U.TAG, "CellInformer: getAllCellInfo(): forbidden");
-      return;
+      //throw new U.RunException(e.getMessage());
+      mStatus="forbidden";
+      return cellData;//.toString();
     }
-  }
 
-  @RequiresApi(api = Build.VERSION_CODES.Q)
-  private void onCellInfosObtained(List<CellInfo> cellInfos) {
-    JSONObject cellData = new JSONObject();
     if (null == cellInfos || cellInfos.size() == 0) {
-      if (U.DEBUG) Log.d(U.TAG, "got null cell info");
+      if (U.DEBUG) Log.d(U.TAG,"got null cell info");
       //cellData=getMockParams();
       //mStatus="mocking";
-      cellData = getNoService();
-      mStatus = "noService";
+      cellData=getNoService();
+      mStatus="noService";
     }
     else {
       int cellCount = cellInfos.size();
-      if (U.DEBUG) Log.d(U.TAG, "got " + cellCount + " cell infos");
-      if (U.DEBUG) Log.d(U.TAG, "0th cellInfo is registered:" + cellInfos.get(0).isRegistered() +
-              ", cellInfos registered:" + countRegisteres(cellInfos));
+      if (U.DEBUG) Log.d(U.TAG,"got "+cellCount+" cell infos");
+      if (U.DEBUG) Log.d(U.TAG,"0th cellInfo is registered:"+cellInfos.get(0).isRegistered()+
+          ", cellInfos registered:"+countRegisteres(cellInfos));
       cellData = getMyCellParams(cellInfos.get(0));
     }
-    mCallback.onCellDataObtained(cellData);
+    return cellData;//.toString();
   }
-
 
   private int countRegisteres(List<CellInfo> cellInfos) {
     int found = 0;
@@ -113,24 +87,13 @@ public class CellInformer {
     JSONObject err=new JSONObject();
     try {
       if (U.classHasMethod(CellInfo.class, "getTimeStamp")) {
-        long cellTsNs = cellInfo.getTimeStamp();
-        if (cellTsNs == 0) {
-          if (U.DEBUG) Log.d(U.TAG,"cellInfo.getTimeStamp is 0");
-        }
-        else {
-          int ageS = (int) ( (SystemClock.elapsedRealtime() - (cellTsNs / 1000000))/1000 );
-          if (U.DEBUG) Log.d(U.TAG, "timestamp=" + (cellTsNs / 1000000) +
-                  "ms, now=" + (SystemClock.elapsedRealtime())+"ms");
-          if (U.DEBUG) Log.d(U.TAG, "age " + ageS + "s");
-          if (ageS > 1) data.accumulate("age", ageS);
-        }
+        int age = (int) (cellInfo.getTimeStamp() - System.currentTimeMillis() / 1000);
+        if (age >= 0) data.accumulate("age", age);
       }
       if (U.classHasMethod(CellInfo.class, "getCellConnectionStatus")) {
         int s = cellInfo.getCellConnectionStatus();
-        if (U.DEBUG) Log.d(U.TAG,"CellConnectionStatus:"+s+
-                ", primary:"+CellInfo.CONNECTION_PRIMARY_SERVING);
-        int isPrimary = ( s == CellInfo.CONNECTION_PRIMARY_SERVING ) ? 1 : 0;
-        if (isPrimary == 0) data.accumulate("primary", isPrimary);
+        int isPrimary = s == CellInfo.CONNECTION_PRIMARY_SERVING ? 1 : 0;
+        data.accumulate("primary", isPrimary);
       }
       if (cellInfo instanceof CellInfoGsm) {
         CellInfoGsm cellInfoGsm = (CellInfoGsm) cellInfo;
@@ -231,7 +194,7 @@ public class CellInformer {
         mStatus="error";
         return err;
       }
-      //mCellData=data;
+      cellData=data;
       mStatus="available";
       return data;
     }
@@ -251,6 +214,7 @@ public class CellInformer {
       Log.e(U.TAG, e.getStackTrace().toString());
       return new JSONObject();
     }
+    cellData=data;
     return data;
   }
 
@@ -258,17 +222,13 @@ public class CellInformer {
     JSONObject data=new JSONObject();
     try {
       data.accumulate("type", "mock GSM");
-      data.accumulate("MCC", 250);
-      data.accumulate("MNC", 99);
-      data.accumulate("LAC", 11002);
-      data.accumulate("CID", 26953);
       data.accumulate("dBm", -60);
     }
     catch (JSONException e) {
       Log.e(U.TAG, e.getStackTrace().toString());
       return new JSONObject();
     }
+    cellData=data;
     return data;
   }
-
 }

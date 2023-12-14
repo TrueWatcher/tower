@@ -47,7 +47,7 @@ public class MainActivity extends SingleFragmentActivity {
     private MyRegistry mRg=MyRegistry.getInstance();
     private TrackStorage mTrackStorage=Model.getInstance().getTrackStorage();
     private TrackListener mTrackListener=Model.getInstance().getTrackListener();
-    private CellInformer mCellInformer=Model.getInstance().getCellInformer();
+    //private CellInformer mCellInformer=Model.getInstance().getCellInformer();
     private TextView tvState, tvData, tvCount, tvCount2, tvPrevInterval, tvTime;
     private Button bRefresh, bOn, bOnSegm, bOff, bSettings;
     private TableLayout tlTable1;
@@ -200,7 +200,7 @@ public class MainActivity extends SingleFragmentActivity {
         startMyService();
         mTrackStorage.initTargetDir(getActivity());
         String storageIbfo=displayStorageStat(mTrackStorage.statStored());
-        mCellInformer.bindAxtivity(getActivity());
+        //mCellInformer.bindActivity(getActivity());
         mTrackListener.clearCounter();
         mTrackListener.clearCounter2();
         mTrackListener.startListening(getActivity());

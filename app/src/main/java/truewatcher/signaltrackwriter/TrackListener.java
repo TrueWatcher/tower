@@ -7,14 +7,14 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import androidx.annotation.RequiresApi;
+import androidx.fragment.app.FragmentActivity;
 
-public class TrackListener implements LocationListener {
+public class TrackListener implements LocationListener,CellDataReceiver {
 
+  private Context mActivity;
   private boolean mOn=false;
   private int mCounter=0; // GPS fixes
   private int mCounter2=0; // new points
@@ -22,10 +22,11 @@ public class TrackListener implements LocationListener {
   public long prevUpdateTime=0;
   public long updateTime=0;
   public long startUpdatesTime=0;
-  private String mPrevCellInfo="";
   private Trackpoint mPrevTrackpoint=new Trackpoint("0","0");
+  private Trackpoint mTp=new Trackpoint("0","0");
   private LocationManager mLocationManager=null;// same instance for startListening and stopListening !
-  //private Model.LocationReceiver mLocationReceiver = new Model.LocationReceiver();
+  //private CellInformer mCellInformer = Model.getInstance().getCellInformer();
+  private CellInformer mCellInformer = new CellInformer();
   private MyRegistry mRg = MyRegistry.getInstance();
   private TrackStorage mTrackStorage=null;//=Model.getInstance().getTrackStorage(); causes loop
 
@@ -47,6 +48,7 @@ public class TrackListener implements LocationListener {
   public void startListening(Context ct) {
     long minTimeMs=1000*mRg.getInt("gpsMinDelayS");//U.minFixDelayS;
     float minDistanceM=0;//mRg.getInt("gpsMinDistance");// get updates by timer, check signal
+    mActivity = ct;
     try {
       mLocationManager = (LocationManager) ct.getSystemService(Context.LOCATION_SERVICE);
       mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTimeMs, minDistanceM,
@@ -93,22 +95,27 @@ public class TrackListener implements LocationListener {
 
   @RequiresApi(api = Build.VERSION_CODES.Q)
   private void onPointavailable(Location loc) {
-    Trackpoint tp=new Trackpoint(loc);
-    JSONObject cellData = Model.getInstance().getCellInformer().getInfo();
-    tp.addCell(cellData);
+    mTp = new Trackpoint(loc);
+    mCellInformer.bindActivity((FragmentActivity) mActivity);
+    mCellInformer.requestCellInfos(this);
+  }
+
+  public void onCellDataObtained(JSONObject cellData) {
+    //JSONObject cellData = Model.getInstance().getCellInformer().getInfo();
+    mTp.addCell(cellData);
     if (U.DEBUG) Log.i(U.TAG, "got a fix");
-    if (farEnough(tp, mPrevTrackpoint)) {
-      mPrevTrackpoint = tp;
-      mTrackStorage.simplySave(tp);
+    if (farEnough(mTp, mPrevTrackpoint)) {
+      mPrevTrackpoint = mTp;
+      mTrackStorage.simplySave(mTp);
       incCounter2(); // counting new points
       if (U.DEBUG) Log.i(U.TAG, "new point "+String.valueOf(mTrackStorage.getLastId()));
       return;
     }
-    if (signalChanged(tp, mPrevTrackpoint)) {
-      mPrevTrackpoint = tp;
-      mTrackStorage.updateLast(tp);
+    if (signalChanged(mTp, mPrevTrackpoint)) {
+      mPrevTrackpoint = mTp;
+      mTrackStorage.updateLast(mTp);
       if (U.DEBUG) Log.i(U.TAG, "update "+String.valueOf(mTrackStorage.getLastId())+":"
-          +String.valueOf(tp.data)+", "+tp.data1);
+          +String.valueOf(mTp.data)+", "+mTp.data1);
       return;
     }
     if (U.DEBUG) Log.i(U.TAG, "noop");
