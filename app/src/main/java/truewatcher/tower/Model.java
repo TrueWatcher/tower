@@ -8,15 +8,15 @@ public class Model {
   public Point lastCell;
   public Point lastGps;
   public Point lastPosition;
-  private CellInformer mCellInformer;
-  private GpsInformer mGpsInformer;
+  private CellPointFetcher mCellPointFetcher;
+  private GpsPointFetcher mGpsPointFetcher;
   private PointList mPointList;
   private StorageHelper mStorageHelper;
   private JSbridge mJSbridge;
   private TrackStorage mTrackStorage;
   private TrackListener mTrackListener;
-  public CellInformer getCellInformer() { return mCellInformer; }
-  public GpsInformer getGpsInformer() { return mGpsInformer; }
+  public CellPointFetcher getCellPointFetcher() { return mCellPointFetcher; }
+  public GpsPointFetcher getGpsPointFetcher() { return mGpsPointFetcher; }
   public PointList getPointList() { return mPointList; }
   public StorageHelper getStorageHelper() { return mStorageHelper; }
   public JSbridge getJSbridge() { return mJSbridge; }
@@ -28,12 +28,12 @@ public class Model {
     if (sModel == null) { sModel=new Model(); }
     return sModel;
   }
-    
+
   private Model() {
-    mCellInformer=new CellInformer();
-    mGpsInformer=new GpsInformer();
+    mCellPointFetcher =new CellPointFetcher();
+    mGpsPointFetcher =new GpsPointFetcher();
     mStorageHelper=new StorageHelper();
-    mPointList=new PointList( 0 , mStorageHelper);// must be resized after reading StoredPreferences in MainActivity    
+    mPointList=new PointList( 0 , mStorageHelper);// must be resized after reading StoredPreferences in MainActivity
     mJSbridge=new JSbridge();
     mJSbridge.setPointList(mPointList);
     mTrackStorage=new TrackStorage();
@@ -65,5 +65,5 @@ public class Model {
     mIsFresh=false;
     return res;
   }
-  
+
 }

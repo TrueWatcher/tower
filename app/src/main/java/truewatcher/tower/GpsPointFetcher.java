@@ -10,19 +10,19 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
 
-public class GpsInformer extends PointFetcher {
-  
+public class GpsPointFetcher extends PointFetcher {
+
   private LocationManager mLocnManager;
   private int mFixCount=0;
   private int mGpsAcceptableAccuracy=MyRegistry.getInstance().getInt("gpsAcceptableAccuracy");
   private int mGpsMaxFixCount=MyRegistry.getInstance().getInt("gpsMaxFixCount");
-  
+
   @Override
   protected String getPermissionType() { return Manifest.permission.ACCESS_FINE_LOCATION; }
-  
+
   @Override
   protected int getPermissionCode() { return 2; }
-  
+
   /* mock gps location seems to be off limits now :(
   @Override
   protected boolean tryGiveMockLocation() {
@@ -32,7 +32,7 @@ public class GpsInformer extends PointFetcher {
     }
     return false;
   }*/
-  
+
   @Override
   public void afterLocationPermissionOk() {
     mPi.addProgress("checking GPS...");
@@ -95,7 +95,7 @@ public class GpsInformer extends PointFetcher {
     if (loc.hasAccuracy()) s+=" Accuracy="+String.valueOf(loc.getAccuracy());
     return s;
   }
-  
+
   private String isAcceptable(Location loc, int count) {
     String s="not ready";
     if (count >= mGpsMaxFixCount) { s="overcount"; }
@@ -106,7 +106,7 @@ public class GpsInformer extends PointFetcher {
   /*
   private void giveMockLocation() {
     // https://stackoverflow.com/questions/38251741/how-to-set-android-mock-gps-location
-    
+
     //LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
     //Criteria criteria = new Criteria();
     //criteria.setAccuracy( Criteria.ACCURACY_FINE );

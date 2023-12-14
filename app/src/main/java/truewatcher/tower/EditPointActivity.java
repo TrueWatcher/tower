@@ -21,12 +21,12 @@ import java.util.Map;
 public class EditPointActivity extends SingleFragmentActivity {
   private int mArgId=-1;
   private String mArgCaller="";
-  
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Intent intent = getIntent();
-    Bundle bd = intent.getExtras();       
+    Bundle bd = intent.getExtras();
     if (bd != null) {
       mArgId = bd.getInt("id");
       mArgCaller = (String) bd.get("caller");
@@ -49,18 +49,18 @@ public class EditPointActivity extends SingleFragmentActivity {
     }
     return super.onOptionsItemSelected(item);
   }
-  
+
   public int getArgId() { return mArgId; }
   public String getArgCaller() { return mArgCaller; }
-  
+
   public void showEditTextDialog(DialogFragment dialog) {
     dialog.show(getSupportFragmentManager(), "EditTextDialogFragment");
   }
-  
+
   public void showConfirmationDialog(DialogFragment dialog) {
     dialog.show(getSupportFragmentManager(), "ConfirmationDialogFragment");
   }
-  
+
   public static class EditPointFragment extends Fragment
       implements ConfirmationDialogFragment.ConfirmationDialogReceiver,
       EditTextDialogFragment.EditTextDialogReceiver {
@@ -82,7 +82,7 @@ public class EditPointActivity extends SingleFragmentActivity {
       mFragment=this;
       mEd=new Editor();
     }
-      
+
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
       View v = inflater.inflate(R.layout.fragment_edit_point, container, false);
@@ -93,7 +93,7 @@ public class EditPointActivity extends SingleFragmentActivity {
       mPoint=mEd.getPoint();
       return v;
     }
-    
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
       inflater.inflate(R.menu.edit_point_fragment, menu);
@@ -102,7 +102,7 @@ public class EditPointActivity extends SingleFragmentActivity {
         actionList.setVisible(false);
       }
     }
-    
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
       int id = item.getItemId();
@@ -144,7 +144,7 @@ public class EditPointActivity extends SingleFragmentActivity {
       }
       return super.onOptionsItemSelected(item);
     }
-    
+
     private void offerEditText(int actionId, int actionStringId, String text) {
       EditTextDialogFragment dialog = new EditTextDialogFragment();
       Map<String,String> args=new ArrayMap<String,String>();
@@ -153,16 +153,16 @@ public class EditPointActivity extends SingleFragmentActivity {
       args.put("text",text);
       dialog.setArguments(U.map2bundle(args));
       dialog.setTargetFragment(mFragment, 2);
-      ((EditPointActivity) getActivity()).showEditTextDialog(dialog);   
+      ((EditPointActivity) getActivity()).showEditTextDialog(dialog);
     }
-    
+
     public void onEditTextPositive(int id, String text) {
       if (U.DEBUG) Log.d(U.TAG, "EditPointFragment:"+"EditTextPositive:"+id);
       if (id == R.id.action_comment) {
         mEd.updateComment(text);
       }
     }
-    
+
     private void requestConfirmation(int actionId, int actionStringId) {
       ConfirmationDialogFragment dialog = new ConfirmationDialogFragment();
       Map<String,String> args=new ArrayMap<String,String>();
@@ -170,27 +170,27 @@ public class EditPointActivity extends SingleFragmentActivity {
       args.put("actionStringId",String.valueOf(actionStringId));
       dialog.setArguments(U.map2bundle(args));
       dialog.setTargetFragment(mFragment, 1);
-      ((EditPointActivity) getActivity()).showConfirmationDialog(dialog);     
+      ((EditPointActivity) getActivity()).showConfirmationDialog(dialog);
     }
-    
+
     private void exit(String result) {
       Intent returnIntent = new Intent();
-      returnIntent.putExtra("result", result);                          
+      returnIntent.putExtra("result", result);
       mFragment.getActivity().setResult(AppCompatActivity.RESULT_OK, returnIntent);
-      mFragment.getActivity().finish();     
+      mFragment.getActivity().finish();
     }
-    
+
     public void onConfirmationNegative(int id) {
       if (U.DEBUG) Log.d(U.TAG, "EditPointFragment:"+"ConfirmationNegative:"+id);
     }
-    
+
     public void onConfirmationPositive(int id) {
       if (U.DEBUG) Log.d(U.TAG, "EditPointFragment:"+"ConfirmationPositive:"+id);
       if (id == R.id.action_delete) {
         if (mEd.tryDeleteCurrentPoint()) exit("Ok");
       }
     }
-    
+
     private int extractId() {
       // getting data from the activity argument
       // https://stackoverflow.com/questions/12739909/send-data-from-activity-to-fragment-in-android
@@ -218,7 +218,7 @@ public class EditPointActivity extends SingleFragmentActivity {
 
     private class Editor implements PointReceiver {
       private Point mP;
-      
+
       public void adoptPoint(int iid) {
         mP = mPointList.getById(iid);
         if (mP == null) {
@@ -227,16 +227,16 @@ public class EditPointActivity extends SingleFragmentActivity {
         }
         mV.fillForm(mP);
       }
-      
+
       public Point getPoint() { return mP; }
-      
+
       public void toggleProtect() {
         if (mP.isProtected()) mP.unprotect();
         else mP.protect();
         mPointList.update(mP);
         mV.fillForm(mP);
       }
-      
+
       public boolean tryDeleteCurrentPoint() {
         if (mP.isProtected()) {
           mV.alert("Cannot delete a protected point");
@@ -266,7 +266,7 @@ public class EditPointActivity extends SingleFragmentActivity {
           return;
         }
         PointIndicator pi=new PointIndicator(mV.getTvAlert(), mV.getTvNull());
-        CellInformer ci=new CellInformer();
+        CellPointFetcher ci=new CellPointFetcher();
         //ci.setFragment(mFragment);
         ci.onlyResolve(pi, this, mP);
       }
@@ -369,7 +369,7 @@ public class EditPointActivity extends SingleFragmentActivity {
       }
 
     }// end Viewer
-    
+
   }// end ListFragment
 
   @Override

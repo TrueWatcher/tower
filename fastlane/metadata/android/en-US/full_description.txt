@@ -2,7 +2,7 @@
 <li>no Google Services dependencies, only necessary permissions (fine and coarse location, internet, foreground service)</li>
 <li>connects to several online map providers</li>
 <li>acceptable performance on slow GPRS-EDGE networks; may find coarse location by phone cell without GPS; may create waypoints with GPS without phone and internet connections</li>
-<li>displays and saves cell info ( <em>MCC, MNC, LAC, CID</em> )</li>
+<li>displays and saves cell info ( <em>MCC, MNC, LAC, CID</em> ) and the signal strength ( RSRP/dBm )</li>
 <li>all waypoints are stored on a memory card and may be organized in any number of files (by regions etc.)</li>
 <li>waypoint lists may be exported or imported in the GPX format, compatible with many navigators and software</li>
 <li>finds location only by explicit user's command, so is very mild on the battery</li>

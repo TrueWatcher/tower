@@ -1,15 +1,10 @@
 package truewatcher.tower;
 
-import java.util.ArrayList;
-import java.util.List;
-import org.json.JSONException;
-import org.json.JSONObject;
-import android.Manifest;
 import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.SystemClock;
 import android.support.annotation.RequiresApi;
+import android.support.v4.app.FragmentActivity;
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
@@ -28,36 +23,39 @@ import android.telephony.CellSignalStrengthTdscdma;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-public class CellInformer extends PointFetcher implements PermissionReceiver,HttpReceiver {
-  
-  private JSONObject mCellData = new JSONObject();
-  private CellResolver mCellResolver;
-  private String mResponse="";
-  
-  @Override
-  protected String getPermissionType() { return Manifest.permission.ACCESS_FINE_LOCATION; }
-  
-  @Override
-  protected int getPermissionCode() { return 1; }
-  
-  @RequiresApi(api = Build.VERSION_CODES.Q)
-  @Override
-  public void afterLocationPermissionOk() {
-    requestCellInfos();
-  }
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
+interface CellDataReceiver {
+  public void onCellDataObtained(JSONObject cellData);
+}
+
+public class CellInformer {
+  private FragmentActivity mActivity;
+  private String mStatus = "not run";
+  private CellDataReceiver mCallback;
+  private int mIsCallback = -1;
+
+  public void bindActivity(FragmentActivity a) { mActivity = a; }
+
+  public String getStatus() { return mStatus; }
 
   @RequiresApi(api = Build.VERSION_CODES.Q)
-  private void requestCellInfos() {
+  public void requestCellInfos(CellDataReceiver aCallback) {
+    mCallback = aCallback;
     // https://stackoverflow.com/questions/61075598/what-is-proper-usage-of-requestcellinfoupdate
     List<CellInfo> cellInfos = new ArrayList<>();
     //if (U.DEBUG) Log.d(U.TAG, "CellInformer:" + "requestCellInfos here");
     TelephonyManager tm = (TelephonyManager) mActivity.getSystemService(Context.TELEPHONY_SERVICE);
-    //boolean isCallback = U.classHasMethod(TelephonyManager.class, "requestCellInfoUpdate");
-    boolean isCallback = U.classExists("android.telephony.TelephonyManager$CellInfoCallback");
-    //boolean isCallback = true;
-    if (U.DEBUG) Log.d(U.TAG, "CellInformer:" + "isCallback="+isCallback);
+    //boolean isCallback = U.classHasMethod(TelephonyManager.class, "requestCellInfoUpdate"); // fails
+    if (mIsCallback < 0) mIsCallback = U.classExists(
+            "android.telephony.TelephonyManager$CellInfoCallback") ? 1 : 0;
+    if (U.DEBUG) Log.d(U.TAG, "CellInformer:" + "isCallback=" + mIsCallback);
     try {
-      if (isCallback) {
+      if (mIsCallback > 0) {
         TelephonyManager.CellInfoCallback cellInfoCallback = new TelephonyManager.CellInfoCallback() {
           @Override
           public void onCellInfo(List<CellInfo> cellInfos) {
@@ -74,154 +72,33 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
       }
     }
     catch (SecurityException e) {
-      // the permission is checked in PointFetcher
+      // the permission was actually checked in PointFetcher
       mStatus = "forbidden";
-      Log.e(U.TAG,"CellInformer: getAllCellInfo(): forbidden");
-      mPi.addProgress(mStatus);
+      Log.e(U.TAG, "CellInformer: getAllCellInfo(): forbidden");
       return;
     }
   }
 
   @RequiresApi(api = Build.VERSION_CODES.Q)
   private void onCellInfosObtained(List<CellInfo> cellInfos) {
+    JSONObject cellData = new JSONObject();
     if (null == cellInfos || cellInfos.size() == 0) {
-      if (U.DEBUG) Log.d(U.TAG,"got null cell info");
+      if (U.DEBUG) Log.d(U.TAG, "got null cell info");
       //cellData=getMockParams();
       //mStatus="mocking";
-      mCellData=getNoService();
-      mStatus="noService";
+      cellData = getNoService();
+      mStatus = "noService";
     }
     else {
       int cellCount = cellInfos.size();
-      if (U.DEBUG) Log.d(U.TAG,"got "+cellCount+" cell infos");
-      if (U.DEBUG) Log.d(U.TAG,"0th cellInfo is registered:"+cellInfos.get(0).isRegistered()+
-              ", cellInfos registered:"+countRegisteres(cellInfos));
-      mCellData = getMyCellParams(cellInfos.get(0));
+      if (U.DEBUG) Log.d(U.TAG, "got " + cellCount + " cell infos");
+      if (U.DEBUG) Log.d(U.TAG, "0th cellInfo is registered:" + cellInfos.get(0).isRegistered() +
+              ", cellInfos registered:" + countRegisteres(cellInfos));
+      cellData = getMyCellParams(cellInfos.get(0));
     }
-
-    String cd = mCellData.toString();
-    if (mStatus.equals("forbidden")) {
-      mPi.addProgress(mActivity.getResources().getString(R.string.permissionfailure));
-      return;
-    }
-    if (mStatus.indexOf("unsupported") == 0) {
-      mPi.addProgress(mStatus);
-      return;
-    }
-    if (! mStatus.equals("available") && ! mStatus.equals("mocking") && ! mStatus.equals("noService")) {
-      mStatus="error";
-      mPi.addProgress("failed to get cell info");
-      return;
-    }
-
-    mPoint=new Point("cell");
-    mPoint.cellData=cd;
-    mPi.showData(JsonHelper.filterQuotes(cd));
-    if (shouldNotResolve()) {
-      onPointavailable(mPoint);
-      return;
-    }
-    mPi.addProgress("trying to get location...");
-    startResolveCell();
+    mCallback.onCellDataObtained(cellData);
   }
 
-  private boolean shouldNotResolve() {
-    if ("none".equals( MyRegistry.getInstance().get("cellResolver") ) ) {
-      mPi.addProgress("location service is off (see Settings)");
-      return true;
-    }
-    //if (U.DEBUG) Log.i(U.TAG,"network on:"+U.isNetworkOn(mActivity));
-    if (! U.isNetworkOn(mActivity)) {
-      mPi.addProgress("no internet");
-      return true;
-    }
-    return false;
-  }
-
-  public void onlyResolve(PointIndicator pi, PointReceiver pr, Point p) {
-  // a shortcut entrypoint for resolving a ready cell without permission checks
-    mPi=pi;
-    mPointReceiver=pr;
-    mPoint=p;
-    mStatus="asked to resolve";
-    mToUpdateLocation=false;
-    if ( ! p.getType().equals("cell") || p.cellData == null || p.cellData.length() < 10) {
-      mPi.addProgress("Not a valid cell");
-      return;
-    }
-    if ( "none".equals( MyRegistry.getInstance().get("cellResolver") ) ) {
-      mPi.addProgress("Select cell location service");
-      return;
-    }
-    startResolveCell();
-  }
-  
-  private void startResolveCell() {
-    String resolverUri = "";
-    String reqData = "";
-
-    try {
-      mCellData =new JSONObject(mPoint.cellData);
-    }
-    catch (JSONException e) { 
-      Log.e(U.TAG,"Wrong point.cellData");
-      Log.e(U.TAG,e.getMessage());
-      mPi.addProgress("Wrong point.cellData");
-      onPointavailable(mPoint);
-      return;
-    }
-    try {
-      if ( ! mCellData.has("CID") || "".equals(mCellData.optString("CID"))) {
-        throw new U.DataException("No cell id");
-      }
-      mCellResolver = CellResolverFactory.getResolver(MyRegistry.getInstance().get("cellResolver"));
-      resolverUri = mCellResolver.makeResolverUri(mCellData);
-      reqData = mCellResolver.makeResolverData(mCellData);
-    }
-    catch (U.DataException e) {
-      Log.e(U.TAG,e.getMessage());
-      mStatus="Failure:"+e.getMessage();
-      mPi.addProgress(mStatus);
-      onPointavailable(mPoint);
-      return;
-    }
-    if (U.DEBUG) Log.i(U.TAG,"startResolveCell:"+"About to query "+resolverUri+"\n data="+reqData);
-    AsyncTask<String, Void, String> req = mCellResolver.getRequestTask(this);
-    req.execute(resolverUri,reqData);
-  }
-
-  @Override
-  public void onHttpReceived(String result) {
-    mResponse=result;
-    if (U.DEBUG) Log.i(U.TAG,"onHttpReceived:"+"Response:"+mResponse);
-    try {
-      JSONObject resolvedData = mCellResolver.getResolvedData(mResponse);
-      mStatus = "resolved";
-      mPoint.lat=resolvedData.optString("lat");
-      mPoint.lon=resolvedData.optString("lon");
-      String r=resolvedData.optString("range");
-      if ( r != null && ! r.isEmpty()) mPoint.range=r;
-    }
-    catch (U.DataException e) {
-      Log.e(U.TAG,e.getMessage());
-      mStatus="Failure:"+e.getMessage();
-    }
-
-    mPi.addProgress(mStatus);
-    //if (mStatus != "resolved") return;
-    if (mPoint.range != null && ! mPoint.range.isEmpty()) {
-      String rt=PointIndicator.floor(mPoint.range);
-      mPi.addData(" Accuracy:"+rt);
-    }
-    onPointavailable(mPoint);
-  }
-  
-  @Override
-  public void onHttpError(String error) {
-    mStatus="Http Error:"+error;
-    mPi.addProgress(mStatus);
-    onPointavailable(mPoint);
-  }
 
   private int countRegisteres(List<CellInfo> cellInfos) {
     int found = 0;
@@ -230,7 +107,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
     }
     return found;
   }
-  
+
   @RequiresApi(api = Build.VERSION_CODES.Q)
   private JSONObject getMyCellParams(CellInfo cellInfo) {
     JSONObject data=new JSONObject();
@@ -246,7 +123,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
           if (U.DEBUG) Log.d(U.TAG, "timestamp=" + (cellTsNs / 1000000) +
                   "ms, now=" + (SystemClock.elapsedRealtime())+"ms");
           if (U.DEBUG) Log.d(U.TAG, "age " + ageS + "s");
-          data.accumulate("age", ageS);
+          if (ageS > 1) data.accumulate("age", ageS);
         }
       }
       if (U.classHasMethod(CellInfo.class, "getCellConnectionStatus")) {
@@ -254,7 +131,7 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
         if (U.DEBUG) Log.d(U.TAG,"CellConnectionStatus:"+s+
                 ", primary:"+CellInfo.CONNECTION_PRIMARY_SERVING);
         int isPrimary = ( s == CellInfo.CONNECTION_PRIMARY_SERVING ) ? 1 : 0;
-        data.accumulate("primary", isPrimary);
+        if (isPrimary == 0) data.accumulate("primary", isPrimary);
       }
       if (cellInfo instanceof CellInfoGsm) {
         CellInfoGsm cellInfoGsm = (CellInfoGsm) cellInfo;
@@ -355,11 +232,11 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
         mStatus="error";
         return err;
       }
-      mCellData =data;
+      //mCellData=data;
       mStatus="available";
       return data;
-    } 
-    catch (JSONException e) { 
+    }
+    catch (JSONException e) {
       Log.e(U.TAG,e.getMessage());
       mStatus="error";
       return err;
@@ -375,7 +252,6 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
       Log.e(U.TAG, e.getStackTrace().toString());
       return new JSONObject();
     }
-    mCellData =data;
     return data;
   }
 
@@ -393,7 +269,6 @@ public class CellInformer extends PointFetcher implements PermissionReceiver,Htt
       Log.e(U.TAG, e.getStackTrace().toString());
       return new JSONObject();
     }
-    mCellData =data;
     return data;
   }
 

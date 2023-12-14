@@ -44,8 +44,8 @@ public class AddPointActivity  extends SingleFragmentActivity {
 
   public static class AddPointFragment extends PermissionAwareFragment {
     private Model mModel=Model.getInstance();
-    private CellInformer mCellInformer=mModel.getCellInformer();;
-    private GpsInformer mGpsInformer=mModel.getGpsInformer();
+    private CellPointFetcher mCellPointFetcher =mModel.getCellPointFetcher();;
+    private GpsPointFetcher mGpsPointFetcher =mModel.getGpsPointFetcher();
     private PointList mPointList=mModel.getPointList();;
     private JSbridge mJSbridge=mModel.getJSbridge();;;
     private AddPointFragment.Viewer mV;
@@ -55,10 +55,10 @@ public class AddPointActivity  extends SingleFragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
       setHasOptionsMenu(true);
-      mCellInformer.setFragment(this);
-      mGpsInformer.setFragment(this);
+      mCellPointFetcher.setFragment(this);
+      mGpsPointFetcher.setFragment(this);
     }
-      
+
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
       Point toBeRemoved;
@@ -72,8 +72,8 @@ public class AddPointActivity  extends SingleFragmentActivity {
       mV.setListeners(mGpsRenderer,mCellRenderer);
       mGpsRenderer.showPoint(mModel.lastGps);
       mCellRenderer.showPoint(mModel.lastCell);
-      mGpsRenderer.showProgress(mGpsInformer.getStatus());
-      mCellRenderer.showProgress(mCellInformer.getStatus());
+      mGpsRenderer.showProgress(mGpsPointFetcher.getStatus());
+      mCellRenderer.showProgress(mCellPointFetcher.getStatus());
       return v;
     }
 
@@ -92,9 +92,9 @@ public class AddPointActivity  extends SingleFragmentActivity {
       }
       return super.onOptionsItemSelected(item);
     }
-    
+
     private class Adder {
-      
+
       private void go() {
         String outcome="";
         String removed;
@@ -102,10 +102,10 @@ public class AddPointActivity  extends SingleFragmentActivity {
         String aType=getAdditionType();
         mV.alert(aType);
         String[] latLon=getLatLon(aType);
-        if (latLon == null) {// valid unresolved cell gives {"",""}  
+        if (latLon == null) {// valid unresolved cell gives {"",""}
           mV.alert(aType+": no data");
           return;
-        }          
+        }
         p=preparePoint(aType, latLon, mV.getAsCenter(), mV.getIsProtected());
         try {
           removed=mPointList.addAsNext(p);
@@ -123,7 +123,7 @@ public class AddPointActivity  extends SingleFragmentActivity {
         mV.removeFocus();
         String res=mPointList.save();
       }
-      
+
       private Point preparePoint(String aType, String[] latLon, boolean asCenter, boolean isProtect) {
         Point p;
         if (aType.equals("gps")) { p = (Point) mModel.lastGps.clone(); }
@@ -139,7 +139,7 @@ public class AddPointActivity  extends SingleFragmentActivity {
         }
         return p;
       }
-      
+
       private String getAdditionType() {
         int selectedId = mV.getCheckedRadioButton();
         if (selectedId == R.id.rbMapCenter) return "mapCenter";
@@ -148,7 +148,7 @@ public class AddPointActivity  extends SingleFragmentActivity {
         if (selectedId == R.id.rbWaypoint) return "waypoint";
         return "error";
       }
-      
+
       private String[] getLatLon(String aType) {
         String[] latLon;
         String lat;
@@ -167,7 +167,7 @@ public class AddPointActivity  extends SingleFragmentActivity {
           lon=mV.getLon();
           if (lat.isEmpty() || lon.isEmpty()) return null;
           return new String[]{lat, lon};
-        }      
+        }
         if (aType.equals("gps")) {
           if (mModel.lastGps == null) return null;
           p=mModel.lastGps;
@@ -175,7 +175,7 @@ public class AddPointActivity  extends SingleFragmentActivity {
         }
         if (aType.equals("cell")) {
           if (mModel.lastCell == null) return null;
-          p=mModel.lastCell;          
+          p=mModel.lastCell;
           if (p.cellData == null || p.cellData.isEmpty()) return null;
           if ( ! p.hasCoords()) return new String[]{"",""};
           return new String[]{p.lat, p.lon};
@@ -185,12 +185,12 @@ public class AddPointActivity  extends SingleFragmentActivity {
     }// end Adder
 
     private class PointRenderer extends PointIndicator implements PointReceiver {
-      
+
       public PointRenderer(TextView twP, TextView twD) { super(twP,twD); }
-      
+
       @Override
       public void addProgress(String d) { showProgress(d); }// just show last update
-      
+
       public void showPoint(Point p) {
         if (p == null) {
           if (U.DEBUG) Log.d(U.TAG,"PointRenderer:"+"Empty point");
@@ -204,14 +204,14 @@ public class AddPointActivity  extends SingleFragmentActivity {
         if ( ! location.isEmpty() && p.range != null) location+=",Accuracy:"+floor(p.range);
         if ( ! location.isEmpty()) {
           if ( ! s.isEmpty()) s+="\n";
-          s+=location;  
+          s+=location;
         }
         if ( ! s.isEmpty()) { showData(s); }
       }
 
       @Override
       public void onPointavailable(Point p) { showPoint(p); }
-    
+
     } // end PointRenderer
 
     private class Viewer {
@@ -258,13 +258,13 @@ public class AddPointActivity  extends SingleFragmentActivity {
         bGetGps.setOnClickListener(new View.OnClickListener() {
           @Override
           public void onClick(View v) {
-            mGpsInformer.go(gpsRenderer, gpsRenderer);
+            mGpsPointFetcher.go(gpsRenderer, gpsRenderer);
           }
         });
         bGetCell.setOnClickListener(new View.OnClickListener() {
           @Override
           public void onClick(View v) {
-            mCellInformer.go(cellRenderer, cellRenderer);
+            mCellPointFetcher.go(cellRenderer, cellRenderer);
           }
         });
       }
@@ -318,7 +318,7 @@ public class AddPointActivity  extends SingleFragmentActivity {
 
     }// end Viewer
   }// end AddPointFragment
-    
+
   @Override
   protected android.support.v4.app.Fragment createFragment() { return new AddPointFragment(); }
 }

@@ -9,7 +9,7 @@ for finding user location (by phone cell or GPS), viewing online maps, creating 
 * no Google Services dependencies, only necessary permissions (fine and coarse location, internet)
 * connects to several online map providers
 * acceptable performance on slow GPRS-EDGE networks; may find coarse location by phone cell without GPS; may create waypoints with GPS without phone and internet connections
-* displays and saves cell info ( MCC, MNC, LAC, CID )
+* displays and saves cell info ( MCC, MNC, LAC, CID ) and the signal strength ( RSRP/dBm )
 * all waypoints are stored on a memory card and may be organized in any number of files (by regions etc.)
 * waypoint lists may be exported or imported in the GPX format, compatible with many navigators and software
 * finds location only by explicit user's command, so is very mild on the battery
@@ -27,7 +27,7 @@ See [the project web page](http://tower.posmotrel.net) and
 
 ## External materials (see LICENSES):
 
-This distribution includes the _LeafletJS_ javacsript library code ver. 1.3.4 (https://leafletjs.com, https://github.com/Leaflet/Leaflet),
+This distribution includes the _LeafletJS_ javacsript library code ver. 1.9 (https://leafletjs.com, https://github.com/Leaflet/Leaflet),
 which has BSD 2-Clause "Simplified" License
 
 This program uses several web APIs and loads data and javascript code, details and references are included in the LICENSES file.
@@ -37,4 +37,4 @@ This program uses several web APIs and loads data and javascript code, details a
 Some of web services, despite being free of charge, require access keys. As these keys are not to be committed to public repositories, this app may appear in two kinds of distributions: full (with keys included in the binary) and pure open (without keys). The keyless distribution is fully operational, except for concerned services, and always has slots to enter user's own keys. See [the manual](http://tower.posmotrel.net/#external-materials-and-api-keys) for details.
 
 Builders are free to provide their own keys with their distribution; the easiest way is via Gradle files as BuildConfig.yandexLocatorKey and BuildConfig.yandexMapKey ( [instruction](https://stackoverflow.com/questions/35722904/saving-the-api-key-in-gradle-properties) ).
-    
+

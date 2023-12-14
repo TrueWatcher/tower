@@ -42,8 +42,8 @@ public class MainActivity extends SingleFragmentActivity {
     private MyRegistry mRegistry=MyRegistry.getInstance();
     private MapViewer mMapViewer;
     private Model mModel = Model.getInstance();
-    private CellInformer mCellInformer = mModel.getCellInformer();;
-    private GpsInformer mGpsInformer = mModel.getGpsInformer();;
+    private CellPointFetcher mCellPointFetcher = mModel.getCellPointFetcher();;
+    private GpsPointFetcher mGpsPointFetcher = mModel.getGpsPointFetcher();;
     private PointList mPointList = mModel.getPointList();
     private StorageHelper mStorageHelper = mModel.getStorageHelper();
     private JSbridge mJSbridge = mModel.getJSbridge();
@@ -62,8 +62,8 @@ public class MainActivity extends SingleFragmentActivity {
       mRegistry.readFromShared(getActivity());
       mRegistry.syncSecrets(getActivity());
       mReadData=mModel.loadData(this.getActivity(), mRegistry);
-      mCellInformer.setFragment(this);
-      mGpsInformer.setFragment(this);
+      mCellPointFetcher.setFragment(this);
+      mGpsPointFetcher.setFragment(this);
     }
 
     @Override
@@ -85,21 +85,21 @@ public class MainActivity extends SingleFragmentActivity {
       if ( ! mRegistry.getBool("enableTrack")) return;
       mMapViewer.redraw();
     }
-    
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
       inflater.inflate(R.menu.main_fragment, menu);
     }
-    
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
       int id = item.getItemId();
       if (id == R.id.action_cell) {
-        mCellInformer.go(mMapViewer, mMapViewer);
+        mCellPointFetcher.go(mMapViewer, mMapViewer);
         return true;
       }
       if (id == R.id.action_gps) {
-        mGpsInformer.go(mMapViewer, mMapViewer);
+        mGpsPointFetcher.go(mMapViewer, mMapViewer);
         return true;
       }
       if (id == R.id.action_add) {
@@ -152,8 +152,8 @@ public class MainActivity extends SingleFragmentActivity {
     public void onResume() {
       super.onResume();
       if (U.DEBUG) Log.i(U.TAG,"mainFragment:onResume");
-      mCellInformer.setFragment(this);
-      mGpsInformer.setFragment(this);
+      mCellPointFetcher.setFragment(this);
+      mGpsPointFetcher.setFragment(this);
       mMapViewer.clearIndicator();
       if (mModel.getJSbridge().isDirty() > 0) {
         mMapViewer.hideIndicator();
@@ -184,15 +184,15 @@ public class MainActivity extends SingleFragmentActivity {
       super.onPause();
       mTrackListener.removeListener(this);
     }
-    
+
     @Override
     public void onDestroy() {
       super.onDestroy();
       if (U.DEBUG) Log.i(U.TAG,"mainFragment:onDestroy");
-      mCellInformer.clearFragment();
-      mGpsInformer.clearFragment();
+      mCellPointFetcher.clearFragment();
+      mGpsPointFetcher.clearFragment();
     }
-    
+
   }// end MainPageFragment
 
   @Override
