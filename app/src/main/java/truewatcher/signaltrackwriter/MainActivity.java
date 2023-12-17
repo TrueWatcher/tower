@@ -8,10 +8,7 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import androidx.annotation.RequiresApi;
-import androidx.fragment.app.Fragment;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,51 +18,22 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TableLayout;
 import android.widget.TextView;
+
+import androidx.annotation.RequiresApi;
+
 import java.io.IOException;
-
-interface PermissionChecker {
-  public void genericRequestPermission(String permCode, int reqCode, PermissionReceiver receiver);
-}
-
-interface PermissionReceiver {
-  public void receivePermission(int reqCode, boolean isGranted);
-}
 
 public class MainActivity extends SingleFragmentActivity {
 
-  @Override
-  public void onRequestPermissionsResult(int reqCode, String[] permissions, int[] grantResults) {
-    Log.d(U.TAG, "Calling super.onResult from the activity");
-    super.onRequestPermissionsResult(reqCode, permissions, grantResults);
-  }
+  public static class TrackPageFragment extends PermissionAwareFragment
+          implements PermissionReceiver {
 
-  public static class MainPageFragment extends Fragment
-          implements PermissionChecker, PermissionReceiver {
-
-    private SparseArray<PermissionReceiver> mPermissionReceivers =
-            new SparseArray<PermissionReceiver>();
     private MyRegistry mRg=MyRegistry.getInstance();
     private TrackStorage mTrackStorage=Model.getInstance().getTrackStorage();
     private TrackListener mTrackListener=Model.getInstance().getTrackListener();
-    //private CellInformer mCellInformer=Model.getInstance().getCellInformer();
-    private TextView tvState, tvData, tvCount, tvCount2, tvPrevInterval, tvTime;
-    private Button bRefresh, bOn, bOnSegm, bOff, bSettings;
-    private TableLayout tlTable1;
+    private TrackPageFragment.Viewer mV;
     private DataWatcher mDataWatcher=new DataWatcher();
-
-    //@TargetApi(23)
-    public void genericRequestPermission(String permCode, int reqCode, PermissionReceiver receiver) {
-      mPermissionReceivers.put(reqCode, receiver);
-      Log.d(U.TAG, "Requesting user...");
-      requestPermissions(new String[]{permCode}, reqCode);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int reqCode, String[] permissions, int[] grantResults) {
-      boolean isGranted = ( grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED );
-      Log.d(U.TAG,"grantResults length="+grantResults.length);
-      mPermissionReceivers.get(reqCode).receivePermission(reqCode,isGranted);
-    }
+    //private JSbridge mJSbridge=Model.getInstance().getJSbridge();
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -92,10 +60,34 @@ public class MainActivity extends SingleFragmentActivity {
       return super.onOptionsItemSelected(item);
     }
 
+    /*@Override
+    public boolean onOptionsItemSelected_(MenuItem item) {
+      int id = item.getItemId();
+      if (id == R.id.action_back) {
+        getActivity().finish();
+        return true;
+      }
+      if (id == R.id.action_fit_to_map) {
+        if (tryFitTrackToMap()) getActivity().finish();// show map
+        return true;
+      }
+      if (id == R.id.action_delete_last_segment) {
+        deleteLastSegment();
+        mJSbridge.setDirty(1);
+        return true;
+      }
+      if (id == R.id.action_settings) {
+        Intent si=new Intent(getActivity(),PreferencesActivity.class);
+        startActivity(si);
+        return true;
+      }
+      return super.onOptionsItemSelected(item);
+    }*/
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
-      Log.i(U.TAG,"mainFragment:onCreate");
+      if (U.DEBUG) Log.d(U.TAG,"trackFragment:onCreate");
       setHasOptionsMenu(true);
       mRg.readFromShared(getActivity());
     }
@@ -103,30 +95,10 @@ public class MainActivity extends SingleFragmentActivity {
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
-      Log.i(U.TAG,"mainFragment:onCreateView");
+      if (U.DEBUG) Log.d(U.TAG,"trackFragment:onCreateView");
       View v = inflater.inflate(R.layout.fragment_main, container, false);
-      tvState = (TextView) v.findViewById(R.id.tvState);
-      tvData = (TextView) v.findViewById(R.id.tvData);
-      tvCount = (TextView) v.findViewById(R.id.tvCount);
-      tvCount2 = (TextView) v.findViewById(R.id.tvCount2);
-      tvPrevInterval = (TextView) v.findViewById(R.id.tvPrevInterval);
-      tvTime = (TextView) v.findViewById(R.id.tvTime);
-      bOn = (Button) v.findViewById(R.id.bOn);
-      bOnSegm = (Button) v.findViewById(R.id.bOnSegm);
-      bOff = (Button) v.findViewById(R.id.bOff);
-      bOn.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) { runAll(); }
-      });
-      bOnSegm.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) { mTrackStorage.demandNewSegment(); runAll(); }
-      });
-      bOff.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) { stopAll(); }
-      });
-      tlTable1 = (TableLayout) v.findViewById(R.id.tlTable1);
+      mV=new Viewer(v);
+      mV.setListeners(this, mTrackStorage);
       return v;
     }
 
@@ -134,96 +106,94 @@ public class MainActivity extends SingleFragmentActivity {
     @Override
     public void onResume() {
       super.onResume();
-      Log.i(U.TAG,"mainFragment:onResume");
+      if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume");
       if (mRg.getBool("useTowerFolder") && ! checkStoragePermission()) {
-        tvState.setText("No storage permission, asking user");
+        mV.alert("No storage permission, asking user");
         askStoragePermission();
         return;
       }
       if (mTrackListener.isOn()) {
         mDataWatcher.run();
-        Log.i(U.TAG,"mainFragment:onResume"+"restarting dataWatcher");
+        if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume"+"restarting dataWatcher");
       }
       else {
         printStorageInfo();
       }
-      adjustVisibility(mTrackListener.isOn());
+      mV.adjustVisibility(mTrackListener.isOn());
     }
 
     public void printStorageInfo() {
       try {
         mTrackStorage.initTargetDir(getActivity());
-        String storageIbfo=displayStorageStat(mTrackStorage.statStored());
-        tvState.setText("IDLE");
-        tvData.setText(storageIbfo);
+        mV.alert("IDLE");
+        mV.displayStorageStat(mTrackStorage.statStored());
       }
       catch (IOException e) {
-        tvState.setText("IOException:"+e.getMessage());
-        Log.d(U.TAG, "IOException:"+e.getMessage());
+        mV.alert("IOException:"+e.getMessage());
+        Log.e(U.TAG, "IOException:"+e.getMessage());
       }
       catch (U.DataException e) {
-        tvState.setText("DataException:"+e.getMessage());
-        Log.d(U.TAG, "DataException:"+e.getMessage());
+        mV.alert("DataException:"+e.getMessage());
+        Log.e(U.TAG, "DataException:"+e.getMessage());
       }
       catch (U.FileException e) {
-        tvState.setText("FileException:"+e.getMessage());
-        Log.d(U.TAG, "FileException:"+e.getMessage());
+        mV.alert("FileException:"+e.getMessage());
+        Log.e(U.TAG, "FileException:"+e.getMessage());
       }
     }
 
     @Override
     public void onPause() {
       super.onPause();
-      if (U.DEBUG) Log.i(U.TAG,"mainFragment:onPause");
+      if (U.DEBUG) Log.d(U.TAG,"trackFragment:onPause");
       mDataWatcher.stop();
     }
 
     @Override
     public void onDestroy() {
       super.onDestroy();
-      if (U.DEBUG) Log.i(U.TAG,"mainFragment:onDestroy");
+      if (U.DEBUG) Log.d(U.TAG,"trackFragment:onDestroy");
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void runAll() {
       if (mTrackListener.isOn()) {
-        tvState.setText("Service is already started");
+        mV.alert("Service is already started");
         return;
       }
       try {
         if ( ! checkLocationPermission()) {
-          tvState.setText("No location permission, asking user");
+          mV.alert("No location permission, asking user");
           askLocationPermission();
           return;
         }
         checkGps();
         startMyService();
-        mTrackStorage.initTargetDir(getActivity());
-        String storageIbfo=displayStorageStat(mTrackStorage.statStored());
-        //mCellInformer.bindActivity(getActivity());
+        mTrackStorage.initTargetDir(getActivity());// see MainPageFragment.loadCurrentTrack
+        mV.displayStorageStat(mTrackStorage.statStored());
         mTrackListener.clearCounter();
         mTrackListener.clearCounter2();
         mTrackListener.startListening(getActivity());
         mTrackListener.setOn();
-        tvState.setText("STARTED");
-        tvData.setText(storageIbfo);
-        adjustVisibility(true);
+        mV.alert("STARTED");
+        mV.adjustVisibility(true);
+        //if (U.DEBUG) Log.i(U.TAG, "TrackActivity:"+"10");
         mDataWatcher.run();
       }
       catch (U.UserException e) {
-        tvState.setText("UserException:"+e.getMessage());
+        mV.alert("UserException:"+e.getMessage());
         Log.e(U.TAG, "UserException:"+e.getMessage());
       }
       catch (IOException e) {
-        tvState.setText("IOException:"+e.getMessage());
+        mV.alert("IOException:"+e.getMessage());
         Log.e(U.TAG, "IOException:"+e.getMessage());
       }
       catch (U.DataException e) {
-        tvState.setText("DataException:"+e.getMessage());
+        mV.alert("DataException:"+e.getMessage());
         Log.e(U.TAG, "DataException:"+e.getMessage());
       }
       catch (U.FileException e) {
-        tvState.setText("FileException:"+e.getMessage());
+        mV.alert("FileException:"+e.getMessage());
         Log.e(U.TAG, "FileException:"+e.getMessage());
       }
     }
@@ -250,18 +220,19 @@ public class MainActivity extends SingleFragmentActivity {
       genericRequestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, 2, this);
     }
 
+    @Override
     public void receivePermission(int reqCode, boolean isGranted) {
       if ( ! isGranted) {
         if (U.DEBUG) Log.d(U.TAG, "permission denied");
         if (reqCode == 2) {
           mRg.setBool("useTowerFolder",false);
           mRg.saveToShared(getActivity(), "useTowerFolder");
-          tvState.setText("Permission denied, falling back to native folder");
+          mV.alert("Permission denied, falling back to native folder");
         }
       }
       else {
         if (U.DEBUG) Log.d(U.TAG,"permission granted");
-        tvState.setText("Permission granted, try to start again");
+        mV.alert("Permission granted, try to start again");
       }
     }
 
@@ -269,12 +240,6 @@ public class MainActivity extends SingleFragmentActivity {
       LocationManager lm = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
       boolean isGpsEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
       if ( ! isGpsEnabled) throw new U.UserException("GPS is disabled");
-    }
-
-    private String displayStorageStat(U.Summary2 s) {
-      String r=String.format("%s:\n%d records, %d trackpoints in %d segments: \n%s",
-              s.fileName, s.found-2, s.adopted, s.segments, s.segMap);
-      return r;
     }
 
     private void startMyService() {
@@ -287,9 +252,8 @@ public class MainActivity extends SingleFragmentActivity {
       stopMyService();
       mTrackListener.setOff();
       mDataWatcher.stop();
-      adjustVisibility(false);
+      mV.adjustVisibility(false);
       printStorageInfo();
-      //tvState.setText(tvState.getText().toString().concat("\nIDLE"));
     }
 
     private void stopMyService() {
@@ -299,70 +263,49 @@ public class MainActivity extends SingleFragmentActivity {
 
     private void deleteLastSegment() {
       if (mTrackListener.isOn()) {
-        tvState.setText("Stop recording first");
+        mV.alert("Stop recording first");
         return;
       }
       try {
         mTrackStorage.deleteLastSegment();
-        String storageIbfo=displayStorageStat(mTrackStorage.statStored());
-        tvState.setText("IDLE");
-        tvData.setText(storageIbfo);
+        //String buf = mTrackStorage.trackCsv2LatLonString();
+        //mJSbridge.replaceCurrentTrackLatLonJson(buf);
+        mV.alert("IDLE");
+        mV.displayStorageStat(mTrackStorage.statStored());;
       }
       catch (IOException e) {
-        tvState.setText("IOException:"+e.getMessage());
+        mV.alert("IOException:"+e.getMessage());
         Log.e(U.TAG, "IOException:"+e.getMessage());
       }
       catch (U.DataException e) {
-        tvState.setText("DataException:"+e.getMessage());
+        mV.alert("DataException:"+e.getMessage());
         Log.e(U.TAG, "DataException:"+e.getMessage());
       }
       catch (U.FileException e) {
-        tvState.setText("FileException:"+e.getMessage());
+        mV.alert("FileException:"+e.getMessage());
         Log.e(U.TAG, "FileException:"+e.getMessage());
       }
     }
 
-    private void exportGpx() {
-      if (mTrackListener.isOn()) {
-        tvState.setText("Stop recording first");
-        return;
+    /*private boolean tryFitTrackToMap() {
+      if ( ! mJSbridge.importViewCurrentTrack() &&
+              mJSbridge.importViewTrackLatLonJson().length() < 3) {
+        mV.alert("Current track turned off in Settings");
+        return false;
       }
-      try {
-        String name=Trackpoint.getDate().replace(' ','_').replace(':','-');
-        U.Summary res=mTrackStorage.trackCsv2Gpx(name);
-        String info=String.format("%s %d points (of %d, %d segment) to %s",
-                res.act, res.adopted, res.found, res.segments, res.fileName);
-        tvState.setText("IDLE");
-        tvData.setText(info);
+      if (mJSbridge.importCurrentTrackLatLonJson().length() < 3 &&
+              mJSbridge.importViewTrackLatLonJson().length() < 3) {
+        mV.alert("No trackpoints found");
+        return false;
       }
-      catch (IOException e) {
-        tvState.setText("IOException:"+e.getMessage());
-        Log.e(U.TAG, "IOException:"+e.getMessage());
+      mJSbridge.setBounded("t");// t for currentTrack abd viewTrack, ct for currentTrack only
+      mJSbridge.setDirty(2);
+      if (mJSbridge.hasNoCenter()) {
+        mJSbridge.exportCenterLatLon("45","45");
+        mJSbridge.setDirty(3);
       }
-      catch (U.DataException e) {
-        tvState.setText("DataException:"+e.getMessage());
-        Log.e(U.TAG, "DataException:"+e.getMessage());
-      }
-      catch (U.FileException e) {
-        tvState.setText("FileException:"+e.getMessage());
-        Log.e(U.TAG, "FileException:"+e.getMessage());
-      }
-    }
-
-    private void adjustVisibility(boolean isOn) {
-      if (isOn) {
-        tlTable1.setVisibility(View.VISIBLE);
-        bOff.setVisibility(View.VISIBLE);
-        bOn.setVisibility(View.GONE);
-        bOnSegm.setVisibility(View.GONE);
-      }
-      else {
-        tlTable1.setVisibility(View.GONE);
-        bOff.setVisibility(View.GONE);
-        bOn.setVisibility(View.VISIBLE);
-        bOnSegm.setVisibility(View.VISIBLE);
-      }
-    }
+      return true;
+    }*/
 
     private class DataWatcher implements Runnable {
       private Handler mWatchHandler=new Handler();
@@ -372,10 +315,8 @@ public class MainActivity extends SingleFragmentActivity {
       public void run() {
         long waitingS=U.getTimeStamp() - mTrackListener.updateTime;
         long prevUpdateIntervalS=mTrackListener.updateTime - mTrackListener.prevUpdateTime;
-        tvCount.setText(Integer.toString(mTrackListener.getCounter()));// fixes
-        tvCount2.setText(Integer.toString(mTrackListener.getCounter2()));// points
-        tvPrevInterval.setText(Long.toString(prevUpdateIntervalS));
-        tvTime.setText(Long.toString(waitingS));
+        mV.row( mTrackListener.getCounter(), mTrackListener.getCounter2(), prevUpdateIntervalS, waitingS );
+        //if (U.DEBUG) Log.i(U.TAG, "TrackActivity:"+"DataWatcher:"+"run()");
         mWatchHandler.postDelayed(this, mWatchIntervalMS);
       }
 
@@ -384,9 +325,112 @@ public class MainActivity extends SingleFragmentActivity {
       }
     }
 
+    private void exportGpx() {
+      if (mTrackListener.isOn()) {
+        mV.alert("Stop recording first");
+        return;
+      }
+      try {
+        String name=Trackpoint.getDate().replace(' ','_').replace(':','-');
+        U.Summary res=mTrackStorage.trackCsv2Gpx(name);
+        String info=String.format("%s %d points (of %d, %d segment) to %s",
+                res.act, res.adopted, res.found, res.segments, res.fileName);
+        mV.alert("IDLE");
+        mV.data(info);
+      }
+      catch (IOException e) {
+        mV.alert("IOException:"+e.getMessage());
+        Log.e(U.TAG, "IOException:"+e.getMessage());
+      }
+      catch (U.DataException e) {
+        mV.alert("DataException:"+e.getMessage());
+        Log.e(U.TAG, "DataException:"+e.getMessage());
+      }
+      catch (U.FileException e) {
+        mV.alert("FileException:"+e.getMessage());
+        Log.e(U.TAG, "FileException:"+e.getMessage());
+      }
+    }
+
+    private class Viewer {
+      private TextView tvState, tvData, tvCount, tvCount2, tvPrevInterval, tvTime;
+      private Button bRefresh, bOn, bOnSegm, bOff, bSettings;
+      private TableLayout tlTable1;
+
+      public Viewer(View v) {
+        tvState = (TextView) v.findViewById(R.id.tvState);
+        tvData = (TextView) v.findViewById(R.id.tvData);
+        tvCount = (TextView) v.findViewById(R.id.tvCount);
+        tvCount2 = (TextView) v.findViewById(R.id.tvCount2);
+        tvPrevInterval = (TextView) v.findViewById(R.id.tvPrevInterval);
+        tvTime = (TextView) v.findViewById(R.id.tvTime);
+        bOn = (Button) v.findViewById(R.id.bOn);
+        bOnSegm = (Button) v.findViewById(R.id.bOnSegm);
+        bOff = (Button) v.findViewById(R.id.bOff);
+        tlTable1 = (TableLayout) v.findViewById(R.id.tlTable1);
+
+        tvState.setTextColor(U.MSG_COLOR);
+      }
+
+      @RequiresApi(api = Build.VERSION_CODES.M)
+      public void setListeners(final TrackPageFragment fragment, final TrackStorage ts) {
+
+        bOn.setOnClickListener(new View.OnClickListener() {
+          @Override
+          public void onClick(View v) { fragment.runAll(); }
+        });
+
+        bOnSegm.setOnClickListener(new View.OnClickListener() {
+          @Override
+          public void onClick(View v) {
+            ts.demandNewSegment();
+            fragment.runAll();
+          }
+        });
+
+        bOff.setOnClickListener(new View.OnClickListener() {
+          @Override
+          public void onClick(View v) { fragment.stopAll(); }
+        });
+      }
+
+      private void adjustVisibility(boolean isOn) {
+        if (isOn) {
+          tlTable1.setVisibility(View.VISIBLE);
+          bOff.setVisibility(View.VISIBLE);
+          bOn.setVisibility(View.GONE);
+          bOnSegm.setVisibility(View.GONE);
+        }
+        else {
+          tlTable1.setVisibility(View.GONE);
+          bOff.setVisibility(View.GONE);
+          bOn.setVisibility(View.VISIBLE);
+          bOnSegm.setVisibility(View.VISIBLE);
+        }
+      }
+
+      public void alert(String s) { tvState.setText(s); }
+
+      public void data(String s) { tvData.setText(s); }
+
+      public void displayStorageStat(U.Summary2 s) {
+        String r=String.format("%s:\n%d records, %d trackpoints in %d segments: \n%s",
+                  s.fileName, s.found-2, s.adopted, s.segments, s.segMap);
+        tvData.setText(r);
+      }
+
+      public void row(int fixCount, int pointCount, long prevUpdateIntervalS, long waitingS) {
+        tvCount.setText(Integer.toString(fixCount));
+        tvCount2.setText(Integer.toString(pointCount));
+        tvPrevInterval.setText(Long.toString(prevUpdateIntervalS));
+        tvTime.setText(Long.toString(waitingS));
+      }
+
+    }// end Viewer
+
   }// end MainPageFragment
 
   @Override
-  protected Fragment createFragment() { return new MainPageFragment(); }
+  protected androidx.fragment.app.Fragment createFragment() { return new TrackPageFragment(); }
 
 }

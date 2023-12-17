@@ -122,13 +122,31 @@ public class TrackStorage {
     simplySave(p);
   }
 
-  public U.Summary2 statStored() throws U.FileException, IOException, U.DataException {
+  public U.Summary2 statStored_() throws U.FileException, IOException, U.DataException {
     U.Summary2 res=visitStored(new Counter());
     U.Summary2 mil=visitStored(new Mileage());
     res.segMap=res.segMap+Point.NL+mil.segMap;
     U.Summary2 res2=visitStored(new Numerator());
     mLastId=Integer.valueOf(res2.segMap);
     if (U.DEBUG) Log.i(U.TAG, "found last ID:"+mLastId);
+    return res;
+  }
+
+  public U.Summary2 statStored() throws U.FileException, IOException, U.DataException {
+    U.Summary2 res=visitStored(new Counter());
+    if (res.adopted == 0) { // the track is empty
+      return res;
+    }
+    U.Summary2 mil=visitStored(new Mileage());
+    // repack segMaps
+    String[] counts = TextUtils.split(res.segMap," ");
+    String[] mils = TextUtils.split(mil.segMap," ");
+    int i=0;
+    String segMap="";
+    for (; i < counts.length-1; i+=1) {
+      segMap += String.format("#%d  %s  %s\n",i+1,counts[i],mils[i]);
+    }
+    res.segMap=segMap;
     return res;
   }
 
@@ -429,9 +447,9 @@ public class TrackStorage {
       if (!content.get("alt").isEmpty()) {
         ele = "<ele>" + content.get("alt") + "</ele>";
       }
-      if (!content.get("name").isEmpty()) {
-        cmt = "<cmt>" + content.get("name") + "</cmt>";
-      }
+      //if (!content.get("name").isEmpty()) {
+      //  cmt = "<cmt>" + content.get("name") + "</cmt>";
+      //}
 
       String entry = String.format(mTrkptTemplate, content.get("lat"), content.get("lon"),
               ele, time, cmt);

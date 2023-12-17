@@ -25,7 +25,6 @@ public class TrackListener implements LocationListener,CellDataReceiver {
   private Trackpoint mPrevTrackpoint=new Trackpoint("0","0");
   private Trackpoint mTp=new Trackpoint("0","0");
   private LocationManager mLocationManager=null;// same instance for startListening and stopListening !
-  //private CellInformer mCellInformer = Model.getInstance().getCellInformer();
   private CellInformer mCellInformer = new CellInformer();
   private MyRegistry mRg = MyRegistry.getInstance();
   private TrackStorage mTrackStorage=null;//=Model.getInstance().getTrackStorage(); causes loop
