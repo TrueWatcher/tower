@@ -19,6 +19,7 @@ public class TrackStorage {
   private MyRegistry mRg = MyRegistry.getInstance();
   private int mLastNl=0;
   private int mLastId=0;
+  private String[] mCachedLines =  null;
 
   public void demandNewSegment() {
     mShouldStartNewSegment = true;
@@ -147,6 +148,10 @@ public class TrackStorage {
       segMap += String.format("#%d  %s  %s\n",i+1,counts[i],mils[i]);
     }
     res.segMap=segMap;
+    U.Summary2 res2=visitStored(new Numerator());
+    mLastId=Integer.valueOf(res2.segMap);
+    if (U.DEBUG) Log.i(U.TAG, "found last ID:"+mLastId);
+    mCachedLines = null;
     return res;
   }
 
@@ -279,7 +284,8 @@ public class TrackStorage {
         mError += " Wrong id:" + foundId + " " + String.valueOf(lineNumber) + " ";
         return;
       }
-      if (foundIdInt <= mCurrentId) mError += " Non-order id:" + foundId + " " + String.valueOf(lineNumber) + " ";
+      if (foundIdInt <= mCurrentId) mError += " Non-order id:" + foundId + " (after " + mCurrentId + ") "
+              + " at line " + String.valueOf(lineNumber+1) + " ";
       mCurrentId = foundIdInt;
     }
 
@@ -291,12 +297,14 @@ public class TrackStorage {
   }
 
   public U.Summary2 visitStored(Visitor visitor) throws U.FileException, IOException, U.DataException {
-    if (null == U.fileExists(mTargetPath, mMyFileExt, "csv")) {
-      throw new U.FileException("Missing my good file");
+    if (mCachedLines == null || mCachedLines.length == 0) {
+      if (null == U.fileExists(mTargetPath, mMyFileExt, "csv")) {
+        throw new U.FileException("Missing my good file");
+      }
+      String buf = U.fileGetContents(mTargetPath, mMyFileExt);
+      mCachedLines = splitCsv(buf);
     }
-    String buf = U.fileGetContents(mTargetPath, mMyFileExt);
-    String[] lines = splitCsv(buf);
-    int l = lines.length;
+    int l = mCachedLines.length;
     if (l < 2) throw new U.DataException("Wrong content");
     int i = 1;
     int j = 0;
@@ -305,16 +313,16 @@ public class TrackStorage {
     visitor.onInit();
 
     for (i = 1; i < l; i += 1) {
-      p = (new Trackpoint()).fromCsv(lines[i]);
+      p = (new Trackpoint()).fromCsv(mCachedLines[i]);
       if (null == p || !p.getType().equals("T")) continue;
       if (p.isNewSegment()) {
         j += 1;
-        visitor.onNewsegment(i,j,p,lines);
+        visitor.onNewsegment(i,j,p,mCachedLines);
       }
       found += 1;
-      visitor.onNewtrackpoint(i,j,p,lines);
+      visitor.onNewtrackpoint(i,j,p,mCachedLines);
     }
-    visitor.onEnd(i,j,p,lines);
+    visitor.onEnd(i,j,p,mCachedLines);
     String map = visitor.presentResult();
     return new U.Summary2("storage", l, found, mMyFileExt, j, map, 0);
   }
@@ -357,6 +365,36 @@ public class TrackStorage {
     buf = buf.trim().concat(Point.NL);
     U.filePutContents(mTargetPath, mMyFileExt, buf, false);
     mShouldStartNewSegment = true;
+  }
+
+  public int renumber() throws U.FileException, U.DataException, IOException {
+    int i = 0, count = 0;
+    String[] fields;
+    if (null == U.fileExists(mTargetPath, mMyFileExt, "csv")) {
+      throw new U.FileException("Missing my good file");
+    }
+    String buf = U.fileGetContents(mTargetPath, mMyFileExt);
+    String[] lines = splitCsv(buf);
+    int l = lines.length;
+    int idColumn = Trackpoint.FIELDS.indexOf("id");
+    int typeColumn = Trackpoint.FIELDS.indexOf("type");
+    if (idColumn < 0 || typeColumn < 0)
+      throw new U.RunException("Something is wrong with csv headers");
+
+    for (i = 1; i < l; i += 1) {
+      if (lines[i].isEmpty()) continue;
+      fields = TextUtils.split(lines[i], Point.SEP);
+      if (fields[typeColumn].equals("T")) {
+        count += 1;
+        fields[idColumn] = String.valueOf(count);
+      }
+      else { fields[idColumn] = ""; }
+      lines[i] = TextUtils.join(Point.SEP, fields);;
+    }
+    buf = TextUtils.join(Point.NL, lines);
+    buf = buf.trim().concat(Point.NL);
+    U.filePutContents(mTargetPath, mMyFileExt, buf, false);
+    return count;
   }
 
   public U.Summary trackCsv2Gpx(String targetFileExt) throws U.FileException, U.DataException, IOException {

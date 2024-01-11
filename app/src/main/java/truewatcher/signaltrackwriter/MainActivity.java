@@ -52,6 +52,10 @@ public class MainActivity extends SingleFragmentActivity {
         exportGpx();
         return true;
       }
+      if (id == R.id.action_renumber) {
+        renumber();
+        return true;
+      }
       if (id == R.id.action_settings) {
         Intent si=new Intent(getActivity(),SettingsActivity.class);
         startActivity(si);
@@ -287,26 +291,6 @@ public class MainActivity extends SingleFragmentActivity {
       }
     }
 
-    /*private boolean tryFitTrackToMap() {
-      if ( ! mJSbridge.importViewCurrentTrack() &&
-              mJSbridge.importViewTrackLatLonJson().length() < 3) {
-        mV.alert("Current track turned off in Settings");
-        return false;
-      }
-      if (mJSbridge.importCurrentTrackLatLonJson().length() < 3 &&
-              mJSbridge.importViewTrackLatLonJson().length() < 3) {
-        mV.alert("No trackpoints found");
-        return false;
-      }
-      mJSbridge.setBounded("t");// t for currentTrack abd viewTrack, ct for currentTrack only
-      mJSbridge.setDirty(2);
-      if (mJSbridge.hasNoCenter()) {
-        mJSbridge.exportCenterLatLon("45","45");
-        mJSbridge.setDirty(3);
-      }
-      return true;
-    }*/
-
     private class DataWatcher implements Runnable {
       private Handler mWatchHandler=new Handler();
       private int mWatchIntervalMS=2000;
@@ -335,6 +319,31 @@ public class MainActivity extends SingleFragmentActivity {
         U.Summary res=mTrackStorage.trackCsv2Gpx(name);
         String info=String.format("%s %d points (of %d, %d segment) to %s",
                 res.act, res.adopted, res.found, res.segments, res.fileName);
+        mV.alert("IDLE");
+        mV.data(info);
+      }
+      catch (IOException e) {
+        mV.alert("IOException:"+e.getMessage());
+        Log.e(U.TAG, "IOException:"+e.getMessage());
+      }
+      catch (U.DataException e) {
+        mV.alert("DataException:"+e.getMessage());
+        Log.e(U.TAG, "DataException:"+e.getMessage());
+      }
+      catch (U.FileException e) {
+        mV.alert("FileException:"+e.getMessage());
+        Log.e(U.TAG, "FileException:"+e.getMessage());
+      }
+    }
+
+    private void renumber() {
+      if (mTrackListener.isOn()) {
+        mV.alert("Stop recording first");
+        return;
+      }
+      try {
+        int maxTrackpointNumber=mTrackStorage.renumber();
+        String info=String.format("renumbered trackpoints up to %s",maxTrackpointNumber);
         mV.alert("IDLE");
         mV.data(info);
       }
