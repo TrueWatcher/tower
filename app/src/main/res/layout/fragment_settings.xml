@@ -62,6 +62,17 @@
         android:layout_height="wrap_content"
         android:checked="false" />
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/cellFilter" />
+
+    <EditText
+        android:id="@+id/cellFilter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="numberSigned" />
+
   </LinearLayout>
 
 </ScrollView>

@@ -5,6 +5,13 @@
     tools:context="truewatcher.tower.MainActivity" >
 
   <item
+      android:id="@+id/action_cells"
+      android:orderInCategory="1"
+      app:showAsAction="ifRoom"
+      android:title="@string/action_cells"
+      />
+
+  <item
       android:id="@+id/action_delete_last_segment"
       android:orderInCategory="1"
       app:showAsAction="never"

@@ -18,7 +18,7 @@ public class SettingsActivity extends SingleFragmentActivity {
   public static class SettingsPageFragment extends Fragment {
 
     private MyRegistry mRg=MyRegistry.getInstance();
-    private EditText etGpsMinDistance, etGpsMinDelay;
+    private EditText etGpsMinDistance, etGpsMinDelay, etCellFilter;
     private CheckBox cbTrackShoudWrite, cbUseTowerFolder;
     private TextView tvWorkingFileFull;
 
@@ -36,12 +36,14 @@ public class SettingsActivity extends SingleFragmentActivity {
       cbTrackShoudWrite = (CheckBox) v.findViewById(R.id.cbTrackShoudWrite);
       cbUseTowerFolder = (CheckBox) v.findViewById(R.id.cbUseTowerFolder);
       tvWorkingFileFull = (TextView) v.findViewById(R.id.tvWorkingFileFull);
+      etCellFilter = (EditText) v.findViewById(R.id.cellFilter);
       //if (null == etGpsMinDistance) Log.e(U.TAG,"null!!!");
       setupEditText(etGpsMinDistance, "gpsMinDistance");
       setupEditText(etGpsMinDelay, "gpsMinDelayS");
       setupCheckBox(cbTrackShoudWrite, "trackShouldWrite");
       setupCheckBox(cbUseTowerFolder, "useTowerFolder");
       tvWorkingFileFull.setText(Model.getInstance().getTrackStorage().getWorkingFileFull());
+      setupEditText(etCellFilter, "cellFilter");
       return v;
     }
 

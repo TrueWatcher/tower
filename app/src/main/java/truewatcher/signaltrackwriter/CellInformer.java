@@ -29,14 +29,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 interface CellDataReceiver {
-  public void onCellDataObtained(JSONObject cellData);
+  public void onCellDataObtained(List<JSONObject> cellData);
 }
 
 public class CellInformer {
   private FragmentActivity mActivity;
   private String mStatus = "not run";
   private CellDataReceiver mCallback;
+  private long mCallbackFilter = TOP;
   private int mIsCallback = -1;
+
+  public static final long TOP = 0;
+  public static final long ALL = -1;
 
   public void bindActivity(FragmentActivity a) { mActivity = a; }
 
@@ -79,23 +83,40 @@ public class CellInformer {
   }
 
   @RequiresApi(api = Build.VERSION_CODES.Q)
+  public void requestCellInfos(CellDataReceiver aCallback, long aFilter) {
+    mCallbackFilter = aFilter;
+    requestCellInfos(aCallback);
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.Q)
   private void onCellInfosObtained(List<CellInfo> cellInfos) {
     JSONObject cellData = new JSONObject();
+    List<JSONObject> cellDataList = new ArrayList<>();
     if (null == cellInfos || cellInfos.size() == 0) {
       if (U.DEBUG) Log.d(U.TAG, "got null cell info");
       //cellData=getMockParams();
       //mStatus="mocking";
       cellData = getNoService();
       mStatus = "noService";
+      cellDataList.add(cellData);
     }
     else {
       int cellCount = cellInfos.size();
       if (U.DEBUG) Log.d(U.TAG, "got " + cellCount + " cell infos");
       if (U.DEBUG) Log.d(U.TAG, "0th cellInfo is registered:" + cellInfos.get(0).isRegistered() +
               ", cellInfos registered:" + countRegisteres(cellInfos));
-      cellData = getMyCellParams(cellInfos.get(0));
+      if (mCallbackFilter == ALL) {
+        for (int i = 0; i < cellCount; i+=1) {
+          cellData = getMyCellParams(cellInfos.get(i));
+          cellDataList.add(cellData);
+        }
+      }
+      else {
+        cellData = getMyCellParams(cellInfos.get(0));
+        cellDataList.add(cellData);
+      }
     }
-    mCallback.onCellDataObtained(cellData);
+    mCallback.onCellDataObtained(cellDataList);
   }
 
 

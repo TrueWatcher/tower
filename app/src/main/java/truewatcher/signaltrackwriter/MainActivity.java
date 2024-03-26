@@ -44,6 +44,11 @@ public class MainActivity extends SingleFragmentActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
       int id = item.getItemId();
+      if (id == R.id.action_cells) {
+        Intent si=new Intent(getActivity(),CellsActivity.class);
+        startActivity(si);
+        return true;
+      }
       if (id == R.id.action_delete_last_segment) {
         deleteLastSegment();
         return true;

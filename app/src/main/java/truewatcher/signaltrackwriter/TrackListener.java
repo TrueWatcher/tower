@@ -9,6 +9,9 @@ import android.os.Bundle;
 import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.List;
+
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.FragmentActivity;
 
@@ -97,6 +100,10 @@ public class TrackListener implements LocationListener,CellDataReceiver {
     mTp = new Trackpoint(loc);
     mCellInformer.bindActivity((FragmentActivity) mActivity);
     mCellInformer.requestCellInfos(this);
+  }
+
+  public void onCellDataObtained(List<JSONObject> cellData) {
+    onCellDataObtained(cellData.get(0));
   }
 
   public void onCellDataObtained(JSONObject cellData) {
