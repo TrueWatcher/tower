@@ -1,6 +1,7 @@
 package truewatcher.signaltrackwriter;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
@@ -11,7 +12,11 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -32,11 +37,40 @@ public class CellsActivity extends SingleFragmentActivity {
     private MyRegistry mRg=MyRegistry.getInstance();
     private CellsActivity.CellsPageFragment.Viewer mV;
     private CellsActivity.CellsPageFragment.CellsWatcher mCellsWatcher=new CellsActivity.CellsPageFragment.CellsWatcher();
+    private boolean mIsOn = true;
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+      inflater.inflate(R.menu.fragment_cells, menu);
+      super.onCreateOptionsMenu(menu,inflater);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+      int id = item.getItemId();
+      if (id == R.id.action_back) {
+        stopAll();
+        getActivity().finish();
+        return true;
+      }
+      if (id == R.id.action_pause) {
+        togglePause();
+        return true;
+      }
+      if (id == R.id.action_settings) {
+        Intent si=new Intent(getActivity(),SettingsActivity.class);
+        startActivity(si);
+        return true;
+      }
+      return super.onOptionsItemSelected(item);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
       if (U.DEBUG) Log.d(U.TAG, "cellsFragment:onCreate");
+      setHasOptionsMenu(true);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -112,6 +146,19 @@ public class CellsActivity extends SingleFragmentActivity {
       mCellsWatcher.stop();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private void togglePause() {
+      if (mIsOn) {
+        stopAll();
+        mV.alert("PAUSED");
+        mIsOn = false;
+      }
+      else {
+        runAll();
+        mIsOn = true;
+      }
+    }
+
     private class CellsWatcher implements Runnable,CellDataReceiver {
       private Handler mWatchHandler = new Handler();
       private int mWatchIntervalMS = 5000;
@@ -121,6 +168,7 @@ public class CellsActivity extends SingleFragmentActivity {
       @RequiresApi(api = Build.VERSION_CODES.Q)
       @Override
       public void run() {
+        mWatchIntervalMS = mRg.getInt("cellsRefreshS") * 1000;
         mRunTime += mWatchIntervalMS/1000;
         mV.alert(String.valueOf(mRunTime));
         mCellInformer.bindActivity((FragmentActivity) getActivity());
@@ -146,6 +194,7 @@ public class CellsActivity extends SingleFragmentActivity {
       JSONArray mFa = new JSONArray();
       String mHeadline = "";
 
+      @RequiresApi(api = Build.VERSION_CODES.N)
       public Viewer(View v) {
         tvState = (TextView) v.findViewById(R.id.tvState);
         tvData = (TextView) v.findViewById(R.id.tvData);
@@ -164,6 +213,9 @@ public class CellsActivity extends SingleFragmentActivity {
           }
           mHeadline += s + " \t";
         }
+        float textSize = tvState.getTextSize(); // gives px
+        // https://stackoverflow.com/questions/3687065/textview-settextsize-behaves-abnormally-how-to-set-text-size-of-textview-dynam
+        tvData.setTextSize( TypedValue.COMPLEX_UNIT_PX,textSize * 1.25f);
       }
 
       public void alert(String s) {
@@ -189,21 +241,10 @@ public class CellsActivity extends SingleFragmentActivity {
           cellData = cellDataList.get(i);
           s = cell(cellData);
           ss = new SpannableString(s);
-          if (isFiltered(cellData)) ss = setColor(s, Color.MAGENTA);
+          if (CellInformer.isWatched(cellData)) ss = setColor(ss, Color.MAGENTA);
           b.append(ss);
         }
         sData(b);
-      }
-
-      private boolean isFiltered(JSONObject cellData) {
-        int cellFilter = mRg.getInt("cellFilter");
-        if (cellFilter <= 0) return false;
-        try {
-          if (cellData.getInt("PCI") == cellFilter) return true;
-          if (cellData.getInt("CID") == cellFilter) return true;
-        }
-        catch (JSONException e) {}
-        return false;
       }
 
       private String cell(JSONObject cellData) {
@@ -215,9 +256,9 @@ public class CellsActivity extends SingleFragmentActivity {
             f = mFa.getString(i);
             s = cellData.getString(f);
           }
-          catch (JSONException e) { s = "*"; }
-          if (s.equals("2147483647")) s="NA";
-          if (s.equals("268435455")) s="NA";
+          catch (JSONException e) { s = "-"; }
+          if (s.equals("2147483647")) s="--";
+          if (s.equals("268435455")) s="--";
           b.append(s);
           b.append(" \t");
         }
@@ -226,8 +267,14 @@ public class CellsActivity extends SingleFragmentActivity {
 
       private SpannableString setColor(String s, int color) {
         SpannableString r = new SpannableString(s);
-        r.setSpan(new ForegroundColorSpan(color), 0, s.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        r.setSpan(new ForegroundColorSpan(color), 0, s.length()-1,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         return r;
+      }
+      private SpannableString setColor(SpannableString ss, int color) {
+        ss.setSpan(new ForegroundColorSpan(color), 0, ss.length()-1,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return ss;
       }
     }// end Viewer
 

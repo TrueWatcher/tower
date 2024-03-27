@@ -37,10 +37,9 @@ public class CellInformer {
   private String mStatus = "not run";
   private CellDataReceiver mCallback;
   private long mCallbackFilter = TOP;
-  private int mIsCallback = -1;
-
   public static final long TOP = 0;
   public static final long ALL = -1;
+  private int mIsCallback = -1;
 
   public void bindActivity(FragmentActivity a) { mActivity = a; }
 
@@ -262,6 +261,18 @@ public class CellInformer {
       return err;
     }
   }
+
+  public static boolean isWatched(JSONObject cellData) {
+    int cellFilter = MyRegistry.getInstance().getInt("cellFilter");
+    if (cellFilter <= 0) return false;
+    try {
+      if (cellData.getInt("PCI") == cellFilter) return true;
+      if (cellData.getInt("CID") == cellFilter) return true;
+    }
+    catch (JSONException e) {}
+    return false;
+  }
+
   private JSONObject getNoService() {
     JSONObject data=new JSONObject();
     try {

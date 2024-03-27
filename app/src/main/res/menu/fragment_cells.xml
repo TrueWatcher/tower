@@ -1,0 +1,28 @@
+<?xml version ="1.0" encoding ="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="truewatcher.signaltrackwriter.CellsActivity" >
+
+    <item
+        android:id="@+id/action_back"
+        android:orderInCategory="1"
+        app:showAsAction="always"
+        android:title="@string/action_back"
+        />
+
+    <item
+        android:id="@+id/action_pause"
+        android:orderInCategory="2"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_pause"
+        />
+
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_settings"
+        />
+
+</menu>
