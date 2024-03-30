@@ -12,7 +12,6 @@ wm.fb.MyJSbridge=function(aProvider) {
       viewTrackNamesJson="[]",
       currentTrackJson='[]',
       signalTrack={ trkPoints:"[]", colors:"[]", breaks:"[]" },
-      zColorFn = wm.utils.linearRGB2,
       loadedFiles=[],
       usedParsers={},
       provider=aProvider,
@@ -65,14 +64,14 @@ wm.fb.MyJSbridge=function(aProvider) {
   this.pushViewTrackName=function(name) {
     viewTrackNamesJson=wm.utils.joinJsonArrays( viewTrackNamesJson, "[\"".concat(name).concat("\"]") );
   };
-  this.importViewTrackNamesJson=function() { return viewTrackNamesJson; }
-  this.setViewTrackNamesJson=function(json) { viewTrackNamesJson=json; }
+  this.importViewTrackNamesJson=function() { return viewTrackNamesJson; };
+  this.setViewTrackNamesJson=function(json) { viewTrackNamesJson=json; };
 
   this.importCurrentTrackLatLonJson=function() { return currentTrackJson; };
   this.replaceCurrentTrackLatLonJson=function(json) { currentTrackJson=json; };
 
-  this.importViewCurrentTrack=function() { return false; }
-  this.importFollowCurrentTrack=function() { return false; }
+  this.importViewCurrentTrack=function() { return false; };
+  this.importFollowCurrentTrack=function() { return false; };
 
   this.importSignalTrackLatLonJson=function() { return signalTrack.trkPoints; };// segments are allowed
   // colors and breaks must be 1D arrays

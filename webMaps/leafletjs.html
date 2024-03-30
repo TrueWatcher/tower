@@ -165,7 +165,7 @@
     //alert(radius);
     var params={ color: color, fillColor: color, fillOpacity: 0.3, radius: radius };
     var circle = L.circleMarker(center, params).addTo(oMap);
-    if (text) circle.bindTooltip(text, {permanent: true, offset: [-5, 0]} ); direction: 'right'
+    if (text) circle.bindTooltip(text, {permanent: true, offset: [-5, 0]} ); //direction: 'right'
     return circle;
   }
 
@@ -314,7 +314,7 @@
       return;
     }
     //console.log("tr0:"+track[0]);
-    var breaks = Array.from({length: track.length}, ()=>"");
+    var breaks = Array.from({length: track.length}, function() { return ""; });
     if (JSbridge.hasOwnProperty("importSignalTrackBreaks")) {
       breaks=JSbridge.importSignalTrackBreaks();
       breaks=JSON.parse(breaks);
@@ -328,7 +328,7 @@
   }
 
   wm.utils.findJSbridge(ind,"opentopo map");
-  wm.utils.adjustScreen();
+  wm.utils.adjustScreen(scrInfo);
   initmap();
   addEvents();
   visBtn=new LayerToggler(document.getElementById("visBtn"));

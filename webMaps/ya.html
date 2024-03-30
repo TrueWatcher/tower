@@ -252,7 +252,7 @@
   function drawMarkers(map) { wm.utils.putMarkers(map, ind, JSbridge.getMarkers(), addMark); }
 
   wm.utils.findJSbridge(ind,"yandex hyb");
-  wm.utils.adjustScreen();
+  wm.utils.adjustScreen(scrInfo);
   loadApiScripts(yainit);
   addEvents();
   if (typeof JSbridge.setupEventThrower == "function") JSbridge.setupEventThrower();

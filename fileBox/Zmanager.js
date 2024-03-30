@@ -106,7 +106,7 @@ wm.fb.Zmanager=function() {
 
   function normalize(x, bounds) {
     var low=-120, high=-50, y;
-    if (bounds && bounds?.high && bounds?.low) {
+    if (bounds && bounds.hasOwnProperty(high) && bounds.hasOwnProperty(low)) {
       low = bounds.low; high = bounds.high;
     }
     x = parseInt(x);
@@ -176,4 +176,4 @@ wm.fb.Zmanager=function() {
     return colors[ n % count ];
   }
 
-}
+};

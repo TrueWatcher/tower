@@ -5,7 +5,6 @@ wm.fb.Controller=function(view) {
   var _this=this,
       dataForMap=new wm.fb.MyJSbridge("wallpaper"),
       dataForMapBak=false,
-      mapFrame=window.frames[0],
       fileIndex=0,
       zManager=false,
       dataFile, files;

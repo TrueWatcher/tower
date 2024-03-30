@@ -148,7 +148,7 @@ wm.utils.MockJSbridge=function(provider,ind) {
       _this.moveLatLon();
       (function() { window.dispatchEvent(onTrackreloadEvent); }) ();// onDatareloadEvent onTrackreloadEvent
       return false;
-    }
+    };
   };
 };
 
@@ -186,7 +186,7 @@ wm.utils.LimitFinder=function() {
     //console.log(wm.utils.dumpArray(limits));
     //console.log(JSON.stringify(limits));
     return limits;
-  }
+  };
 
   function findTrackLimits(trackJson) {
     var ntr=0;
@@ -229,7 +229,8 @@ wm.utils.LimitFinder=function() {
       l=markersArr.length;
     }
     catch (e) {
-      ind.fail("Unparsable markersJson");
+      //alert("Unparsable markersJson");
+      throw new Error("Unparsable markersJson");
     }
     for (i=0; i < l; i+=1) {
       //console.log(wm.utils.dumpArray(markersArr[i]));
@@ -285,7 +286,7 @@ wm.utils.Limits=function() {
 };
 
 wm.utils.dumpArray=function(x) {
-  var res="",i,expanded;
+  var res="",i;
   if (typeof x == "object") {
     res+="{ ";
     for (i in x) {
@@ -314,7 +315,7 @@ wm.utils.joinJsonArrays=function(a1, a2) {
 wm.utils.pushJsonArray=function(a1, a2) {
   var empty="[]";
   var l1=a1.length;
-  var l2=a2.length;
+  //var l2=a2.length;
   if ( ! (a1.startsWith("[") && a1.endsWith("]")) ) throw new Error("Wrong A1="+a1);
   if ( ! (a2.startsWith("[") && a2.endsWith("]")) ) throw new Error("Wrong A2="+a2);
   if (a2.indexOf(",") < 0) return a1;
@@ -338,7 +339,7 @@ wm.utils.findJSbridge=function (ind, mockMapType) {
   }
 };
 
-wm.utils.adjustScreen=function() {
+wm.utils.adjustScreen=function(scrInfo) {
   //alert(scrInfo.width+"/"+scrInfo.height);
   var mapDiv=document.getElementById("mapDiv");
   var dWidthEm=0, dHeightEm=0;
@@ -441,4 +442,4 @@ wm.utils.total=function(arr) {
     return t;
   }
   return arr.length;
-}
+};

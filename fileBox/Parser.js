@@ -102,7 +102,7 @@ wm.fb.Parser=function() {
   // @returns [ [lat,lon], ... ]
   function parseTrkPointGroup(points) {
     var pt,trkpt,arr=[],lat,lon,
-        pCount=points.length;;
+        pCount=points.length;
     for (pt=0; pt < pCount; pt+=1) {
       trkpt=points[pt];
       lat=trkpt.getAttribute("lat");
@@ -195,7 +195,7 @@ wm.fb.Parser=function() {
     }
 
     for (i=1; i<lines.length; i+=1) {
-      parts=cutCsvLine(lines[i]);
+      parts=cutCsvLine(lines[i], i);
       if ( ! parts) continue;
       //console.log(wm.utils.dumpArray(parts));
       lat=parts[header.LAT];
@@ -247,7 +247,7 @@ wm.fb.Parser=function() {
     }
   }
 
-  function cutCsvLine(line) {
+  function cutCsvLine(line, i=0) {
     line=line.trim();
     if ( ! line) return false;
     var parts=line.split(csv.SEP);
@@ -291,7 +291,7 @@ wm.fb.Parser=function() {
     //alert("length="+lines.length);
     for (i=1 ;i < lines.length; i+=1) {
       //alert("i="+i);
-      parts=cutCsvLine(lines[i]);
+      parts=cutCsvLine(lines[i], i);
       if ( ! parts || ! parts.length) {
         //console.log("Empty PARTS at "+i);
         continue;
@@ -304,7 +304,7 @@ wm.fb.Parser=function() {
     if (foundI < 0) {
       throw new Error("No valid coords");
     }
-    return [ cutCsvLine(lines[foundI]), minDistance ];
+    return [ cutCsvLine(lines[foundI], foundI), minDistance ];
   }
 
   function squareDistance(lat0,lon0,lat1,lon1) {

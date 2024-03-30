@@ -36,7 +36,7 @@ wm.fb.View=function() {
   this.setHandlers2=function(showDataForCenter, updateSignalTrackColors) {
     getDataBtn.onclick=showDataForCenter;
     zscaleSelect.onchange=updateSignalTrackColors;
-  }
+  };
 
   this.loadUri=function(uri) {
     wmIframe.src=uri;
@@ -68,7 +68,8 @@ wm.fb.View=function() {
     if ( ! (dataForMap instanceof wm.fb.MyJSbridge)) throw new Error("Rendering from non-JSbridge");
     var provider=dataForMap.importMapType();
     var mapFrame=window.frames[0];
-    switch ( dataForMap.getDirty() ) {
+    var dirty=dataForMap.getDirty();
+    switch (dirty) {
     case 0:
       console.log("doing nothing");
       break;
@@ -133,6 +134,6 @@ wm.fb.View=function() {
     for (k of resKeys) { res = res.concat(""+k+": "+uniPoint[k]+"\n"); }
     //for (k in uniPoint) { res = res.concat(""+k+": "+uniPoint[k]+"\n"); }
     return res;
-  }
+  };
 
 }; // end View
