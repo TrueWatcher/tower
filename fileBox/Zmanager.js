@@ -5,6 +5,7 @@ wm.fb.Zmanager=function() {
   var _this = this,
       defaultParams = { dataField: "dBm", scale: "auto", low: -120, high: -85, lowYetReal:-150, colorScheme: 'orange', cellField: 'CID' },// scale: "static"
       params = Object.assign({}, defaultParams),
+      makeColorFn = makeSignalColor,
       colorSchemes = { orange: wm.utils.linearRGB2, redTrans: wm.utils.linearTranslucent, poly7: poly7 },
       cellList = [ 0 ];
 
@@ -45,7 +46,7 @@ wm.fb.Zmanager=function() {
     var failSafe = { low: defaultParams.low, high: defaultParams.high };
     if (params.scale == "static" || params.scale == "cell" ) return statiic;
     for (i=0; i<extras.length; i+=1) {
-      signal = getSignalValue(extras[i][0]);
+      signal = getFieldValue(extras[i][0], params.dataField);
       if (signal === false) continue;
       if (signal < params.lowYetReal) continue; // allows -999 instead of false
       if (signal < low) low = signal;
@@ -62,30 +63,28 @@ wm.fb.Zmanager=function() {
   function makeColors(extras, bounds) {
     var i, colors = [];
     for (i=0; i<extras.length; i+=1) {
-      if (params.scale == "cell") { colors.push( makeCellColor(extras[i][1]) ); }
-      else { colors.push( makeSignalColor(extras[i][0], bounds) ); }
+      colors.push( makeColorFn (extras[i], bounds) );
     }
     return colors;
   }
 
-  function makeSignalColor(dataField, bounds) {
-    var asInt = getSignalValue(dataField, params.dataField);
-    var as01 = normalize(asInt, bounds);
+  function makeSignalColor(extra, bounds) {
+    var signalAsInt = getFieldValue(extra[0], params.dataField);
+    var as01 = normalize(signalAsInt, bounds);
     var asRgb = colorSchemes[params.colorScheme] (as01);
     return asRgb;
   }
 
-  function makeCellColor(cellField) {
-    var asInt = getSignalValue(cellField, params.cellField);
-    var asIndex = indexCells(asInt);
-    console.log("Cells by "+params.cellField+":"+asInt+" ("+cellList.length+")");
+  function makeCellColor(extra) {
+    var cellAsInt = getFieldValue(extra[1], params.cellField);
+    var asIndex = indexCells(cellAsInt);
     var asRgb = poly7(asIndex);
     return asRgb;
   }
 
-  function getSignalValue(dataField, targetFieldName) {
+  function getFieldValue(dataField, targetFieldName) {
     var asInt, asJson;
-    if (! targetFieldName) targetFieldName = params.dataField;
+    if (! targetFieldName) throw new Error("Empty targetFieldName");
     asJson = JSON.parse(dataField);
     //alert(typeof asJson);
     if (! (typeof asJson == "object")) {
@@ -120,11 +119,11 @@ wm.fb.Zmanager=function() {
   }
 
   function indexCells(id) {
-    var found;
     if (! id) return false;
-    found = cellList.indexOf(id);
+    var found = cellList.indexOf(id);
     if (found >= 0) return found;
     cellList.push(id);
+    console.log("Cells by "+params.cellField+": "+id+" ("+cellList.length+")");
     return cellList.indexOf(id);
   }
 
@@ -134,6 +133,7 @@ wm.fb.Zmanager=function() {
     var parts = optStr.split(' ');
     if (parts[0] == "auto") {
       params.scale = "auto";
+      makeColorFn = makeSignalColor;
       return;
     }
     else if (parts[0] == "static") {
@@ -144,10 +144,12 @@ wm.fb.Zmanager=function() {
       params.scale = "static";
       params.low = low;
       params.high = high;
+      makeColorFn = makeSignalColor;
     }
     else if (parts[0] == "cell") {
       params.scale = "cell";
       params.cellField = parts[1];
+      makeColorFn = makeCellColor;
       resetCellList();
     }
     else throw new Error("Wrong SCALE");
