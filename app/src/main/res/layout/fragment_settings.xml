@@ -40,7 +40,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <TextView
+    <!--<TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/trackShouldWrite" />
@@ -49,9 +49,20 @@
         android:id="@+id/cbTrackShoudWrite"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:checked="true" />
+        android:checked="true" />-->
 
     <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/useMediaFolder" />
+
+    <CheckBox
+        android:id="@+id/cbUseMediaFolder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true" />
+
+    <!--<TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/useTowerFolder" />
@@ -60,7 +71,7 @@
         android:id="@+id/cbUseTowerFolder"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:checked="false" />
+        android:checked="false" />-->
 
     <TextView
         android:layout_width="match_parent"

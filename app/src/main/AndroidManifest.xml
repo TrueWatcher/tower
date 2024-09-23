@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.signaltrackwriter"
-    android:versionCode="27"
-    android:versionName="2.4.1" >
+    android:versionCode="28"
+    android:versionName="2.5.0" >
   <!--
   trackwriter
   1.4.0 5 18.02.2020 added saving to the truewatcher.tower folder
@@ -19,6 +19,7 @@
   2.3.0  25 11.01.2024 bugfix, added Renumber
   2.4.0  26 26.03.2024 added CELLS page and CellsActivity
   2.4.1  27 27.03.2024 improvements
+  2.5.0  28 23.09.2024 save to Android/media
   -->
 
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />

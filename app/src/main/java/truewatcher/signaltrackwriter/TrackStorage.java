@@ -1,6 +1,7 @@
 package truewatcher.signaltrackwriter;
 
 import android.content.Context;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -32,7 +33,13 @@ public class TrackStorage {
   public void initTargetDir(Context context) throws IOException, U.FileException {
     String nativeFolder = context.getExternalFilesDir(null).getPath();
     mTargetPath = nativeFolder;
-    if (mRg.getBool("useTowerFolder")) {
+    if (mRg.getBool("useMediaFolder")) {
+      String appMediaFolder = getMediaDir(context);
+      Log.i(U.TAG, "appMediaFolder=" + appMediaFolder);
+      if (appMediaFolder.isEmpty()) throw new U.FileException("Cannot find the app's media folder");
+      mTargetPath = appMediaFolder;
+    }
+    else if (mRg.getBool("useTowerFolder")) {
       String towerFolder = getTowerDir(nativeFolder);
       if (towerFolder.isEmpty()) throw new U.FileException("Cannot find truewatcher.tower");
       mTargetPath = towerFolder;
@@ -47,6 +54,19 @@ public class TrackStorage {
       U.filePutContents(mTargetPath, mMyFileExt, headerNl, false);
       demandNewSegment();
     }
+  }
+
+  private String getMediaDir(Context context) {
+    // context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) gives a subfolder of Android/data
+    //https://stackoverflow.com/questions/69658332/how-to-create-folder-inside-android-media-in-android-11
+    File[] dirs = new File[0];
+    dirs = context.getExternalMediaDirs();
+    for (int i = 0; i<dirs.length; i+=1){
+      if (dirs[i].getName().contains(context.getPackageName())) {
+        return dirs[i].getAbsolutePath();
+      }
+    }
+    return "";
   }
 
   private int detectLastId() throws U.FileException, IOException, U.DataException {
@@ -65,7 +85,8 @@ public class TrackStorage {
 
   public String getWorkingFileFull() {
     if (null == mTargetPath) return mMyFileExt;
-    return mTargetPath + mMyFileExt;
+    if ( ! mTargetPath.endsWith("/")) mTargetPath = mTargetPath.concat("/");
+    return mTargetPath.concat(mMyFileExt);
   }
 
   public void simplySave(Trackpoint p) {

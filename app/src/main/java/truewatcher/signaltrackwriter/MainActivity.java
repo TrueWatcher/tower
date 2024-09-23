@@ -116,7 +116,9 @@ public class MainActivity extends SingleFragmentActivity {
     public void onResume() {
       super.onResume();
       if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume");
-      if (mRg.getBool("useTowerFolder") && ! checkStoragePermission()) {
+      Boolean needsPermission = mRg.getBool("useTowerFolder") ||
+          ( mRg.getBool("useMediaFolder") && ( Build.VERSION.SDK_INT < 30 ));
+      if (needsPermission && ! checkStoragePermission()) {
         mV.alert("No storage permission, asking user");
         askStoragePermission();
         return;
