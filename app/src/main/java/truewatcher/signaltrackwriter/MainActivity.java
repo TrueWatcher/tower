@@ -1,13 +1,16 @@
 package truewatcher.signaltrackwriter;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.storage.StorageManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,8 +23,11 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
+import androidx.documentfile.provider.DocumentFile;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
 
 public class MainActivity extends SingleFragmentActivity {
 
@@ -33,7 +39,8 @@ public class MainActivity extends SingleFragmentActivity {
     private TrackListener mTrackListener=Model.getInstance().getTrackListener();
     private TrackPageFragment.Viewer mV;
     private DataWatcher mDataWatcher=new DataWatcher();
-    //private JSbridge mJSbridge=Model.getInstance().getJSbridge();
+    private final int REQUEST_ACTION_OPEN_DOCUMENT_TREE = 100;
+    private String mMyFolderUri = null;
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -69,30 +76,6 @@ public class MainActivity extends SingleFragmentActivity {
       return super.onOptionsItemSelected(item);
     }
 
-    /*@Override
-    public boolean onOptionsItemSelected_(MenuItem item) {
-      int id = item.getItemId();
-      if (id == R.id.action_back) {
-        getActivity().finish();
-        return true;
-      }
-      if (id == R.id.action_fit_to_map) {
-        if (tryFitTrackToMap()) getActivity().finish();// show map
-        return true;
-      }
-      if (id == R.id.action_delete_last_segment) {
-        deleteLastSegment();
-        mJSbridge.setDirty(1);
-        return true;
-      }
-      if (id == R.id.action_settings) {
-        Intent si=new Intent(getActivity(),PreferencesActivity.class);
-        startActivity(si);
-        return true;
-      }
-      return super.onOptionsItemSelected(item);
-    }*/
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
@@ -116,13 +99,22 @@ public class MainActivity extends SingleFragmentActivity {
     public void onResume() {
       super.onResume();
       if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume");
-      Boolean needsPermission = mRg.getBool("useTowerFolder") ||
+      boolean needsPermission = mRg.getBool("useTowerFolder") ||
           ( mRg.getBool("useMediaFolder") && ( Build.VERSION.SDK_INT < 30 ));
       if (needsPermission && ! checkStoragePermission()) {
         mV.alert("No storage permission, asking user");
         askStoragePermission();
         return;
       }
+      if ( mRg.getBool("useSAF") && (Build.VERSION.SDK_INT >= 30)) {
+        if (null == mMyFolderUri) {
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            requestSAFFolder();
+          }
+          return;
+        }
+      }
+
       if (mTrackListener.isOn()) {
         mDataWatcher.run();
         if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume"+"restarting dataWatcher");
@@ -152,6 +144,63 @@ public class MainActivity extends SingleFragmentActivity {
         Log.e(U.TAG, "FileException:"+e.getMessage());
       }
     }
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private void requestSAFFolder() {
+      // https://stackoverflow.com/questions/67509218/how-can-i-set-the-action-open-document-tree-start-path-the-first-time-a-user-use
+      StorageManager sm = (StorageManager) getActivity().getSystemService(Context.STORAGE_SERVICE);
+      Intent intent = sm.getPrimaryStorageVolume().createOpenDocumentTreeIntent();
+      String startDir = "Documents";// + "/" + "Tracks" is ignored
+      Uri uri = intent.getParcelableExtra("android.provider.extra.INITIAL_URI");
+      String scheme = uri.toString();
+      //Log.d(U.TAG, "INITIAL_URI scheme: " + scheme);
+      scheme = scheme.replace("/root/", "/document/");
+      scheme += "%3A" + startDir;
+      uri = Uri.parse(scheme);
+      intent.putExtra("android.provider.extra.INITIAL_URI", uri);
+      //Log.d(U.TAG, "uri: " + uri.toString());
+      startActivityForResult(intent, REQUEST_ACTION_OPEN_DOCUMENT_TREE);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
+      if (requestCode == REQUEST_ACTION_OPEN_DOCUMENT_TREE && resultCode == Activity.RESULT_OK) {
+        Uri uri = null;
+        if (resultData != null) {
+          uri = resultData.getData();
+          final int takeFlags = resultData.getFlags()
+              & (Intent.FLAG_GRANT_READ_URI_PERMISSION
+              | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+          try {
+            getActivity().getContentResolver().takePersistableUriPermission(uri, takeFlags);
+          } catch (Exception e) {
+            Log.e(U.TAG, "Something wrong with persistanle permission:" + e.getMessage());
+            e.printStackTrace();
+          }
+
+          mMyFolderUri = uri.toString();
+          Log.d(U.TAG, "got uri: " + uri.toString() + "/" + uri.getPath());
+          // got uri: content://com.android.externalstorage.documents/tree/primary%3ADocuments
+          // /tree/primary:Documents
+          String myFileExt = "Text.txt";
+          String myMime = "text/plain";
+          String myExt = "txt";
+
+          try {
+            U.createIfMissingSAF(mMyFolderUri, myFileExt, myExt, getActivity());
+            U.filePutContentsSAF(mMyFolderUri, myFileExt, " + line\n", myMime, getActivity(),true);
+          } catch (U.FileException e) {
+            Log.e(U.TAG, "FileException:" + e.getMessage());
+            e.printStackTrace();
+          } catch (IOException e) {
+            Log.e(U.TAG, "IOException:" + e.getMessage());
+            e.printStackTrace();
+          }
+          Log.d(U.TAG, "onActivityResult: got " + requestCode + "/" + resultCode);
+        }
+      }
+    }
+
 
     @Override
     public void onPause() {

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.ArrayMap;
@@ -13,12 +14,15 @@ import android.util.TypedValue;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -32,9 +36,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
+import androidx.documentfile.provider.DocumentFile;
 
 public abstract class U {
 
@@ -251,11 +258,12 @@ public abstract class U {
     }
   }
 
+  /*
   public static boolean isNetworkOn(Activity activity) {
     ConnectivityManager cm = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
     if ( cm.getActiveNetworkInfo() == null || ! cm.getActiveNetworkInfo().isConnected()) return false;
     return true;
-  }
+  }*/
 
   // deletes a file
   public static Summary unlink(String path, String fileExt) {
@@ -278,6 +286,24 @@ public abstract class U {
     return null;
   }
 
+  public static DocumentFile fileExistsSAF(String path, String name, String ext, Context context) {
+    String ne = U.assureExtension(name, ext);
+    Uri folderUri = Uri.parse(path);
+    DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
+    DocumentFile found = folderFile.findFile(ne);
+    return found;
+  }
+
+  public static DocumentFile createIfMissingSAF(String path, String name, String mime, Context context)
+      throws FileException {
+    Uri folderUri = Uri.parse(path);
+    DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
+    DocumentFile found = folderFile.findFile(name);
+    if (found != null) return found;
+    found = folderFile.createFile(mime, name);
+    if (found == null) throw new U.FileException("Failrd to create file "+name);
+    return found;
+  }
   // reads a whole directory
   public static String[] getCatalog(String path) throws FileException {
     String[] myDir = (new File(path)).list();
@@ -329,7 +355,8 @@ public abstract class U {
   }
 
   // saves a string as a file
-  public static void filePutContents(String path, String fileNameExt, String buf, boolean isAppend) throws IOException {
+  public static void filePutContents(String path, String fileNameExt, String buf, boolean isAppend)
+      throws IOException {
     File file = new File(path, fileNameExt);
     FileOutputStream stream = new FileOutputStream(file, isAppend);
     try {
@@ -338,6 +365,46 @@ public abstract class U {
       stream.close();
     }
   }
+
+  public static void filePutContentsSAF(String path, String fileNameExt, String buf, String mime, Context context, boolean isAppend)
+      throws FileException, IOException {
+    DocumentFile df = U.createIfMissingSAF(path, fileNameExt, mime, context);
+    OutputStream stream = context.getContentResolver().openOutputStream(df.getUri());
+    if (! isAppend) {
+      stream.write(buf.getBytes("UTF-8"));
+    }
+    else {
+      InputStream is = context.getContentResolver().openInputStream(df.getUri());
+      String content = U.readTextFromStream(is, buf);
+      stream.write(content.getBytes("UTF-8"));
+      is.close();
+    }
+    stream.close();
+  }
+
+  public static String fileGetContentsSAF(String path, String fileNameExt, Context context)
+      throws FileException, IOException {
+    Uri folderUri = Uri.parse(path);
+    DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
+    DocumentFile found = folderFile.findFile(fileNameExt);
+    if (found == null) throw new U.FileException("No file "+fileNameExt+" in "+path);
+    InputStream stream = context.getContentResolver().openInputStream(found.getUri());
+    return U.readTextFromStream(stream, "");
+  }
+
+  private static String readTextFromStream(InputStream stream, String tail) throws IOException {
+    StringBuilder stringBuilder = new StringBuilder();
+    try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(Objects.requireNonNull(stream)))) {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        stringBuilder.append(line);
+      }
+      stringBuilder.append(tail);
+      return stringBuilder.toString();
+    }
+  }
+
 
   // creates a bundle from a map
   public static Bundle map2bundle(Map<String, String> args) {
