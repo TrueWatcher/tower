@@ -21,6 +21,7 @@
   2.4.1  27 27.03.2024 improvements
   2.5.0  28 23.09.2024 save to Android/media
   2.6.0  29 24.09.2024 experiments with SAF
+  2.6.1  30 26.09.2024 workable FileUtilsSAF
   -->
 
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />

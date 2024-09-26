@@ -111,16 +111,16 @@ public class MainActivity extends SingleFragmentActivity {
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             requestSAFFolder();
           }
-          return;
         }
+        return;
       }
 
-      if (mTrackListener.isOn()) {
-        mDataWatcher.run();
-        if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume"+"restarting dataWatcher");
+      if (! mTrackListener.isOn()) {
+        printStorageInfo();
       }
       else {
-        printStorageInfo();
+        mDataWatcher.run();
+        if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume"+"restarting dataWatcher");
       }
       mV.adjustVisibility(mTrackListener.isOn());
     }
@@ -147,19 +147,8 @@ public class MainActivity extends SingleFragmentActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private void requestSAFFolder() {
-      // https://stackoverflow.com/questions/67509218/how-can-i-set-the-action-open-document-tree-start-path-the-first-time-a-user-use
-      StorageManager sm = (StorageManager) getActivity().getSystemService(Context.STORAGE_SERVICE);
-      Intent intent = sm.getPrimaryStorageVolume().createOpenDocumentTreeIntent();
-      String startDir = "Documents";// + "/" + "Tracks" is ignored
-      Uri uri = intent.getParcelableExtra("android.provider.extra.INITIAL_URI");
-      String scheme = uri.toString();
-      //Log.d(U.TAG, "INITIAL_URI scheme: " + scheme);
-      scheme = scheme.replace("/root/", "/document/");
-      scheme += "%3A" + startDir;
-      uri = Uri.parse(scheme);
-      intent.putExtra("android.provider.extra.INITIAL_URI", uri);
-      //Log.d(U.TAG, "uri: " + uri.toString());
-      startActivityForResult(intent, REQUEST_ACTION_OPEN_DOCUMENT_TREE);
+      Intent it = U.FileUtilsSAF.makeIntentToRequestFolder(getActivity(), "Documents");
+      startActivityForResult(it, REQUEST_ACTION_OPEN_DOCUMENT_TREE);
     }
 
     @Override
@@ -174,29 +163,33 @@ public class MainActivity extends SingleFragmentActivity {
           try {
             getActivity().getContentResolver().takePersistableUriPermission(uri, takeFlags);
           } catch (Exception e) {
-            Log.e(U.TAG, "Something wrong with persistanle permission:" + e.getMessage());
-            e.printStackTrace();
+            Log.e(U.TAG, "Something wrong with persistanle permission:"
+                + e.getMessage() + "\n" + e.getStackTrace());
           }
 
           mMyFolderUri = uri.toString();
           Log.d(U.TAG, "got uri: " + uri.toString() + "/" + uri.getPath());
           // got uri: content://com.android.externalstorage.documents/tree/primary%3ADocuments
           // /tree/primary:Documents
+
+          mTrackStorage.setTargetPath(mMyFolderUri);
+          printStorageInfo();
+          mV.adjustVisibility(mTrackListener.isOn());
+          /*
           String myFileExt = "Text.txt";
           String myMime = "text/plain";
           String myExt = "txt";
 
           try {
-            U.createIfMissingSAF(mMyFolderUri, myFileExt, myExt, getActivity());
-            U.filePutContentsSAF(mMyFolderUri, myFileExt, " + line\n", myMime, getActivity(),true);
+            U.FileUtilsSAF.createIfMissingSAF(mMyFolderUri, myFileExt, myExt, getActivity());
+            U.FileUtilsSAF.filePutContentsSAF(mMyFolderUri, myFileExt, " + line\n", myMime, getActivity(),true);
           } catch (U.FileException e) {
-            Log.e(U.TAG, "FileException:" + e.getMessage());
-            e.printStackTrace();
+            Log.e(U.TAG, "FileException:" + e.getMessage() + "\n" + e.getStackTrace());
           } catch (IOException e) {
-            Log.e(U.TAG, "IOException:" + e.getMessage());
-            e.printStackTrace();
+            Log.e(U.TAG, "IOException:" + e.getMessage() + "\n" + e.getStackTrace());
           }
           Log.d(U.TAG, "onActivityResult: got " + requestCode + "/" + resultCode);
+           */
         }
       }
     }

@@ -14,8 +14,9 @@ import java.util.Map;
 public class TrackStorage {
   private String mTargetPath;
   private String mMyFileExt = "currentSignalTrack.csv";
+  private U.FileUtils mFU;
   private boolean mShouldStartNewSegment = false;
-  private long mTotalPointCount =0;
+  private long mTotalPointCount = 0;
   public Trackpoint latestStoredTrackpoint = null;
   private MyRegistry mRg = MyRegistry.getInstance();
   private int mLastNl=0;
@@ -31,6 +32,15 @@ public class TrackStorage {
   }
 
   public void initTargetDir(Context context) throws IOException, U.FileException {
+    if (mRg.getBool("useSAF")) {
+      if (mTargetPath == null || ! mTargetPath.startsWith("content:"))
+        throw new U.FileException("Need a valid SAF uri instead of "+mTargetPath);
+      if (! (mFU instanceof U.FileUtilsSAF)) mFU = new U.FileUtilsSAF(context);
+      if (U.DEBUG) Log.i(U.TAG, "My path=" + mTargetPath);
+      initMyFile();
+      return;
+    }
+    if (! (mFU instanceof U.FileUtilsBasic)) mFU = new U.FileUtilsBasic();
     String nativeFolder = context.getExternalFilesDir(null).getPath();
     mTargetPath = nativeFolder;
     if (mRg.getBool("useMediaFolder")) {
@@ -48,10 +58,14 @@ public class TrackStorage {
     initMyFile();
   }
 
-  private void initMyFile() throws IOException {
-    if (null == U.fileExists(mTargetPath, mMyFileExt, "csv")) {
+  public void setTargetPath(String tps) {
+    mTargetPath = tps;
+  }
+
+  private void initMyFile() throws IOException, U.FileException {
+    if (! mFU.fileExists(mTargetPath, mMyFileExt)) {
       String headerNl = TextUtils.join(Trackpoint.SEP, Trackpoint.FIELDS).concat(Trackpoint.NL);
-      U.filePutContents(mTargetPath, mMyFileExt, headerNl, false);
+      mFU.filePutContents(mTargetPath, mMyFileExt, headerNl, false);
       demandNewSegment();
     }
   }
@@ -99,7 +113,10 @@ public class TrackStorage {
     p.setIdInt(mLastId);
     String line = p.toCsv().concat(Trackpoint.NL);
     try {
-      U.filePutContents(mTargetPath, mMyFileExt, line, true);
+      mFU.filePutContents(mTargetPath, mMyFileExt, line, true);
+    }
+    catch (U.FileException e) {
+      throw new U.RunException("FileException" + e.getMessage());
     }
     catch (IOException e) {
       throw new U.RunException("IOException" + e.getMessage());
@@ -111,20 +128,23 @@ public class TrackStorage {
     if ( ! mRg.getBool("trackShouldWrite")) return;
     String buf= "";
     try {
-      buf=U.fileGetContents(mTargetPath, mMyFileExt);
+      buf= mFU.fileGetContents(mTargetPath, mMyFileExt);
       buf = buf.trim();
       p.setNewSegment(detectNewSegment(buf));
       p.setIdInt(mLastId);
       String line = p.toCsv().concat(Trackpoint.NL);
       buf=buf.substring(0,mLastNl+1);
       buf=buf.concat(line);
-      U.filePutContents(mTargetPath, mMyFileExt, buf, false);
+      mFU.filePutContents(mTargetPath, mMyFileExt, buf, false);
     }
     catch (IOException e) {
       throw new U.RunException("IOException:" + e.getMessage());
     }
     catch (U.DataException e) {
       throw new U.RunException("DataException:" + e.getMessage() + "Trace:" + e.getStackTrace());
+    }
+    catch (U.FileException e) {
+      throw new U.RunException("FileException:" + e.getMessage() + "Trace:" + e.getStackTrace());
     }
   }
 
@@ -319,10 +339,10 @@ public class TrackStorage {
 
   public U.Summary2 visitStored(Visitor visitor) throws U.FileException, IOException, U.DataException {
     if (mCachedLines == null || mCachedLines.length == 0) {
-      if (null == U.fileExists(mTargetPath, mMyFileExt, "csv")) {
+      if (! mFU.fileExists(mTargetPath, mMyFileExt)) {
         throw new U.FileException("Missing my good file");
       }
-      String buf = U.fileGetContents(mTargetPath, mMyFileExt);
+      String buf = mFU.fileGetContents(mTargetPath, mMyFileExt);
       mCachedLines = splitCsv(buf);
     }
     int l = mCachedLines.length;
@@ -361,10 +381,10 @@ public class TrackStorage {
   public void deleteLastSegment() throws U.FileException, U.DataException, IOException {
     int lastSegmentMark = -1, i = 0;
     String[] fields;
-    if (null == U.fileExists(mTargetPath, mMyFileExt, "csv")) {
+    if (! mFU.fileExists(mTargetPath, mMyFileExt)) {
       throw new U.FileException("Missing my good file");
     }
-    String buf = U.fileGetContents(mTargetPath, mMyFileExt);
+    String buf = mFU.fileGetContents(mTargetPath, mMyFileExt);
     String[] lines = splitCsv(buf);
     int l = lines.length;
     int typeColumn = Trackpoint.FIELDS.indexOf("type");
@@ -382,19 +402,22 @@ public class TrackStorage {
       }
     }
     if (lastSegmentMark <= 0) return;// no segments found - nothing to write
+    long before = buf.length();
     buf = TextUtils.join(Point.NL, lines);
     buf = buf.trim().concat(Point.NL);
-    U.filePutContents(mTargetPath, mMyFileExt, buf, false);
+    long after = buf.length();
+    if (U.DEBUG) Log.d(U.TAG, "Found last segment mark at id="+i+"\nFile strlen = "+before+" > "+after);
+    mFU.filePutContents(mTargetPath, mMyFileExt, buf, false);
     mShouldStartNewSegment = true;
   }
 
   public int renumber() throws U.FileException, U.DataException, IOException {
     int i = 0, count = 0;
     String[] fields;
-    if (null == U.fileExists(mTargetPath, mMyFileExt, "csv")) {
+    if (! mFU.fileExists(mTargetPath, mMyFileExt)) {
       throw new U.FileException("Missing my good file");
     }
-    String buf = U.fileGetContents(mTargetPath, mMyFileExt);
+    String buf = mFU.fileGetContents(mTargetPath, mMyFileExt);
     String[] lines = splitCsv(buf);
     int l = lines.length;
     int idColumn = Trackpoint.FIELDS.indexOf("id");
@@ -414,7 +437,7 @@ public class TrackStorage {
     }
     buf = TextUtils.join(Point.NL, lines);
     buf = buf.trim().concat(Point.NL);
-    U.filePutContents(mTargetPath, mMyFileExt, buf, false);
+    mFU.filePutContents(mTargetPath, mMyFileExt, buf, false);
     return count;
   }
 
@@ -437,14 +460,14 @@ public class TrackStorage {
     }
 
     public U.Summary trackCsv2Gpx(String targetFileExt) throws U.FileException, U.DataException, IOException {
-      if (null == U.fileExists(mTargetPath, mMyFileExt, "csv")) {
+      if (! mFU.fileExists(mTargetPath, mMyFileExt)) {
         throw new U.FileException("Missing my good file");
       }
-      String buf = U.fileGetContents(mTargetPath, mMyFileExt);
+      String buf = mFU.fileGetContents(mTargetPath, mMyFileExt);
       buf = csv2gpx(targetFileExt, buf);
       if (mCount == 0) { return new U.Summary("failed to export", mRecords, mCount, targetFileExt); }
       targetFileExt = U.assureExtension(targetFileExt, "gpx");
-      U.filePutContents(mTargetPath, targetFileExt, buf, false);
+      mFU.filePutContents(mTargetPath, targetFileExt, buf, false);
       //String aAct, int aFound, int aAdopted, String file,int aSegments
       return new U.Summary("exported", mRecords, mCount, targetFileExt, mSegments);
     }

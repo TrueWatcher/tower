@@ -2,11 +2,14 @@ package truewatcher.signaltrackwriter;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.storage.StorageManager;
 import android.preference.PreferenceManager;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -30,6 +33,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Dictionary;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,6 +45,7 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import androidx.annotation.RequiresApi;
 import androidx.documentfile.provider.DocumentFile;
 
 public abstract class U {
@@ -278,32 +283,17 @@ public abstract class U {
   }
 
   // checks if a file exists
-  public static File fileExists(String path, String name, String ext) {
-    String ne = U.assureExtension(name, ext);
-    //Log.d(U.TAG,"U_fileExists:","FILENAME="+ne);
-    File file = new File(path, ne);
+  public static File fileExists(String path, String nameExt) {
+    File file = new File(path, nameExt);
     if (file.exists()) return file;
     return null;
   }
-
-  public static DocumentFile fileExistsSAF(String path, String name, String ext, Context context) {
+  public static File fileExists(String path, String name, String ext) {
     String ne = U.assureExtension(name, ext);
-    Uri folderUri = Uri.parse(path);
-    DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
-    DocumentFile found = folderFile.findFile(ne);
-    return found;
+    //Log.d(U.TAG,"U_fileExists:","FILENAME="+ne);
+    return fileExists(path, ne);
   }
 
-  public static DocumentFile createIfMissingSAF(String path, String name, String mime, Context context)
-      throws FileException {
-    Uri folderUri = Uri.parse(path);
-    DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
-    DocumentFile found = folderFile.findFile(name);
-    if (found != null) return found;
-    found = folderFile.createFile(mime, name);
-    if (found == null) throw new U.FileException("Failrd to create file "+name);
-    return found;
-  }
   // reads a whole directory
   public static String[] getCatalog(String path) throws FileException {
     String[] myDir = (new File(path)).list();
@@ -366,45 +356,150 @@ public abstract class U {
     }
   }
 
-  public static void filePutContentsSAF(String path, String fileNameExt, String buf, String mime, Context context, boolean isAppend)
-      throws FileException, IOException {
-    DocumentFile df = U.createIfMissingSAF(path, fileNameExt, mime, context);
-    OutputStream stream = context.getContentResolver().openOutputStream(df.getUri());
-    if (! isAppend) {
-      stream.write(buf.getBytes("UTF-8"));
-    }
-    else {
-      InputStream is = context.getContentResolver().openInputStream(df.getUri());
-      String content = U.readTextFromStream(is, buf);
-      stream.write(content.getBytes("UTF-8"));
-      is.close();
-    }
-    stream.close();
+  public static interface FileUtils {
+    public boolean fileExists(String path, String fileNameExt);
+    public String fileGetContents(String path, String fileNameExt)
+        throws IOException, U.FileException;
+    public void filePutContents(String path, String fileNameExt, String buf, boolean isAppend)
+        throws IOException, U.FileException;
   }
 
-  public static String fileGetContentsSAF(String path, String fileNameExt, Context context)
-      throws FileException, IOException {
-    Uri folderUri = Uri.parse(path);
-    DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
-    DocumentFile found = folderFile.findFile(fileNameExt);
-    if (found == null) throw new U.FileException("No file "+fileNameExt+" in "+path);
-    InputStream stream = context.getContentResolver().openInputStream(found.getUri());
-    return U.readTextFromStream(stream, "");
+  public static class FileUtilsBasic implements U.FileUtils {
+    public boolean fileExists(String path, String fileNameExt) {
+      if (null == U.fileExists(path, fileNameExt)) return false;
+      return true;
+    }
+
+    public String fileGetContents(String path, String fileNameExt) throws IOException {
+      return U.fileGetContents(path, fileNameExt);
+    }
+
+    public void filePutContents(String path, String fileNameExt, String buf, boolean isAppend)  throws IOException {
+      U.filePutContents(path, fileNameExt, buf, isAppend);
+    }
   }
 
-  private static String readTextFromStream(InputStream stream, String tail) throws IOException {
-    StringBuilder stringBuilder = new StringBuilder();
-    try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(Objects.requireNonNull(stream)))) {
-      String line;
-      while ((line = reader.readLine()) != null) {
-        stringBuilder.append(line);
+  public static class FileUtilsSAF implements U.FileUtils {
+    private Context mContext;
+
+    public FileUtilsSAF(Context context) {
+      mContext = context;
+    }
+
+    public boolean fileExists(String path, String fileNameExt) {
+      if ( null == fileExistsSAF(path, fileNameExt, mContext) ) return false;
+      return true;
+    }
+
+    public String fileGetContents(String path, String fileNameExt)
+        throws IOException, U.FileException {
+      return fileGetContentsSAF(path, fileNameExt, mContext);
+    }
+
+    public void filePutContents(String path, String fileNameExt, String buf, boolean isAppend)
+        throws IOException, U.FileException {
+      String mime = nameExt2mime(fileNameExt);
+      filePutContentsSAF(path, fileNameExt, buf, mime, mContext, isAppend);
+    }
+
+    public static DocumentFile fileExistsSAF(String path, String name, String ext, Context context) {
+      String ne = U.assureExtension(name, ext);
+      return fileExistsSAF(path, ne, context);
+    }
+    public static DocumentFile fileExistsSAF(String path, String nameExt, Context context) {
+      Uri folderUri = Uri.parse(path);
+      DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
+      DocumentFile found = folderFile.findFile(nameExt);
+      return found;
+    }
+
+    public static String fileGetContentsSAF(String path, String fileNameExt, Context context)
+        throws FileException, IOException {
+      Uri folderUri = Uri.parse(path);
+      DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
+      DocumentFile found = folderFile.findFile(fileNameExt);
+      if (found == null) throw new U.FileException("No file "+fileNameExt+" in "+path);
+      InputStream stream = context.getContentResolver().openInputStream(found.getUri());
+      byte[] inbuf = readBytesFromStream(stream, found.length());
+      return new String(inbuf,"UTF-8");
+    }
+
+    public static void filePutContentsSAF(String path, String fileNameExt, String content, String mime,
+                                          Context context, boolean isAppend) throws FileException, IOException {
+      DocumentFile df = createIfMissingSAF(path, fileNameExt, mime, context);
+      byte[] outbuf = content.getBytes("UTF-8");
+      String mode = "w";
+      long dfLength = df.length();
+      // https://stackoverflow.com/questions/73759331/how-to-rewrite-documentfile-completely
+      if (! isAppend && (dfLength > content.length())) { mode = "wt"; }
+      OutputStream stream = context.getContentResolver().openOutputStream(df.getUri(), mode);
+      if (! isAppend) {
+        stream.write(outbuf);
+        //if (U.DEBUG) Log.d(U.TAG, "Wrote strlen ="+content.length());
       }
-      stringBuilder.append(tail);
-      return stringBuilder.toString();
+      else {
+        InputStream is = context.getContentResolver().openInputStream(df.getUri());
+        byte[] inbuf = readBytesFromStream(is, dfLength);
+        stream.write(inbuf);
+        stream.write(outbuf);
+        is.close();
+      }
+      stream.flush();
+      stream.close();
+    }
+
+    private static byte[] readBytesFromStream(InputStream stream, long length) throws IOException, FileException {
+      if (length <= 0) throw new U.FileException("Wrong LENGTH");
+    //U.RunException("Wrong LENGTH");//U.FileException("Wrong LENGTH");
+      if (length >= Integer.MAX_VALUE) throw new U.FileException("Too big LENGTH");
+      byte[] bytes = new byte[(int) length];
+      try {
+        stream.read(bytes);
+      } finally {
+        stream.close();
+      }
+      return bytes;
+    }
+
+    private static String nameExt2mime(String nameExt) throws U.FileException {
+      Map<String, String> myMimes = new androidx.collection.ArrayMap<String, String>();
+      myMimes.put("csv","text/csv");
+      myMimes.put("txt","text/plain");
+      myMimes.put("gpx","application/octet-stream");
+      String[] nameParts = nameExt.split(Pattern.quote("."));
+      int l = nameParts.length;
+      String ext = nameParts[l - 1];
+      if (! myMimes.containsKey(ext)) throw new U.FileException("Cannot find MIME for a "+ext+" file");
+      return myMimes.get(ext);
+    }
+
+    public static DocumentFile createIfMissingSAF(String path, String name, String mime, Context context)
+        throws FileException {
+      Uri folderUri = Uri.parse(path);
+      DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
+      DocumentFile found = folderFile.findFile(name);
+      if (found != null) return found;
+      found = folderFile.createFile(mime, name);
+      if (found == null) throw new U.FileException("Failrd to create file "+name);
+      return found;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    public static Intent makeIntentToRequestFolder(Context context, String startDir) {
+      // https://stackoverflow.com/questions/67509218/how-can-i-set-the-action-open-document-tree-start-path-the-first-time-a-user-use
+      StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+      Intent intent = sm.getPrimaryStorageVolume().createOpenDocumentTreeIntent();
+      Uri uri = intent.getParcelableExtra("android.provider.extra.INITIAL_URI");
+      String scheme = uri.toString();
+      //Log.d(U.TAG, "INITIAL_URI scheme: " + scheme);
+      scheme = scheme.replace("/root/", "/document/");
+      scheme += "%3A" + startDir;
+      uri = Uri.parse(scheme);
+      intent.putExtra("android.provider.extra.INITIAL_URI", uri);
+      //Log.d(U.TAG, "uri: " + uri.toString());
+      return intent;
     }
   }
-
 
   // creates a bundle from a map
   public static Bundle map2bundle(Map<String, String> args) {
