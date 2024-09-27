@@ -36,7 +36,7 @@ public class TrackStorage {
       if (mTargetPath == null || ! mTargetPath.startsWith("content:"))
         throw new U.FileException("Need a valid SAF uri instead of "+mTargetPath);
       if (! (mFU instanceof U.FileUtilsSAF)) mFU = new U.FileUtilsSAF(context);
-      if (U.DEBUG) Log.i(U.TAG, "My path=" + mTargetPath);
+      if (U.DEBUG) Log.i(U.TAG, "My SAF path=" + mTargetPath);
       initMyFile();
       return;
     }
@@ -63,9 +63,11 @@ public class TrackStorage {
   }
 
   private void initMyFile() throws IOException, U.FileException {
+    if (U.DEBUG) Log.i(U.TAG, "initMyFile");
     if (! mFU.fileExists(mTargetPath, mMyFileExt)) {
       String headerNl = TextUtils.join(Trackpoint.SEP, Trackpoint.FIELDS).concat(Trackpoint.NL);
       mFU.filePutContents(mTargetPath, mMyFileExt, headerNl, false);
+      if (U.DEBUG) Log.i(U.TAG, "initMyFile wrote new file");
       demandNewSegment();
     }
   }

@@ -91,7 +91,8 @@ public class MyRegistry {
   private static String getDefaultsString() {
     String defs = "{\"gpsMinDistance\":\"8\",\"gpsMinDelayS\":\"5\",\"trackShouldWrite\":\"true\","
             + "\"gpsTimeoutS\":\"120\",\"gpsAcceptableAccuracy\":\"8\",\"useTowerFolder\":false\","
-            + "\"useMediaFolder\":\"true\",\"useSAF\":\"true\",\"cellFilter\":\"0\",\"cellsRefreshS\":\"3\""
+            + "\"useMediaFolder\":\"true\",\"useSAF\":\"true\",\"cellFilter\":\"0\",\"cellsRefreshS\":\"3\","
+            + "\"SAFRootFolderUri\":\"\",\"SAFAppFolderUri\":\"\""
             + "}";
     return defs;
   }

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.Uri;
@@ -480,7 +481,20 @@ public abstract class U {
       DocumentFile found = folderFile.findFile(name);
       if (found != null) return found;
       found = folderFile.createFile(mime, name);
-      if (found == null) throw new U.FileException("Failrd to create file "+name);
+      if (found == null) throw new U.FileException("Failed to create file "+name);
+      if (! found.canWrite()) throw new U.FileException("Created non-writable file "+name);
+      return found;
+    }
+
+    public static DocumentFile createDirectoryIfMissingSAF(String path, String name, Context context)
+        throws FileException {
+      Uri folderUri = Uri.parse(path);
+      DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
+      DocumentFile found = folderFile.findFile(name);
+      if (found != null) return found;
+      found = folderFile.createDirectory(name);
+      if (found == null) throw new U.FileException("Failed to create directory "+name);
+      if (! found.isDirectory()) throw new U.FileException("Created a file, not a directory "+name);
       return found;
     }
 
@@ -671,4 +685,5 @@ public abstract class U {
   public static int countEntries(String haystack, String needle) {
     return (haystack.length() - haystack.replace(needle, "").length()) / needle.length();
   }
+
 }

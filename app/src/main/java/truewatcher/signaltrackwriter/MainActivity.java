@@ -9,8 +9,8 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
-import android.os.storage.StorageManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -25,7 +25,6 @@ import android.widget.TextView;
 import androidx.annotation.RequiresApi;
 import androidx.documentfile.provider.DocumentFile;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -40,7 +39,8 @@ public class MainActivity extends SingleFragmentActivity {
     private TrackPageFragment.Viewer mV;
     private DataWatcher mDataWatcher=new DataWatcher();
     private final int REQUEST_ACTION_OPEN_DOCUMENT_TREE = 100;
-    private String mMyFolderUri = null;
+    private String mSAFAppFolderUri = "", mSAFRootFolderUri = "";
+    private String mAppFolderName;
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -107,12 +107,19 @@ public class MainActivity extends SingleFragmentActivity {
         return;
       }
       if ( mRg.getBool("useSAF") && (Build.VERSION.SDK_INT >= 30)) {
-        if (null == mMyFolderUri) {
+        mSAFRootFolderUri = mRg.get("SAFRootFolderUri");
+        mSAFAppFolderUri = mRg.get("SAFAppFolderUri");
+        mAppFolderName = getActivity().getPackageName();
+        boolean accessCheck = ! mSAFRootFolderUri.isEmpty() && ! mSAFAppFolderUri.isEmpty() &&
+            (null != U.FileUtilsSAF.fileExistsSAF(mSAFRootFolderUri, mAppFolderName, getActivity()));
+        if (! accessCheck) Log.w(U.TAG, "SAF folder path is present, but does not work. Re-initializing...");
+        if (mSAFRootFolderUri.isEmpty() || ! accessCheck) {
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             requestSAFFolder();
           }
+          return;
         }
-        return;
+        mTrackStorage.setTargetPath(mSAFAppFolderUri); // fall through
       }
 
       if (! mTrackListener.isOn()) {
@@ -147,7 +154,7 @@ public class MainActivity extends SingleFragmentActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private void requestSAFFolder() {
-      Intent it = U.FileUtilsSAF.makeIntentToRequestFolder(getActivity(), "Documents");
+      Intent it = U.FileUtilsSAF.makeIntentToRequestFolder(getActivity(), Environment.DIRECTORY_DOCUMENTS);
       startActivityForResult(it, REQUEST_ACTION_OPEN_DOCUMENT_TREE);
     }
 
@@ -163,16 +170,52 @@ public class MainActivity extends SingleFragmentActivity {
           try {
             getActivity().getContentResolver().takePersistableUriPermission(uri, takeFlags);
           } catch (Exception e) {
-            Log.e(U.TAG, "Something wrong with persistanle permission:"
+            Log.e(U.TAG, "Something wrong with persistable permission:"
                 + e.getMessage() + "\n" + e.getStackTrace());
           }
 
-          mMyFolderUri = uri.toString();
-          Log.d(U.TAG, "got uri: " + uri.toString() + "/" + uri.getPath());
+          if (U.DEBUG) Log.d(U.TAG, "got uri: " + uri.toString() + ", path: " + uri.getPath());
           // got uri: content://com.android.externalstorage.documents/tree/primary%3ADocuments
           // /tree/primary:Documents
 
-          mTrackStorage.setTargetPath(mMyFolderUri);
+          mSAFRootFolderUri = uri.toString();
+          DocumentFile appFolder = null;
+          try {
+            appFolder = U.FileUtilsSAF.createDirectoryIfMissingSAF(mSAFRootFolderUri, mAppFolderName, getActivity());
+            /*
+            DocumentFile test0 = appFolder.createFile("text/csv","test0.csv");
+            Uri ut0 = test0.getUri();
+            OutputStream stream = getActivity().getContentResolver().openOutputStream(Uri.parse(ut0.toString()), "w");
+            stream.write("???".getBytes());
+            DocumentFile dt0 = appFolder.findFile("test0.csv");
+            Log.d(U.TAG, "found fast:"+(dt0 != null));
+            U.FileUtilsSAF.filePutContentsSAF(appFolder.getUri().toString(), "test1.csv",
+                "test content", "text/csv", getActivity(), false);
+            Log.d(U.TAG, "test0 uri: " + test0.getUri().toString()); */
+          }
+          catch (U.FileException e) { //  | IOException
+            mV.alert("FileException: "+e.getMessage());
+            Log.e(U.TAG, "FileException: "+e.getMessage()+"\n"+e.getStackTrace());
+            return;
+          }
+
+          mSAFAppFolderUri = appFolder.getUri().toString();
+          // add to build.gradle: implementation 'androidx.documentfile:documentfile:1.0.1'
+          // https://stackoverflow.com/questions/62375696/unexpected-behavior-when-documentfile-fromtreeuri-is-called-on-uri-of-subdirec
+          //Log.d(U.TAG, "appFolder uri: " + appFolder.getUri().toString());
+          mRg.set("SAFRootFolderUri", mSAFRootFolderUri);
+          mRg.saveToShared(getActivity(),"SAFRootFolderUri");
+          mRg.set("SAFAppFolderUri", mSAFAppFolderUri);
+          mRg.saveToShared(getActivity(),"SAFAppFolderUri");
+          /*DocumentFile test=U.FileUtilsSAF.fileExistsSAF(mSAFAppFolderUri, "test0.csv", getActivity());
+          if (test != null) {
+            Log.d(U.TAG, "test uri: " + test.getUri().toString());
+          }
+          else {
+            Log.d(U.TAG, "test uri: miss");
+          }*/
+
+          mTrackStorage.setTargetPath(mSAFAppFolderUri);
           printStorageInfo();
           mV.adjustVisibility(mTrackListener.isOn());
           /*
