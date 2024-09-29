@@ -73,7 +73,7 @@ public class CellsActivity extends SingleFragmentActivity {
       setHasOptionsMenu(true);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
       if (U.DEBUG) Log.d(U.TAG,"cellsFragment:onCreateView");
@@ -105,14 +105,12 @@ public class CellsActivity extends SingleFragmentActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private void runAll() {
-      //try {
-        if (!checkLocationPermission()) {
-          mV.alert("No location permission, asking user");
-          askLocationPermission();
-          return;
-        }
-        mCellsWatcher.run();
-      //}  catch
+      if (! checkLocationPermission()) {
+        mV.alert("This app will not work without access to Fine Location");
+        askLocationPermission();
+        return;
+      }
+      mCellsWatcher.run();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -129,8 +127,8 @@ public class CellsActivity extends SingleFragmentActivity {
     @Override
     public void receivePermission(int reqCode, boolean isGranted) {
       if ( ! isGranted) {
-        if (U.DEBUG) Log.d(U.TAG, "permission denied");
-        if (reqCode == 2) {
+        if (U.DEBUG) Log.d(U.TAG, "permission denied for code="+reqCode);
+        if (reqCode == 2) { // STORAGE
           mRg.setBool("useTowerFolder",false);
           mRg.saveToShared(getActivity(), "useTowerFolder");
           mV.alert("Permission denied, falling back to native folder");

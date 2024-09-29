@@ -11,12 +11,18 @@ interface PermissionReceiver {
 
 public abstract class PermissionAwareFragment extends androidx.fragment.app.Fragment {
   private SparseArray<PermissionReceiver> mPermissionReceivers = new SparseArray<PermissionReceiver>();
+  private int mPermissionAttempts = 5; // to break loop on receiving coarse location on SDK .= 31
 
   @TargetApi(23)
   public void genericRequestPermission(String permCode, int reqCode, PermissionReceiver receiver) {
-    mPermissionReceivers.put(reqCode, receiver);
-    if (U.DEBUG) Log.d(U.TAG, "Requesting user...");
-    requestPermissions(new String[]{permCode}, reqCode);
+    if (mPermissionAttempts-- > 0) {
+      mPermissionReceivers.put(reqCode, receiver);
+      if (U.DEBUG) Log.d(U.TAG, "Requesting user. code=" + reqCode);
+      requestPermissions(new String[]{permCode}, reqCode);
+    }
+    else {
+      Log.e(U.TAG, "Permission attempts exhausted. code=" + reqCode);
+    }
   }
 
   @Override

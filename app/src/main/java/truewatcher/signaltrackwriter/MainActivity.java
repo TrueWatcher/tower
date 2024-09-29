@@ -259,7 +259,7 @@ public class MainActivity extends SingleFragmentActivity {
       }
       try {
         if ( ! checkLocationPermission()) {
-          mV.alert("No location permission, asking user");
+          mV.alert("This app will not work without access to Fine Location");
           askLocationPermission();
           return;
         }
@@ -319,7 +319,7 @@ public class MainActivity extends SingleFragmentActivity {
     @Override
     public void receivePermission(int reqCode, boolean isGranted) {
       if ( ! isGranted) {
-        if (U.DEBUG) Log.d(U.TAG, "permission denied");
+        if (U.DEBUG) Log.d(U.TAG, "permission denied for code ="+reqCode);
         if (reqCode == 2) {
           mRg.setBool("useTowerFolder",false);
           mRg.saveToShared(getActivity(), "useTowerFolder");

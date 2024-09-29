@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.signaltrackwriter"
-    android:versionCode="28"
-    android:versionName="2.5.0" >
+    android:versionCode="32"
+    android:versionName="2.7.0" >
   <!--
   trackwriter
   1.4.0 5 18.02.2020 added saving to the truewatcher.tower folder
@@ -23,6 +23,7 @@
   2.6.0  29 24.09.2024 experiments with SAF
   2.6.1  30 26.09.2024 workable FileUtilsSAF
   2.6.2  31 28.09.2024 works with SAF folder
+  2.7.0  32 30.09.2024 upgrade to SDK 33 (Android 13)
   -->
 
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -43,7 +44,8 @@
 
     <activity
         android:name="truewatcher.signaltrackwriter.MainActivity"
-        android:label="@string/app_name">
+        android:label="@string/app_name"
+        android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
 
