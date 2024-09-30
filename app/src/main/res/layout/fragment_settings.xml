@@ -54,6 +54,17 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="@string/useSAF" />
+
+    <CheckBox
+        android:id="@+id/cbUseSAF"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="@string/useMediaFolder" />
 
     <CheckBox

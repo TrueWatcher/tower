@@ -4,6 +4,7 @@
   <string name="gpsMinDistance">Minimal track leg, m (requires restart)</string>
   <string name="gpsMinDelay">Minimal GPS fix interval, s (requires restart)</string>
   <string name="trackShouldWrite">Write track</string>
+  <string name="useSAF">Use Documents folder on Android 11+</string>
   <string name="useMediaFolder">Use Media folder</string>
   <string name="useTowerFolder">Use Tower folder</string>
   <string name="action_settings">Settings</string>

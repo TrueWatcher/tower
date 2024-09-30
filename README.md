@@ -10,9 +10,9 @@ Keep the app window maximized to avoid sudden stopping by your OS.
 Your can turn the screen off with the Power button.
 To stop recording, press _Stop_.
 
-The resulting file is called currentSignalTrack.csv and is stored in the app data folder
-(somewhere like /storage/emulated/0/Android/data/truewatcher.signaltrackwriter/files).
-You can rename, remove or edit it if you like.
+The resulting file is called currentSignalTrack.csv and is stored in the app data folder. As Android 10+ do not allow third-party access to Androis/data, [newer versions of the app](http://tower.posmotrel.net/index.html#stw) (since 2.7.0) use Documents or Android/media
+(somewhere like /storage/emulated/0/Documents/truewatcher.signaltrackwriter or /storage/emulated/0/Android/media/truewatcher.signaltrackwriter).
+You can rename, remove or edit that file if you like.
 
 To visualize the track path, cell IDs, and signal strength on a map, use our inventive [WebMapViewer](https://github.com/TrueWatcher/tower/tree/webmapviewer_exp)
 You may open the Viewer in a web browser locally after downloading its files,

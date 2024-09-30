@@ -264,13 +264,6 @@ public abstract class U {
     }
   }
 
-  /*
-  public static boolean isNetworkOn(Activity activity) {
-    ConnectivityManager cm = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
-    if ( cm.getActiveNetworkInfo() == null || ! cm.getActiveNetworkInfo().isConnected()) return false;
-    return true;
-  }*/
-
   // deletes a file
   public static Summary unlink(String path, String fileExt) {
     try {
@@ -358,7 +351,7 @@ public abstract class U {
   }
 
   public static interface FileUtils {
-    public boolean fileExists(String path, String fileNameExt);
+    public boolean fileExists(String path, String fileNameExt) throws FileException;
     public String fileGetContents(String path, String fileNameExt)
         throws IOException, U.FileException;
     public void filePutContents(String path, String fileNameExt, String buf, boolean isAppend)
@@ -387,7 +380,7 @@ public abstract class U {
       mContext = context;
     }
 
-    public boolean fileExists(String path, String fileNameExt) {
+    public boolean fileExists(String path, String fileNameExt) throws FileException {
       if ( null == fileExistsSAF(path, fileNameExt, mContext) ) return false;
       return true;
     }
@@ -403,13 +396,17 @@ public abstract class U {
       filePutContentsSAF(path, fileNameExt, buf, mime, mContext, isAppend);
     }
 
-    public static DocumentFile fileExistsSAF(String path, String name, String ext, Context context) {
+    public static DocumentFile fileExistsSAF(String path, String name, String ext, Context context)
+        throws FileException {
       String ne = U.assureExtension(name, ext);
       return fileExistsSAF(path, ne, context);
     }
-    public static DocumentFile fileExistsSAF(String path, String nameExt, Context context) {
+    public static DocumentFile fileExistsSAF(String path, String nameExt, Context context)
+        throws FileException {
       Uri folderUri = Uri.parse(path);
+      if (folderUri == null) throw new U.FileException("Unparsable path:"+path);
       DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
+      if (folderFile == null) throw new U.FileException("Unaccessible uri:"+folderUri);
       DocumentFile found = folderFile.findFile(nameExt);
       return found;
     }
@@ -418,6 +415,7 @@ public abstract class U {
         throws FileException, IOException {
       Uri folderUri = Uri.parse(path);
       DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
+      if (folderFile == null) throw new U.FileException("Unaccessible uri:"+folderUri);
       DocumentFile found = folderFile.findFile(fileNameExt);
       if (found == null) throw new U.FileException("No file "+fileNameExt+" in "+path);
       InputStream stream = context.getContentResolver().openInputStream(found.getUri());
@@ -478,6 +476,7 @@ public abstract class U {
         throws FileException {
       Uri folderUri = Uri.parse(path);
       DocumentFile folderFile = DocumentFile.fromTreeUri(context, folderUri);
+      if (folderFile == null) throw new U.FileException("Unaccessible uri:"+folderUri);
       DocumentFile found = folderFile.findFile(name);
       if (found != null) return found;
       found = folderFile.createFile(mime, name);

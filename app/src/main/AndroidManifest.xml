@@ -24,11 +24,13 @@
   2.6.1  30 26.09.2024 workable FileUtilsSAF
   2.6.2  31 28.09.2024 works with SAF folder
   2.7.0  32 30.09.2024 upgrade to SDK 33 (Android 13)
+  2.7.1  33 31.09.2024 improvements
   -->
 
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 

@@ -19,7 +19,7 @@ public class SettingsActivity extends SingleFragmentActivity {
 
     private MyRegistry mRg=MyRegistry.getInstance();
     private EditText etGpsMinDistance, etGpsMinDelay, etCellFilter;
-    private CheckBox cbTrackShoudWrite, cbUseMediaFolder, cbUseTowerFolder;
+    private CheckBox cbTrackShoudWrite, cbUseSAF, cbUseMediaFolder, cbUseTowerFolder;
     private TextView tvWorkingFileFull;
 
     @Override
@@ -34,6 +34,7 @@ public class SettingsActivity extends SingleFragmentActivity {
       etGpsMinDistance = (EditText) v.findViewById(R.id.etGpsMinDistance);
       etGpsMinDelay = (EditText) v.findViewById(R.id.etGpsMinDelay);
       //cbTrackShoudWrite = (CheckBox) v.findViewById(R.id.cbTrackShoudWrite);
+      cbUseSAF = (CheckBox) v.findViewById(R.id.cbUseSAF);
       cbUseMediaFolder = (CheckBox) v.findViewById(R.id.cbUseMediaFolder);
       //cbUseTowerFolder = (CheckBox) v.findViewById(R.id.cbUseTowerFolder);
       tvWorkingFileFull = (TextView) v.findViewById(R.id.tvWorkingFileFull);
@@ -41,7 +42,8 @@ public class SettingsActivity extends SingleFragmentActivity {
       //if (null == etGpsMinDistance) Log.e(U.TAG,"null!!!");
       setupEditText(etGpsMinDistance, "gpsMinDistance");
       setupEditText(etGpsMinDelay, "gpsMinDelayS");
-      //setupCheckBox(cbTrackShoudWrite, "trackShouldWrite");
+      //setupCheckBox(cbTrackShoudWrite, "trackShouldWrite")
+      setupCheckBox(cbUseSAF, "useSAF");;
       setupCheckBox(cbUseMediaFolder, "useMediaFolder");
       //setupCheckBox(cbUseTowerFolder, "useTowerFolder");
       tvWorkingFileFull.setText(Model.getInstance().getTrackStorage().getWorkingFileFull());

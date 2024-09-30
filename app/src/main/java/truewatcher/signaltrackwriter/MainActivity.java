@@ -110,11 +110,27 @@ public class MainActivity extends SingleFragmentActivity {
         mSAFRootFolderUri = mRg.get("SAFRootFolderUri");
         mSAFAppFolderUri = mRg.get("SAFAppFolderUri");
         mAppFolderName = getActivity().getPackageName();
-        boolean accessCheck = ! mSAFRootFolderUri.isEmpty() && ! mSAFAppFolderUri.isEmpty() &&
-            (null != U.FileUtilsSAF.fileExistsSAF(mSAFRootFolderUri, mAppFolderName, getActivity()));
-        if (! accessCheck) Log.w(U.TAG, "SAF folder path is present, but does not work. Re-initializing...");
-        if (mSAFRootFolderUri.isEmpty() || ! accessCheck) {
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        boolean foldersPresent = ! mSAFRootFolderUri.isEmpty() && ! mSAFAppFolderUri.isEmpty();
+        boolean access = false;
+        if (foldersPresent) {
+          try {
+            access = null != U.FileUtilsSAF.fileExistsSAF(mSAFRootFolderUri, mAppFolderName, getActivity());
+          } catch (U.FileException e) {
+            Log.e(U.TAG, "FileException:"+e.getMessage());
+          }
+          if (! access) {
+            Log.w(U.TAG, "SAF folder path is present, but does not work");
+            mSAFRootFolderUri = "";
+            mRg.set("SAFRootFolderUri","");
+            mRg.saveToShared(getActivity(),"SAFRootFolderUri");
+            stopAll();
+            mV.alert("File is not accessible. Restart the app");
+            return;
+          }
+          // fall through
+        }
+        if (! access) {
+          if (Build.VERSION.SDK_INT >= 29) { // to make lint happy
             requestSAFFolder();
           }
           return;
@@ -182,16 +198,6 @@ public class MainActivity extends SingleFragmentActivity {
           DocumentFile appFolder = null;
           try {
             appFolder = U.FileUtilsSAF.createDirectoryIfMissingSAF(mSAFRootFolderUri, mAppFolderName, getActivity());
-            /*
-            DocumentFile test0 = appFolder.createFile("text/csv","test0.csv");
-            Uri ut0 = test0.getUri();
-            OutputStream stream = getActivity().getContentResolver().openOutputStream(Uri.parse(ut0.toString()), "w");
-            stream.write("???".getBytes());
-            DocumentFile dt0 = appFolder.findFile("test0.csv");
-            Log.d(U.TAG, "found fast:"+(dt0 != null));
-            U.FileUtilsSAF.filePutContentsSAF(appFolder.getUri().toString(), "test1.csv",
-                "test content", "text/csv", getActivity(), false);
-            Log.d(U.TAG, "test0 uri: " + test0.getUri().toString()); */
           }
           catch (U.FileException e) { //  | IOException
             mV.alert("FileException: "+e.getMessage());
@@ -207,32 +213,10 @@ public class MainActivity extends SingleFragmentActivity {
           mRg.saveToShared(getActivity(),"SAFRootFolderUri");
           mRg.set("SAFAppFolderUri", mSAFAppFolderUri);
           mRg.saveToShared(getActivity(),"SAFAppFolderUri");
-          /*DocumentFile test=U.FileUtilsSAF.fileExistsSAF(mSAFAppFolderUri, "test0.csv", getActivity());
-          if (test != null) {
-            Log.d(U.TAG, "test uri: " + test.getUri().toString());
-          }
-          else {
-            Log.d(U.TAG, "test uri: miss");
-          }*/
 
           mTrackStorage.setTargetPath(mSAFAppFolderUri);
           printStorageInfo();
           mV.adjustVisibility(mTrackListener.isOn());
-          /*
-          String myFileExt = "Text.txt";
-          String myMime = "text/plain";
-          String myExt = "txt";
-
-          try {
-            U.FileUtilsSAF.createIfMissingSAF(mMyFolderUri, myFileExt, myExt, getActivity());
-            U.FileUtilsSAF.filePutContentsSAF(mMyFolderUri, myFileExt, " + line\n", myMime, getActivity(),true);
-          } catch (U.FileException e) {
-            Log.e(U.TAG, "FileException:" + e.getMessage() + "\n" + e.getStackTrace());
-          } catch (IOException e) {
-            Log.e(U.TAG, "IOException:" + e.getMessage() + "\n" + e.getStackTrace());
-          }
-          Log.d(U.TAG, "onActivityResult: got " + requestCode + "/" + resultCode);
-           */
         }
       }
     }
@@ -386,18 +370,26 @@ public class MainActivity extends SingleFragmentActivity {
     private class DataWatcher implements Runnable {
       private Handler mWatchHandler=new Handler();
       private int mWatchIntervalMS=2000;
+      private long mWaitingS=0;
 
       @Override
       public void run() {
-        long waitingS=U.getTimeStamp() - mTrackListener.updateTime;
+        mWaitingS = U.getTimeStamp() - mTrackListener.updateTime;
         long prevUpdateIntervalS=mTrackListener.updateTime - mTrackListener.prevUpdateTime;
-        mV.row( mTrackListener.getCounter(), mTrackListener.getCounter2(), prevUpdateIntervalS, waitingS );
+        mV.row( mTrackListener.getCounter(), mTrackListener.getCounter2(), prevUpdateIntervalS, mWaitingS );
+        mV.alert(getState());
         //if (U.DEBUG) Log.i(U.TAG, "TrackActivity:"+"DataWatcher:"+"run()");
         mWatchHandler.postDelayed(this, mWatchIntervalMS);
       }
 
       public void stop() {
         mWatchHandler.removeCallbacks(this);
+      }
+
+      private String getState() {
+        if (mTrackListener.getCounter() == 0) return("STARTING UP");
+        if (mWaitingS > mRg.getInt("gpsTimeoutS")) return("LOST GPS SIGNAL");
+        return("RECORDING");
       }
     }
 
