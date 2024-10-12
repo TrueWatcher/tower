@@ -497,9 +497,10 @@ public abstract class U {
       return found;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
+    //@RequiresApi(api = Build.VERSION_CODES.Q)
     public static Intent makeIntentToRequestFolder(Context context, String startDir) {
       // https://stackoverflow.com/questions/67509218/how-can-i-set-the-action-open-document-tree-start-path-the-first-time-a-user-use
+      if (Build.VERSION.SDK_INT < 30) return null;
       StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
       Intent intent = sm.getPrimaryStorageVolume().createOpenDocumentTreeIntent();
       Uri uri = intent.getParcelableExtra("android.provider.extra.INITIAL_URI");
@@ -512,7 +513,19 @@ public abstract class U {
       //Log.d(U.TAG, "uri: " + uri.toString());
       return intent;
     }
-  }
+
+    public static void takeSAFFolderPermission(Intent resultData, Uri uri, Context context) {
+      final int takeFlags = resultData.getFlags()
+          & ( Intent.FLAG_GRANT_READ_URI_PERMISSION
+          | Intent.FLAG_GRANT_WRITE_URI_PERMISSION );
+      try {
+        context.getContentResolver().takePersistableUriPermission(uri, takeFlags);
+      } catch (Exception e) {
+        Log.e(U.TAG, "Something wrong with persistable permission:"
+            + e.getMessage() + "\n" + e.getStackTrace());
+      }
+    }
+  } // end FileUtilsSAF
 
   // creates a bundle from a map
   public static Bundle map2bundle(Map<String, String> args) {

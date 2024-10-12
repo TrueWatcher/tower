@@ -92,7 +92,7 @@ public class MyRegistry {
     String defs = "{\"gpsMinDistance\":\"8\",\"gpsMinDelayS\":\"5\",\"trackShouldWrite\":\"true\","
             + "\"gpsTimeoutS\":\"120\",\"gpsAcceptableAccuracy\":\"8\",\"useTowerFolder\":false\","
             + "\"useMediaFolder\":\"true\",\"useSAF\":\"true\",\"cellFilter\":\"0\",\"cellsRefreshS\":\"3\","
-            + "\"SAFRootFolderUri\":\"\",\"SAFAppFolderUri\":\"\""
+            + "\"SAFRootFolderUri\":\"\",\"SAFAppFolderUri\":\"\",\"askNotificationPermission\":\"true\""
             + "}";
     return defs;
   }

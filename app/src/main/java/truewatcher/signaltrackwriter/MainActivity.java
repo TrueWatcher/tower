@@ -26,7 +26,6 @@ import androidx.annotation.RequiresApi;
 import androidx.documentfile.provider.DocumentFile;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class MainActivity extends SingleFragmentActivity {
 
@@ -99,6 +98,7 @@ public class MainActivity extends SingleFragmentActivity {
     public void onResume() {
       super.onResume();
       if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume");
+
       boolean needsPermission = mRg.getBool("useTowerFolder") ||
           ( mRg.getBool("useMediaFolder") && ( Build.VERSION.SDK_INT < 30 ));
       if (needsPermission && ! checkStoragePermission()) {
@@ -106,33 +106,27 @@ public class MainActivity extends SingleFragmentActivity {
         askStoragePermission();
         return;
       }
+      boolean needsNotificationPermission = mRg.getBool("askNotificationPermission") &&
+          ( Build.VERSION.SDK_INT >= 33 );
+      if (needsNotificationPermission) {
+        mV.alert("No default notification permission, asking user");
+        askNotificationPermission();
+        return;
+      }
+
       if ( mRg.getBool("useSAF") && (Build.VERSION.SDK_INT >= 30)) {
         mSAFRootFolderUri = mRg.get("SAFRootFolderUri");
         mSAFAppFolderUri = mRg.get("SAFAppFolderUri");
         mAppFolderName = getActivity().getPackageName();
-        boolean foldersPresent = ! mSAFRootFolderUri.isEmpty() && ! mSAFAppFolderUri.isEmpty();
-        boolean access = false;
-        if (foldersPresent) {
-          try {
-            access = null != U.FileUtilsSAF.fileExistsSAF(mSAFRootFolderUri, mAppFolderName, getActivity());
-          } catch (U.FileException e) {
-            Log.e(U.TAG, "FileException:"+e.getMessage());
-          }
-          if (! access) {
-            Log.w(U.TAG, "SAF folder path is present, but does not work");
-            mSAFRootFolderUri = "";
-            mRg.set("SAFRootFolderUri","");
-            mRg.saveToShared(getActivity(),"SAFRootFolderUri");
-            stopAll();
-            mV.alert("File is not accessible. Restart the app");
-            return;
-          }
-          // fall through
+        int accessError = checkAccess();
+        if (accessError == 1) { // no folders
+          Intent it = U.FileUtilsSAF.makeIntentToRequestFolder(getActivity(), Environment.DIRECTORY_DOCUMENTS);
+          startActivityForResult(it, REQUEST_ACTION_OPEN_DOCUMENT_TREE);
+          return;
         }
-        if (! access) {
-          if (Build.VERSION.SDK_INT >= 29) { // to make lint happy
-            requestSAFFolder();
-          }
+        else if (accessError == 2) { // no access to stored folders
+          clearSAFPath();
+          mV.alert("File is not accessible. Restart the app");
           return;
         }
         mTrackStorage.setTargetPath(mSAFAppFolderUri); // fall through
@@ -146,6 +140,28 @@ public class MainActivity extends SingleFragmentActivity {
         if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume"+"restarting dataWatcher");
       }
       mV.adjustVisibility(mTrackListener.isOn());
+    }
+
+    private int checkAccess() {
+      boolean foldersPresent = ! mSAFRootFolderUri.isEmpty() && ! mSAFAppFolderUri.isEmpty();
+      if (! foldersPresent) return 1;
+      boolean accessible = false;
+      try {
+        accessible = null != U.FileUtilsSAF.fileExistsSAF(mSAFRootFolderUri, mAppFolderName, getActivity());
+      } catch (U.FileException e) {
+        Log.e(U.TAG, "FileException:"+e.getMessage());
+      }
+      if (! accessible) return 2;
+      return 0;
+    }
+
+    private void clearSAFPath() {
+      Log.w(U.TAG, "SAF folder path is present, but does not work");
+      mSAFRootFolderUri = "";
+      mRg.set("SAFRootFolderUri","");
+      mRg.saveToShared(getActivity(),"SAFRootFolderUri");
+      stopAll();
+      return;
     }
 
     public void printStorageInfo() {
@@ -168,57 +184,43 @@ public class MainActivity extends SingleFragmentActivity {
       }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    private void requestSAFFolder() {
-      Intent it = U.FileUtilsSAF.makeIntentToRequestFolder(getActivity(), Environment.DIRECTORY_DOCUMENTS);
-      startActivityForResult(it, REQUEST_ACTION_OPEN_DOCUMENT_TREE);
-    }
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
-      if (requestCode == REQUEST_ACTION_OPEN_DOCUMENT_TREE && resultCode == Activity.RESULT_OK) {
-        Uri uri = null;
-        if (resultData != null) {
-          uri = resultData.getData();
-          final int takeFlags = resultData.getFlags()
-              & (Intent.FLAG_GRANT_READ_URI_PERMISSION
-              | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-          try {
-            getActivity().getContentResolver().takePersistableUriPermission(uri, takeFlags);
-          } catch (Exception e) {
-            Log.e(U.TAG, "Something wrong with persistable permission:"
-                + e.getMessage() + "\n" + e.getStackTrace());
-          }
+      if (requestCode != REQUEST_ACTION_OPEN_DOCUMENT_TREE || resultCode != Activity.RESULT_OK) return;
+      if (resultData == null) return;
+      Uri uri = resultData.getData();
+      U.FileUtilsSAF.takeSAFFolderPermission(resultData, uri, getActivity());
+      mSAFAppFolderUri = makeSAFAppFolder(uri);
 
-          if (U.DEBUG) Log.d(U.TAG, "got uri: " + uri.toString() + ", path: " + uri.getPath());
-          // got uri: content://com.android.externalstorage.documents/tree/primary%3ADocuments
-          // /tree/primary:Documents
+      mTrackStorage.setTargetPath(mSAFAppFolderUri);
+      printStorageInfo();
+      mV.adjustVisibility(mTrackListener.isOn());
+    }
 
-          mSAFRootFolderUri = uri.toString();
-          DocumentFile appFolder = null;
-          try {
-            appFolder = U.FileUtilsSAF.createDirectoryIfMissingSAF(mSAFRootFolderUri, mAppFolderName, getActivity());
-          }
-          catch (U.FileException e) { //  | IOException
-            mV.alert("FileException: "+e.getMessage());
-            Log.e(U.TAG, "FileException: "+e.getMessage()+"\n"+e.getStackTrace());
-            return;
-          }
-
-          mSAFAppFolderUri = appFolder.getUri().toString();
-          // add to build.gradle: implementation 'androidx.documentfile:documentfile:1.0.1'
-          // https://stackoverflow.com/questions/62375696/unexpected-behavior-when-documentfile-fromtreeuri-is-called-on-uri-of-subdirec
-          //Log.d(U.TAG, "appFolder uri: " + appFolder.getUri().toString());
-          mRg.set("SAFRootFolderUri", mSAFRootFolderUri);
-          mRg.saveToShared(getActivity(),"SAFRootFolderUri");
-          mRg.set("SAFAppFolderUri", mSAFAppFolderUri);
-          mRg.saveToShared(getActivity(),"SAFAppFolderUri");
-
-          mTrackStorage.setTargetPath(mSAFAppFolderUri);
-          printStorageInfo();
-          mV.adjustVisibility(mTrackListener.isOn());
-        }
+    private String makeSAFAppFolder(Uri uri) {
+      if (U.DEBUG) Log.d(U.TAG, "got uri: " + uri.toString() + ", path: " + uri.getPath());
+      // got uri: content://com.android.externalstorage.documents/tree/primary%3ADocuments
+      // /tree/primary:Documents
+      mSAFRootFolderUri = uri.toString();
+      DocumentFile appFolder = null;
+      try {
+        appFolder = U.FileUtilsSAF.createDirectoryIfMissingSAF(mSAFRootFolderUri, mAppFolderName, getActivity());
       }
+      catch (U.FileException e) { //  | IOException
+        mV.alert("FileException: "+e.getMessage());
+        Log.e(U.TAG, "FileException: "+e.getMessage()+"\n"+e.getStackTrace());
+        return "";
+      }
+
+      mSAFAppFolderUri = appFolder.getUri().toString();
+      // add to build.gradle: implementation 'androidx.documentfile:documentfile:1.0.1'
+      // https://stackoverflow.com/questions/62375696/unexpected-behavior-when-documentfile-fromtreeuri-is-called-on-uri-of-subdirec
+      //Log.d(U.TAG, "appFolder uri: " + appFolder.getUri().toString());
+      mRg.set("SAFRootFolderUri", mSAFRootFolderUri);
+      mRg.saveToShared(getActivity(),"SAFRootFolderUri");
+      mRg.set("SAFAppFolderUri", mSAFAppFolderUri);
+      mRg.saveToShared(getActivity(),"SAFAppFolderUri");
+      return mSAFAppFolderUri;
     }
 
 
@@ -300,6 +302,10 @@ public class MainActivity extends SingleFragmentActivity {
       genericRequestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, 2, this);
     }
 
+    private void askNotificationPermission() {
+      genericRequestPermission(Manifest.permission.POST_NOTIFICATIONS, 3, this);
+    }
+
     @Override
     public void receivePermission(int reqCode, boolean isGranted) {
       if ( ! isGranted) {
@@ -313,6 +319,10 @@ public class MainActivity extends SingleFragmentActivity {
       else {
         if (U.DEBUG) Log.d(U.TAG,"permission granted");
         mV.alert("Permission granted, try to start again");
+      }
+      if (reqCode == 3) {  // POST_NOTIFICATIONS ; asked only on first run and not used inside the app
+        mRg.setBool("askNotificationPermission",false);
+        mRg.saveToShared(getActivity(), "askNotificationPermission");
       }
     }
 
