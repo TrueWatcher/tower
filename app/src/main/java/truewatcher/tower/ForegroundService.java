@@ -48,7 +48,11 @@ public class ForegroundService extends Service {
   private Notification getNotification() {
     String text="tracking is on";
     Intent intent = new Intent(this, MainActivity.class);
-    PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent contentIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT );
 
     NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
             .setContentTitle("Tower")

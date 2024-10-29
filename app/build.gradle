@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion '30.0.3'
+    compileSdkVersion 34
+    buildToolsVersion '35.0.0'
 
     defaultConfig {
         applicationId "truewatcher.tower"
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 33
     }
 
     buildTypes {
@@ -23,6 +23,11 @@ android {
             // optimise more agressively
             //proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.txt'
         }
+    }
+    namespace 'truewatcher.tower'
+    buildToolsVersion '35.0.0'
+    buildFeatures {
+        buildConfig true
     }
 }
 
