@@ -271,12 +271,15 @@ public abstract class U {
   }
 
   // checks if a file exists
+  public static File fileExists(String path, String nameExt) {
+    File file = new File(path, nameExt);
+    if (file.exists()) return file;
+    return null;
+  }
   public static File fileExists(String path, String name, String ext) {
     String ne = U.assureExtension(name, ext);
     //Log.d(U.TAG,"U_fileExists:","FILENAME="+ne);
-    File file = new File(path, ne);
-    if (file.exists()) return file;
-    return null;
+    return fileExists(path, ne);
   }
 
   // reads a whole directory

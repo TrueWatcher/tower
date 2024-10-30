@@ -14,17 +14,17 @@ import android.util.Log;
 public class MyRegistry {
 	private static MyRegistry sMe;
 	private static Map<String,String> sMap;
-	
+
 	public static void initMap() throws JSONException {
 	  String d=getDefaultsString();
     Map<String,String> defaults=JsonHelper.toMapSS(new JSONObject(d));
 	  sMap=new HashMap<String,String>(defaults);
 	}
-	
+
 	public static String toJson() {
 	  return JsonHelper.MapssToJSONString(sMap);
 	}
-	
+
 	public static MyRegistry getInstance() {
 		if(sMe == null) {
 		  sMe=new MyRegistry();
@@ -37,22 +37,22 @@ public class MyRegistry {
 		}
 		return sMe;
 	}
-  
+
   public String get(String key) {
     if ( ! sMap.keySet().contains(key)) throw new U.RunException("Unknown key="+key);
-    return sMap.get(key); 
+    return sMap.get(key);
   }
-  
+
   public int getInt(String key) {
     if ( ! sMap.keySet().contains(key)) throw new U.RunException("Unknown key="+key);
-    return Integer.parseInt(sMap.get(key));     
+    return Integer.parseInt(sMap.get(key));
   }
-  
+
   public boolean getBool(String key) {
     if ( ! sMap.keySet().contains(key)) throw new U.RunException("Unknown key="+key);
-    return Boolean.parseBoolean(sMap.get(key));     
+    return Boolean.parseBoolean(sMap.get(key));
   }
-  
+
   public String getScrambled(String key) {
     int[] transpose={2,3,5,6,8,9,13,19,25,31};
     char[] ca=sMap.get(key).trim().toCharArray();
@@ -72,48 +72,49 @@ public class MyRegistry {
     }
     return new String(ca);
   }
-  
+
   public void set(String key, String val) {
     if ( ! sMap.keySet().contains(key)) throw new U.RunException("Unknown key="+key);
-    sMap.put(key,val); 
+    sMap.put(key,val);
   }
-  
+
   public void set(String key, boolean val) {
     if ( ! sMap.keySet().contains(key)) throw new U.RunException("Unknown key="+key);
-    sMap.put(key, String.valueOf(val)); 
+    sMap.put(key, String.valueOf(val));
   }
-  
+
   public void set(String key, int val) {
     if ( ! sMap.keySet().contains(key)) throw new U.RunException("Unknown key="+key);
-    sMap.put(key, String.valueOf(val)); 
+    sMap.put(key, String.valueOf(val));
   }
-  
+
   public void set(String key, Object val) {
     if ( ! sMap.keySet().contains(key)) throw new U.RunException("Unknown key="+key);
-    sMap.put(key,val.toString()); 
+    sMap.put(key,val.toString());
   }
-  
+
   public void setInt(String key, int val) {
     if ( ! sMap.keySet().contains(key)) throw new U.RunException("Unknown key="+key);
-    sMap.put(key, String.valueOf(val)); 
+    sMap.put(key, String.valueOf(val));
   }
-    
+
   public void setBool(String key, boolean val) {
     if ( ! sMap.keySet().contains(key)) throw new U.RunException("Unknown key="+key);
-    sMap.put(key, String.valueOf(val)); 
+    sMap.put(key, String.valueOf(val));
   }
-  
+
   public boolean keyExists(String key) {
     return sMap.keySet().contains(key);
   }
-  
+
   private static String getDefaultsString() {
     String defs="{\"cellResolver\":\"none\",\"mapProvider\":\"osm map\",\"mapZoom\":\"17\",\"maxPoints\":\"30\","
     + "\"useTrash\":\"false\",\"gpsAcceptableAccuracy\":\"8\",\"gpsMaxFixCount\":\"10\","
-    + "\"myFile\":\"current.csv\","    
+    + "\"myFile\":\"current.csv\","
     + "\"yandexMapKey\":\"\", \"yandexLocatorKey\":\"\", \"isKeylessDistro\":\"false\","
-    + "\"gpsMinDistance\":\"12\",\"gpsMinDelayS\":\"10\",\"gpsTimeoutS\":\"120\","
-    + "\"enableTrack\":\"true\",\"shouldCenterMapOnTrack\":\"true\",\"useTowerFolder\":\"false\""
+    + "\"gpsMinDistance\":\"12\", \"gpsMinDelayS\":\"10\", \"gpsTimeoutS\":\"120\","
+    + "\"enableTrack\":\"true\", \"shouldCenterMapOnTrack\":\"true\", \"useTowerFolder\":\"false\","
+    +  "\"useMediaFolder\":\"true\", \"askNotificationPermission\":\"true\""
     + "}";
     return defs;
   }
@@ -122,7 +123,7 @@ public class MyRegistry {
           "mapZoom", "maxPoints", "gpsMinDistance", "gpsMinDelayS"} ;
 
   public static final String[] APIS = new String[] { "yandexMapKey","yandexLocatorKey" };
-  
+
   public void readFromShared(Context context) {
     String k;
     String v;
@@ -133,14 +134,14 @@ public class MyRegistry {
         v=String.valueOf(prefs.getAll().get(k));
         this.set(k, U.enforceInt(MyRegistry.INT_KEYS, k, v));
       }
-    }    
+    }
   }
-  
+
   public void saveToShared(Context context, String key) {
     if ( ! sMap.keySet().contains(key)) throw new U.RunException("Unknown key="+key);
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
     SharedPreferences.Editor editor = prefs.edit();
-    editor.putString(key, sMap.get(key)).commit();          
+    editor.putString(key, sMap.get(key)).commit();
   }
 
   private void syncSecret(Context context, String key, String assetFileName) {

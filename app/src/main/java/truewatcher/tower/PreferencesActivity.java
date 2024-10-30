@@ -47,7 +47,7 @@ public class PreferencesActivity extends AppCompatActivity {
     }
     return super.onOptionsItemSelected(item);
   }
-  
+
   public static class PreferencesFragment extends PreferenceFragmentCompat
           implements OnSharedPreferenceChangeListener {
 
@@ -75,7 +75,7 @@ public class PreferencesActivity extends AppCompatActivity {
       getPreferenceScreen().getSharedPreferences()
               .unregisterOnSharedPreferenceChangeListener(this);
     }
-    
+
     private void adjustPrefsScreen() {
       String key;
       pAlert=getPreferenceManager().findPreference("pAlert");
@@ -84,6 +84,7 @@ public class PreferencesActivity extends AppCompatActivity {
       prepareListPreference("cellResolver");
       prepareEditTextPref("mapZoom");
       prepareEditTextPref("maxPoints");
+      prepareSwitchPref("useMediaFolder");
       prepareSwitchPref("useTrash");
       prepareSwitchPref("enableTrack");
       prepareSwitchPref("shouldCenterMapOnTrack");
@@ -123,7 +124,7 @@ public class PreferencesActivity extends AppCompatActivity {
       swp.setChecked(mRegistry.getBool(key));
       return swp;
     }
-    
+
     public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
       if ( ! mRegistry.keyExists(key)) {
         Log.e(U.TAG, "PreferencesFragment:"+"Unknown key:"+key+"!");
@@ -153,7 +154,7 @@ public class PreferencesActivity extends AppCompatActivity {
       if (U.DEBUG) Log.i(U.TAG, "PreferencesFragment:"+"Preference "+key+" set to "+mRegistry.get(key));
       // update the value on the settings screen
       if (null != getPreferenceManager().findPreference(key)) {
-      // some prefs are not on the screen  
+      // some prefs are not on the screen
         getPreferenceManager().findPreference(key).setSummary(mRegistry.get(key));
       }
       adjustApiKey(key);

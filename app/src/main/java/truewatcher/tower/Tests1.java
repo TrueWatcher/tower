@@ -16,13 +16,13 @@ import truewatcher.tower.TestHelper.TestFailure;
 
 public class Tests1 extends SingleFragmentActivity {
 // adb shell am start -n truewatcher.tower/truewatcher.tower.Tests1
-  
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
   }
-  
-  @TargetApi(23) 
+
+  @TargetApi(23)
   public static class Tests1Fragment extends Fragment {
     private TextView TvA;
     private TestHelper th=TestHelper.getInstance(null);
@@ -32,13 +32,13 @@ public class Tests1 extends SingleFragmentActivity {
     private TrackStorage mTs;
     private GpxHelper mGh;
     private String mGpxBuffer;
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
       Log.i(U.TAG,"Tests1Fragment:onCreate");
     }
-    
+
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
       Log.i(U.TAG,"mainFragment:onCreateView");
@@ -50,7 +50,7 @@ public class Tests1 extends SingleFragmentActivity {
       th.printlnln("Running Tests1...");
       return v;
     }
-    
+
     @Override
     public void onResume() {
       super.onResume();
@@ -69,7 +69,7 @@ public class Tests1 extends SingleFragmentActivity {
         testListRotation();
         testSavedFiles();
         testSavedFiles2();
-        
+
         th.printlnln("Tests1 completed SUCCESSFULLY");
       }
       catch (TestHelper.TestFailure e) {
@@ -88,7 +88,7 @@ public class Tests1 extends SingleFragmentActivity {
         th.println(e.getMessage());
       }
     }// end onResume
-    
+
     private void testAssertions() throws TestFailure {
       th.printlnln("Testing assertion utilities -----");
       th.assertTrue(true, "assertTrue failed", "check assertTrue true");
@@ -106,7 +106,7 @@ public class Tests1 extends SingleFragmentActivity {
       th.assertNotContains("йценг", "йцукенг", "assertNotContains failed", "check assertNotContains");
       //th.assertNotContains("енг", "йцукенг", "assertNotContains got inclusion", "assertNotContains should fail here");
     }
-    
+
     private void testFileUtilities() throws TestFailure, IOException, U.FileException {
       th.printlnln("Testing file utilities -----");
       String testName0="test_".concat(Point.getDate());
@@ -119,7 +119,7 @@ public class Tests1 extends SingleFragmentActivity {
       th.assertEquals(testName,withExt2,"Wrong extension append","Extension added");
       String withExt3=U.assureExtension(testName0+".txt", extDat);
       th.assertEquals(testName,withExt3,"Wrong extension overwrite","Extension enforced");
-      
+
       File exists0=U.fileExists(mPath, testName, extDat);
       th.assertTrue(null == exists0,"The target file already exists somehow","File "+testName+" is new, writing...");
       U.filePutContents(mPath, testName, testString, false);
@@ -132,13 +132,13 @@ public class Tests1 extends SingleFragmentActivity {
       th.assertTrue(U.arrayContains(dirDat,testName), "Missing test dat file from filtered directory","The test dat is visible");
       String readBack=U.fileGetContents(mPath, testName);
       th.assertEquals(testString, readBack, "Wrong readBack", "Contents Ok");
- 
+
       String append="append_довесок";
       //String testStringPlus = testString.concat(append);
       U.filePutContents(mPath, testName, append, true);
       String readBack2=U.fileGetContents(mPath, testName);
       th.assertEquals(testString.concat(append), readBack2, "Wrong readBack after append", "Append Ok");
-      
+
       U.Summary isRemoved=U.unlink(mPath, testName);
       th.assertEquals("deleted", isRemoved.act, "Wrong unlink result", "Unlink: deleted");
       th.assertEquals(testName, isRemoved.fileName, "Wrong unlink fileName", "Unlink: fileName Ok");
@@ -165,9 +165,9 @@ public class Tests1 extends SingleFragmentActivity {
       th.println("123456>"+ListHelper.proximityToKm(123456));
       th.println("1234567>"+ListHelper.proximityToKm(1234567));
     }
-    
+
     private String getTestCsv1() { return getTestCsv1(-1); }
-    
+
     private String getTestCsv1(int i) {
       String NL="\n";
       String[] lines=new String[4];
@@ -179,7 +179,7 @@ public class Tests1 extends SingleFragmentActivity {
       String all=TextUtils.join(NL,lines)+NL;
       return all;
     }
-    
+
     private String getTestCsv2(int i) {
       String[] lines=new String[4];
       lines[0]="id;type;comment;protect;lat;lon;alt;range;time;cellData;note;sym";
@@ -189,7 +189,7 @@ public class Tests1 extends SingleFragmentActivity {
       if (i >= 0 && i < lines.length) return lines[i];
       return "";
     }
-    
+
     private String getTestCsv3(int i) {
       String NL="\n";
       String[] lines=new String[2];
@@ -199,7 +199,7 @@ public class Tests1 extends SingleFragmentActivity {
       String all=TextUtils.join(NL,lines)+NL;
       return all;
     }
-    
+
     private PointList testCsvImport() throws IOException, TestFailure, U.DataException, U.FileException {
       th.printlnln("Testing basic csv import -----");
       String extCsv="csv";
@@ -209,8 +209,9 @@ public class Tests1 extends SingleFragmentActivity {
       String headerLine=TextUtils.join(Point.SEP, Point.FIELDS)+Point.NL;
       th.print("Checking the csv header: ");
       th.csvLineDiff(headerLine, getTestCsv1(0), Point.SEP);
-      
-      mSh.init(getActivity(), testNameCsv);
+
+      //mSh.init(getActivity(), testNameCsv);
+      mSh.init(mPath, testNameCsv);
       int maxPointCount=3;
       mPl=new PointList(maxPointCount, mSh);
       String[] dir=U.getCatalog(mSh.getMyDir(), extCsv);
@@ -219,7 +220,7 @@ public class Tests1 extends SingleFragmentActivity {
       int tryCount=mSh.getPointCount(testNameCsv);
       //th.println("found points:"+tryCount);
       th.assertEquals(3, tryCount, "Wrong point count of the test csv", "Point count Ok ("+tryCount+")");
-      
+
       U.Summary loaded=mPl.load();
       th.assertEquals(tryCount, loaded.adopted, "Wrong loaded point count",
               "Loaded point count Ok (".concat(String.valueOf(loaded.adopted)).concat(")"));
@@ -240,13 +241,13 @@ public class Tests1 extends SingleFragmentActivity {
       th.assertEquals("gps", p8.getType(), "Wrong point 8 type", "Point 8:"+p8.getType());
       th.assertEquals("G8", p8.getComment(), "Wrong point 8 name", "Point 8:"+p8.getComment());
       th.assertEquals("202.3", p8.alt, "Wrong point 8 altitude", "ALT present");
-      
+
       U.Summary isRemoved=U.unlink(mPath, testNameCsv);
       th.assertEquals("deleted", isRemoved.act, "Wrong unlink result", "Unlink: deleted");
       th.assertEquals(testNameCsv, isRemoved.fileName, "Wrong unlink fileName", "Unlink: "+testNameCsv+" Ok");
       return mPl;
     }
-    
+
     private void testDistances() throws TestFailure, U.DataException {
       th.printlnln("Testing distances and findNearest -----");
       Point p1=mPl.getById(1);
@@ -439,7 +440,7 @@ public class Tests1 extends SingleFragmentActivity {
 
 
     }
-    
+
     private void testCsvExport() throws TestFailure {
       th.printlnln("Testing conversion back to csv -----");
       Point p1=mPl.getById(1);
@@ -452,10 +453,10 @@ public class Tests1 extends SingleFragmentActivity {
       th.print("8: ");
       th.csvLineDiff(getTestCsv1(3), p8.toCsv(), Point.SEP);
     }
-    
+
     private void testGpxConversions() throws U.DataException, TestFailure, IOException {
       th.printlnln("Testing basic GPX conversions -----");
-      GpxHelper gh=new GpxHelper();        
+      GpxHelper gh=new GpxHelper();
       String gpx=gh.csv2gpx(getTestCsv1());
       th.assertEquals(3, gh.mCount, "Wrong export point count", "Point count Ok ("+gh.mCount+")");
       Point p1=mPl.getById(1);
@@ -465,7 +466,7 @@ public class Tests1 extends SingleFragmentActivity {
       th.assertContains(p2.getComment(), gpx, "Missing point 2 name", "Point 2:"+p2.getComment());
       th.assertContains(p8.getComment(), gpx, "Missing point 8 name", "Point 8:"+p8.getComment());
       mGpxBuffer=gpx;
-      
+
       String csv=gh.gpx2csv(gpx);
       //th.assertContains(p1.getComment(), csv, "Missing point 1 name", "Point 1:"+p1.getComment());
       //th.assertContains(p2.getComment(), csv, "Missing point 2 name", "Point 2:"+p2.getComment());
@@ -481,7 +482,7 @@ public class Tests1 extends SingleFragmentActivity {
       th.print("8: ");
       th.csvLineDiff(getTestCsv1(3), csvLines[3], Point.SEP);
     }
-    
+
     private void testListRotation() throws U.DataException, TestFailure, IOException {
       th.printlnln("Testing list rotation -----");
       String trashFile="trash.csv";
@@ -495,7 +496,7 @@ public class Tests1 extends SingleFragmentActivity {
               "Point list Ok: 1 2 8");
       th.assertTrue( ! mPl.isDirty(), "DIRTY is set", "DIRTY is false");
       int sizeBeforeAdd=mPl.getSize();
-      
+
       th.println("Adding over an unprotected point, expecting replacement");
       Point edge1=mPl.getEdge();
       int eid1=mPl.getEdge().getId();
@@ -512,7 +513,7 @@ public class Tests1 extends SingleFragmentActivity {
               "Edge point removed");
       th.assertEqualsList(Arrays.asList("2","8","9"), mPl.getIndices(), "Wrong index list",
               "Removed #1, added #9");
-      
+
       th.println("Adding over a protected point, expecting replacement of another unprotected");
       Point edge2=mPl.getEdge();// #2 is protected, next is #8
       int eid2=mPl.getEdge().getId();
@@ -521,7 +522,7 @@ public class Tests1 extends SingleFragmentActivity {
       mPl.addAndShiftNext(p11);
       th.assertEqualsList(Arrays.asList("2","9","11"), mPl.getIndices(), "Wrong index list",
               "Removed #8, added #11");
-      
+
       th.println("Adding over all protected points, expecting exception");
       th.assertTrue( ! p11.isProtected(), "Point is wrongly protected",
               "Point "+p11.getId()+" is not protected");
@@ -535,7 +536,7 @@ public class Tests1 extends SingleFragmentActivity {
               "Exception on all protected");
       th.assertEqualsList(Arrays.asList("2","9","11"), mPl.getIndices(), "Wrong index list",
               "Point list unchanged");
-      
+
       th.println("Unprotecting one point and adding over it");
       mPl.getById(2).unprotect();
       th.assertTrue( ! mPl.getById(2).isProtected(), "Point is not set unprotected",
@@ -547,12 +548,12 @@ public class Tests1 extends SingleFragmentActivity {
               "Added #12, removed #2");
       th.assertEquals("МосВок",mPl.getById(12).getComment(),"Wrong added COMMENT",
               "Added:"+mPl.getById(12).getComment());
-      
+
       th.println("Trying to low-level remove a protected point, expecting failure");
       mPl.moveUnprotectedToTrash(11);// it is protected
       th.assertEqualsList(Arrays.asList("9","11","12"), mPl.getIndices(), "Wrong index list",
               "Protected point not removed");
-      
+
       th.println("Renumber points from 1");
       mPl.renumber();
       th.assertEqualsList(Arrays.asList("1","2","3"), mPl.getIndices(), "Wrong index list",
@@ -560,7 +561,7 @@ public class Tests1 extends SingleFragmentActivity {
       th.assertEquals("МосВок",mPl.getById(3).getComment(),"Wrong added COMMENT",
               "Name is same after renumbering");
     }
-    
+
     private void testSavedFiles()
         throws TestFailure, IOException, U.DataException, U.FileException {
       th.printlnln("Testing saved points and trash -----");
@@ -568,7 +569,7 @@ public class Tests1 extends SingleFragmentActivity {
       th.assertTrue( ! mPl.isDirty(), "DIRTY is set", "DIRTY is cleared on save");
       th.assertEqualsList(Arrays.asList("1","2","3"), mPl.getIndices(), "Wrong index list",
               "Point list Ok");
-      
+
       th.println("Trying to open csv with more than MAXCOUNT lines, expecting exception");
       int maxPointCount=2;// deliberately too small
       PointList newPl=new PointList(maxPointCount, mSh);
@@ -576,7 +577,7 @@ public class Tests1 extends SingleFragmentActivity {
       try { U.Summary loaded0=newPl.load(); } catch (U.DataException e) { exceptionThrown=e.getMessage(); }
       th.assertContains("Set max point count",exceptionThrown,"No or wrong exception on too large csv file",
               "Exception on too large csv Ok");
-      
+
       th.println("Load into a fresh PointList and verify");
       newPl.adoptMax(mPl.getSize());
       newPl.load();
@@ -588,10 +589,10 @@ public class Tests1 extends SingleFragmentActivity {
       th.csvLineDiff(getTestCsv2(2), newPl.getById(2).toCsv(), Point.SEP);
       th.print(newPl.getById(3).getComment()+" : ");
       th.csvLineDiff(getTestCsv2(3), newPl.getById(3).toCsv(), Point.SEP);
-      
+
       String testNameCsv=mSh.getMyFile();
       U.unlink(mPath, testNameCsv);
-      
+
       th.println("Open the trash and verify");
       newPl.forceNotUseTrash();
       mSh.trySetMyFile("trash.csv");
@@ -603,10 +604,10 @@ public class Tests1 extends SingleFragmentActivity {
       th.print(newPl.getById(8).getComment()+" : ");
       th.csvLineDiff(getTestCsv1(3), newPl.getById(8).toCsv(), Point.SEP);
       th.print(newPl.getById(9).getComment()+" : ");
-      th.csvLineDiff(getTestCsv1(2), newPl.getById(9).toCsv(), Point.SEP);      
+      th.csvLineDiff(getTestCsv1(2), newPl.getById(9).toCsv(), Point.SEP);
       U.unlink(mPath, "trash.csv");
     }
-    
+
     private void testSavedFiles2()
         throws TestFailure, IOException, U.DataException, U.FileException {
       th.printlnln("Testing more list operations -----");
@@ -614,7 +615,7 @@ public class Tests1 extends SingleFragmentActivity {
       String testName2="test2_".concat(Point.getDate());
       String testName2Csv=testName2+"."+extCsv;
       U.filePutContents(mPath, testName2Csv, getTestCsv3(-1), false);
-      
+
       th.println("Protecting a point, expecting it to be removed anyway on File-open");
       mPl.getById(2).protect();
       th.assertTrue(mPl.getById(2).isProtected(), "Failed to protect point","Point protected");
@@ -630,7 +631,7 @@ public class Tests1 extends SingleFragmentActivity {
       String next=mPl.getNextS();
       th.assertEquals("2", next, "Wrong NEXT="+next, "NEXT is Ok:"+next);
       U.unlink(mPath, testName2Csv);
-      
+
       th.println("Testing GPX import");
       th.assertTrue(null != mGpxBuffer,"No GPX string, make sure testGpxConversions was run",
               "Preparing GPX");
@@ -638,7 +639,7 @@ public class Tests1 extends SingleFragmentActivity {
       String testName2Gpx=testName2+"."+extGpx;
       U.filePutContents(mPath, testName2Gpx, mGpxBuffer, false);
       mPl.adoptMax(5);
-      U.Summary imported=mSh.readPoints(mPl, testName2Gpx, mPl.getSize(), "gpx");      
+      U.Summary imported=mSh.readPoints(mPl, testName2Gpx, mPl.getSize(), "gpx");
       th.assertEquals(3, imported.adopted, "Gpx import failed",
               "Imported "+imported.adopted+" points from GPX");
       th.assertEqualsList(Arrays.asList("1","2","3","8"), mPl.getIndices(), "Wrong index list",
@@ -646,7 +647,7 @@ public class Tests1 extends SingleFragmentActivity {
       next=mPl.getNextS();
       th.assertEquals("9", next, "Wrong NEXT="+next, "NEXT is Ok:"+next);
       th.assertTrue(null == mPl.getEdge(), "Non-empty EDGE", "EDGE is null");
-      
+
       th.println("Testing repeated GPX import, expecting exception");
       String exceptionThrown="";
       try { U.Summary imported2=mSh.readPoints(mPl, testName2Gpx, mPl.getSize(), "gpx"); }
@@ -654,7 +655,7 @@ public class Tests1 extends SingleFragmentActivity {
       th.assertContains("Set max point count",exceptionThrown,"No or wrong exception on too large GPX file",
           "Exception on too large GPX file");
       U.unlink(mPath, testName2Gpx);
-      
+
       th.println("Testing partial CSV import");
       String testName3="test3_".concat(Point.getDate());
       String testName3Csv=testName3+"."+extCsv;
@@ -670,10 +671,10 @@ public class Tests1 extends SingleFragmentActivity {
       th.csvLineDiff(lines[1], getTestCsv1(1), Point.SEP);
       th.print(mPl.getById(3).getComment()+" : ");
       th.csvLineDiff(lines[2], getTestCsv1(2), Point.SEP);
-    }  
-    
+    }
+
   }// end Tests1
-  
+
   @Override
   protected android.support.v4.app.Fragment createFragment() { return new Tests1Fragment(); }
 

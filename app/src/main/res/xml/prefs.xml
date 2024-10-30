@@ -33,6 +33,10 @@
       app:title="@string/chooseMaxPoints" />
 
   <SwitchPreferenceCompat
+      app:key="useMediaFolder"
+      app:title="@string/useMediaFolder" />
+
+  <SwitchPreferenceCompat
       app:key="useTrash"
       app:title="@string/useTrash" />
 

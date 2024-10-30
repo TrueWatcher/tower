@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    android:versionCode="76"
-    android:versionName="2.10.6" >
+    android:versionCode="77"
+    android:versionName="2.10.1" >
 <!--
 2.8.0  65 16.11.2020 updated WebMaps, track-delete bug fix
 2.8.1  66 24.11.2020 updated metadata
@@ -15,6 +15,7 @@
 2.9.5  74 12.12.2023  adapted to Android 11
 2.9.6  75 14.12.2023  refactored CellInformer
 2.10.0 76 29.10.2024  gradle -> 8.9, AGP -> 8.7.1, BuildSDK -> 33
+2.10.1 77 31.10.2024  useMediaFolder, other improvements from stw 2.7.2
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -25,6 +26,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature android:name="android.hardware.location.gps" />
 

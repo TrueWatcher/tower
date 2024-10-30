@@ -86,24 +86,34 @@ public class TrackActivity extends SingleFragmentActivity {
     public void onResume() {
       super.onResume();
       if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume");
-      if (mRg.getBool("useTowerFolder") && ! checkStoragePermission()) {
+
+      boolean needsStoragePermission = ( mRg.getBool("useMediaFolder") && ( Build.VERSION.SDK_INT < 30 ));
+      if (needsStoragePermission && ! checkStoragePermission()) {
         mV.alert("No storage permission, asking user");
         askStoragePermission();
         return;
       }
-      if (mTrackListener.isOn()) {
-        mDataWatcher.run();
-        if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume"+"restarting dataWatcher");
+      boolean needsNotificationPermission = mRg.getBool("askNotificationPermission") &&
+              ( Build.VERSION.SDK_INT >= 33 );
+      if (needsNotificationPermission) {
+        mV.alert("No default notification permission, asking user");
+        askNotificationPermission();
+        return;
+      }
+
+      if (! mTrackListener.isOn()) {
+        printStorageInfo();
       }
       else {
-        printStorageInfo();
+        mDataWatcher.run();
+        if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume"+"restarting dataWatcher");
       }
       mV.adjustVisibility(mTrackListener.isOn());
     }
 
     public void printStorageInfo() {
       try {
-        mTrackStorage.initTargetDir(getActivity());
+        //mTrackStorage.initTargetDir(getActivity()); Already initialized in Model.;padData
         mV.alert("IDLE");
         mV.displayStorageStat(mTrackStorage.statStored());
       }
@@ -198,19 +208,27 @@ public class TrackActivity extends SingleFragmentActivity {
       genericRequestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, 2, this);
     }
 
+    private void askNotificationPermission() {
+      genericRequestPermission(Manifest.permission.POST_NOTIFICATIONS, 3, this);
+    }
+
     @Override
     public void receivePermission(int reqCode, boolean isGranted) {
       if ( ! isGranted) {
-        if (U.DEBUG) Log.d(U.TAG, "permission denied");
-        if (reqCode == 2) {
-          mRg.setBool("useTowerFolder",false);
-          mRg.saveToShared(getActivity(), "useTowerFolder");
+        if (U.DEBUG) Log.d(U.TAG, "permission denied for code ="+reqCode);
+        if (reqCode == 2) { // STORAGE for older OS
+          mRg.setBool("useMediaFolder",false);
+          mRg.saveToShared(getActivity(), "useMediaFolder");
           mV.alert("Permission denied, falling back to native folder");
         }
       }
       else {
         if (U.DEBUG) Log.d(U.TAG,"permission granted");
         mV.alert("Permission granted, try to start again");
+      }
+      if (reqCode == 3) {  // POST_NOTIFICATIONS ; asked only on first run and not used inside the app
+        mRg.setBool("askNotificationPermission",false);
+        mRg.saveToShared(getActivity(), "askNotificationPermission");
       }
     }
 
@@ -288,18 +306,26 @@ public class TrackActivity extends SingleFragmentActivity {
     private class DataWatcher implements Runnable {
       private Handler mWatchHandler=new Handler();
       private int mWatchIntervalMS=2000;
+      private long mWaitingS=0;
 
       @Override
       public void run() {
-        long waitingS=U.getTimeStamp() - mTrackListener.updateTime;
+        mWaitingS = U.getTimeStamp() - mTrackListener.updateTime;
         long prevUpdateIntervalS=mTrackListener.updateTime - mTrackListener.prevUpdateTime;
-        mV.row( mTrackListener.getCounter(), prevUpdateIntervalS, waitingS );
+        mV.row( mTrackListener.getCounter(), prevUpdateIntervalS, mWaitingS );
+        mV.alert(getState());
         //if (U.DEBUG) Log.i(U.TAG, "TrackActivity:"+"DataWatcher:"+"run()");
         mWatchHandler.postDelayed(this, mWatchIntervalMS);
       }
 
       public void stop() {
         mWatchHandler.removeCallbacks(this);
+      }
+
+      private String getState() {
+        if (mTrackListener.getCounter() == 0) return("STARTING UP");
+        if (mWaitingS > mRg.getInt("gpsTimeoutS")) return("LOST GPS SIGNAL");
+        return("RECORDING");
       }
     }
 

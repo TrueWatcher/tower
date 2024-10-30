@@ -1,7 +1,12 @@
 package truewatcher.tower;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.RequiresApi;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -38,7 +43,7 @@ public class MainActivity extends SingleFragmentActivity {
   }
 
   public static class MainPageFragment extends PermissionAwareFragment
-          implements TrackListener.TrackPointListener {
+          implements TrackListener.TrackPointListener,PermissionReceiver {
     private MyRegistry mRegistry=MyRegistry.getInstance();
     private MapViewer mMapViewer;
     private Model mModel = Model.getInstance();
@@ -50,6 +55,7 @@ public class MainActivity extends SingleFragmentActivity {
     private TrackListener mTrackListener = mModel.getTrackListener();
     private U.Summary[] mReadData=null;
 
+    @SuppressLint("NewApi")
     @Override
     public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
@@ -61,9 +67,63 @@ public class MainActivity extends SingleFragmentActivity {
 
       mRegistry.readFromShared(getActivity());
       mRegistry.syncSecrets(getActivity());
-      mReadData=mModel.loadData(this.getActivity(), mRegistry);
       mCellPointFetcher.setFragment(this);
       mGpsPointFetcher.setFragment(this);
+      boolean needsStoragePermission = ( mRegistry.getBool("useMediaFolder") && ( Build.VERSION.SDK_INT < 30 ));
+      if (needsStoragePermission && ! checkStoragePermission()) {
+        //mV.alert("No storage permission, asking user");
+        askStoragePermission();
+        return;
+      }
+      /*if (! checkLocationPermission()) {
+        askLocationPermission();
+        return;
+      }*/
+      mReadData = mModel.loadData(this.getActivity(), mRegistry);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private boolean checkStoragePermission() {
+      int cl = getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+      if (U.DEBUG) Log.d(U.TAG,"cl="+cl+"/"+ PackageManager.PERMISSION_GRANTED);
+      return (cl == PackageManager.PERMISSION_GRANTED);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private boolean checkLocationPermission() {
+      int cl = getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION);
+      if (U.DEBUG) Log.d(U.TAG,"cl="+cl+"/"+PackageManager.PERMISSION_GRANTED);
+      return (cl == PackageManager.PERMISSION_GRANTED);
+    }
+
+    private void askStoragePermission() {
+      genericRequestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, 2, this);
+    }
+
+    private void askLocationPermission() {
+      genericRequestPermission(Manifest.permission.ACCESS_FINE_LOCATION, 1, this);
+    }
+
+    @Override
+    public void receivePermission(int reqCode, boolean isGranted) {
+      if ( ! isGranted) {
+        if (U.DEBUG) Log.d(U.TAG, "permission denied for code ="+reqCode);
+        if (reqCode == 2) { // STORAGE for older OS
+          mRegistry.setBool("useMediaFolder",false);
+          mRegistry.saveToShared(getActivity(), "useMediaFolder");
+          //mV.alert("Permission denied, falling back to native folder");
+        }
+      }
+      else {
+        if (U.DEBUG) Log.d(U.TAG,"permission granted for code ="+reqCode);
+        //mV.alert("Permission granted, try to start again");
+      }
+      if (reqCode == 3) {  // POST_NOTIFICATIONS ; asked only on first run and not used inside the app
+        mRegistry.setBool("askNotificationPermission",false);
+        mRegistry.saveToShared(getActivity(), "askNotificationPermission");
+      }
+
+      mReadData = mModel.loadData(this.getActivity(), mRegistry);
     }
 
     @Override
@@ -162,7 +222,7 @@ public class MainActivity extends SingleFragmentActivity {
       if (mModel.getJSbridge().hasNoCenter() && mRegistry.noAnyKeys()) {
         mMapViewer.addProgress(getString(R.string.keyless_warning),"\n");
       }
-      if (mReadData != null && mReadData[0] != null) {
+      if (mReadData != null && mReadData[0] != null && mReadData[0].found > 0 ) {
         String points="%s %d points (of %s) from %s";
         mMapViewer.addProgress(String.format(points,
                 mReadData[0].act,mReadData[0].adopted,mReadData[0].found,mReadData[0].fileName

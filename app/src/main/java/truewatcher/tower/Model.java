@@ -46,11 +46,12 @@ public class Model {
     if ( ! mIsFresh) return null;
     try {
       mPointList.adoptMax(mrg.getInt("maxPoints"));
-      mStorageHelper.init(context, mrg.get("myFile"));
+      String targetPath = mStorageHelper.getWorkingFolder(context, mrg);
+      mStorageHelper.init(targetPath, mrg.get("myFile"));
       res[0]=mPointList.load();
       if (U.DEBUG) Log.d(U.TAG,"MainPageFragment:"+ "Loaded "+res[0].adopted+" points");
 
-      mTrackStorage.initTargetDir(context);
+      mTrackStorage.initTargetDir(targetPath);
       if ( mrg.getBool("enableTrack")) {
         TrackStorage.Track2LatLonJSON converter = mTrackStorage.getTrack2LatLonJSON();
         String buf = converter.file2LatLonJSON();
