@@ -62,6 +62,7 @@ public class MainActivity extends SingleFragmentActivity {
       if (U.DEBUG) Log.i(U.TAG,"mainFragment:onCreate");
       setHasOptionsMenu(true);
 
+      U.setMsgColorWithTheme(getActivity());
       mRegistry=MyRegistry.getInstance(getActivity());
       //if (U.DEBUG) U.clearPrefs(getActivity()); // DEBUG
       //U.clearPrefs(getActivity()); // DEBUG

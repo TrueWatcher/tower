@@ -6,6 +6,7 @@ import android.content.Context;
 import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import android.content.SharedPreferences;
+import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
@@ -56,6 +57,15 @@ public abstract class U {
   public static final String H = "https://";
 
   public static int MSG_COLOR = Color.parseColor("#0000ff");
+
+  public static void setMsgColorWithTheme(Context context) {
+    // https://gist.github.com/granoeste/2574198
+    TypedArray ta = context.getTheme().obtainStyledAttributes(R.styleable.Attributes);
+    int index = R.styleable.Attributes_colorAccent;//Primary;//Accent;
+    int color = ta.getColor(index, 0);
+    if (color == 0) return;
+    MSG_COLOR = color;
+  }
 
   static class RunException extends RuntimeException {
     public RunException(String s) {

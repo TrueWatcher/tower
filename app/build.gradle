@@ -5,7 +5,7 @@ android {
     defaultConfig {
         applicationId "truewatcher.tower"
         minSdkVersion 21
-        targetSdkVersion 33
+        targetSdkVersion 34
         compileSdk 34
     }
     buildTypes {

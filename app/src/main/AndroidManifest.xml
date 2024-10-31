@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    android:versionCode="78"
-    android:versionName="2.10.2" >
+    android:versionCode="79"
+    android:versionName="2.10.3" >
 <!--
 2.8.3  68 07.01.2021 adapted for Android 9+ restrictions
 2.9.0  69 16.11.2023 signal dbm in CellInformer, 5G, targetApi > 30
@@ -14,6 +14,7 @@
 2.10.0 76 29.10.2024  gradle -> 8.9, AGP -> 8.7.1, BuildSDK -> 33
 2.10.1 77 31.10.2024  useMediaFolder, other improvements from stw 2.7.2
 2.10.2 78 31.10.2024  refactoring
+2.10.3 79 01.11.2024  added dayNight theme, BuildSDK -> 34
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -33,7 +34,7 @@
         android:icon="@mipmap/ic_launcher3"
         android:label="@string/app_name"
         android:usesCleartextTraffic="true"
-        android:theme="@style/Theme.AppCompat.Light.DarkActionBar" >
+        android:theme="@style/MyTheme1" >
 
         <activity
             android:name=".MainActivity"
