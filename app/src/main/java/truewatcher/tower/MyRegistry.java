@@ -7,6 +7,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -14,10 +15,11 @@ import android.util.Log;
 public class MyRegistry {
 	private static MyRegistry sMe;
 	private static Map<String,String> sMap;
+  private static Context sAppContext=null;
 
 	public static void initMap() throws JSONException {
-	  String d=getDefaultsString();
-    Map<String,String> defaults=JsonHelper.toMapSS(new JSONObject(d));
+	  String d = getDefaultsString();
+    Map<String,String> defaults = JsonHelper.toMapSS(new JSONObject(d));
 	  sMap=new HashMap<String,String>(defaults);
 	}
 
@@ -25,6 +27,10 @@ public class MyRegistry {
 	  return JsonHelper.MapssToJSONString(sMap);
 	}
 
+  public static MyRegistry getInstance(Context activity) {
+    sAppContext = activity.getApplicationContext();
+    return getInstance();
+  }
 	public static MyRegistry getInstance() {
 		if(sMe == null) {
 		  sMe=new MyRegistry();
@@ -54,8 +60,8 @@ public class MyRegistry {
   }
 
   public String getScrambled(String key) {
-    int[] transpose={2,3,5,6,8,9,13,19,25,31};
-    char[] ca=sMap.get(key).trim().toCharArray();
+    int[] transpose = {2,3,5,6,8,9,13,19,25,31};
+    char[] ca = sMap.get(key).trim().toCharArray();
     int l=ca.length;
     int lHalf=(int) Math.floor(l/2.);
     char c;
@@ -63,12 +69,12 @@ public class MyRegistry {
 
     if (l < 3) return new String(ca);
     for (int i=0; i < transpose.length; i+=1) {
-      sourceIndex=transpose[i];
+      sourceIndex = transpose[i];
       if (sourceIndex >= lHalf) break;
-      targetIndex=l-sourceIndex;
+      targetIndex = l-sourceIndex;
       c=ca[sourceIndex];
-      ca[sourceIndex]=ca[targetIndex];
-      ca[targetIndex]=c;
+      ca[sourceIndex] = ca[targetIndex];
+      ca[targetIndex] = c;
     }
     return new String(ca);
   }
@@ -108,43 +114,47 @@ public class MyRegistry {
   }
 
   private static String getDefaultsString() {
-    String defs="{\"cellResolver\":\"none\",\"mapProvider\":\"osm map\",\"mapZoom\":\"17\",\"maxPoints\":\"30\","
+    String androidSince11 = Build.VERSION.SDK_INT >= 30 ? "true" : "false";
+
+    String defs = "{\"cellResolver\":\"none\",\"mapProvider\":\"osm map\",\"mapZoom\":\"17\",\"maxPoints\":\"30\","
     + "\"useTrash\":\"false\",\"gpsAcceptableAccuracy\":\"8\",\"gpsMaxFixCount\":\"10\","
     + "\"myFile\":\"current.csv\","
     + "\"yandexMapKey\":\"\", \"yandexLocatorKey\":\"\", \"isKeylessDistro\":\"false\","
     + "\"gpsMinDistance\":\"12\", \"gpsMinDelayS\":\"10\", \"gpsTimeoutS\":\"120\","
     + "\"enableTrack\":\"true\", \"shouldCenterMapOnTrack\":\"true\", \"useTowerFolder\":\"false\","
-    +  "\"useMediaFolder\":\"true\", \"askNotificationPermission\":\"true\""
+    +  "\"useMediaFolder\":\""+androidSince11+"\", \"askNotificationPermission\":\"true\""
     + "}";
     return defs;
   }
 
   public static final String[] INT_KEYS = new String[] {
-          "mapZoom", "maxPoints", "gpsMinDistance", "gpsMinDelayS"} ;
+          "mapZoom", "maxPoints", "gpsMinDistance", "gpsMinDelayS" } ;
 
   public static final String[] APIS = new String[] { "yandexMapKey","yandexLocatorKey" };
 
-  public void readFromShared(Context context) {
+  //public void readFromShared(Context context) {
+  public void readFromShared() throws U.DataException {
+    if (sAppContext == null) throw new U.DataException("APPCONTEXT not set");
     String k;
     String v;
-    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(sAppContext);
     for (Map.Entry<String,String> e : MyRegistry.sMap.entrySet()) {
       k=e.getKey();
       if ( prefs.contains(k) ) {
-        v=String.valueOf(prefs.getAll().get(k));
+        v = String.valueOf(prefs.getAll().get(k));
         this.set(k, U.enforceInt(MyRegistry.INT_KEYS, k, v));
       }
     }
   }
 
-  public void saveToShared(Context context, String key) {
+  public void saveToShared(String key) {
     if ( ! sMap.keySet().contains(key)) throw new U.RunException("Unknown key="+key);
-    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(sAppContext);
     SharedPreferences.Editor editor = prefs.edit();
     editor.putString(key, sMap.get(key)).commit();
   }
 
-  private void syncSecret(Context context, String key, String assetFileName) {
+  private void syncSecret(String key, String assetFileName) {
     String s="";
 
     if (sMap.get(key).length() > 3) return; // already synced
@@ -153,7 +163,7 @@ public class MyRegistry {
       try {
         this.set(key, Class.forName("BuildConfig").getField(key));
         this.set(key, this.getScrambled(key));
-        this.saveToShared(context, key);
+        this.saveToShared(key);
         if (U.DEBUG) Log.d(U.TAG, "MyRegistry:"+" found a key in buildconfig: "+key);
         return;
       }
@@ -163,21 +173,21 @@ public class MyRegistry {
 
     // look in assets
     try {
-      s=U.readAsset(context, assetFileName).trim();
+      s=U.readAsset(sAppContext, assetFileName).trim();
       this.set(key,s);
-      this.saveToShared(context, key);
+      this.saveToShared(key);
     }
     catch (IOException e) {
       if (U.DEBUG) Log.d(U.TAG, "MyRegistry:"+"Missing "+assetFileName);
     }
   }
 
-  public void syncSecrets(Context context) {
-    syncSecret(context, "yandexMapKey", "_yandexmap.txt");
-    syncSecret(context, "yandexLocatorKey", "_yandexlocator.txt");
+  public void syncSecrets() {
+    syncSecret( "yandexMapKey", "_yandexmap.txt");
+    syncSecret( "yandexLocatorKey", "_yandexlocator.txt");
     if (notAllKeys()) {
       this.set("isKeylessDistro", true);
-      this.saveToShared(context, "isKeylessDistro");
+      this.saveToShared( "isKeylessDistro");
       if (U.DEBUG) Log.d(U.TAG, "MyRegistry:"+"This is a distro without API keys");
     }
   }

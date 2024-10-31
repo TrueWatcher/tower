@@ -26,7 +26,7 @@ public class TrackActivity extends SingleFragmentActivity {
   public static class TrackPageFragment extends PermissionAwareFragment
           implements PermissionReceiver {
 
-    private MyRegistry mRg=MyRegistry.getInstance();
+    private MyRegistry mRegistry =MyRegistry.getInstance();
     private TrackStorage mTrackStorage=Model.getInstance().getTrackStorage();
     private TrackListener mTrackListener=Model.getInstance().getTrackListener();
     private TrackPageFragment.Viewer mV;
@@ -68,7 +68,12 @@ public class TrackActivity extends SingleFragmentActivity {
       super.onCreate(savedInstanceState);
       if (U.DEBUG) Log.d(U.TAG,"trackFragment:onCreate");
       setHasOptionsMenu(true);
-      mRg.readFromShared(getActivity());
+      mRegistry = MyRegistry.getInstance(getActivity());
+      try {
+        mRegistry.readFromShared();
+      } catch (U.DataException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -87,17 +92,17 @@ public class TrackActivity extends SingleFragmentActivity {
       super.onResume();
       if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume");
 
-      boolean needsStoragePermission = ( mRg.getBool("useMediaFolder") && ( Build.VERSION.SDK_INT < 30 ));
+      boolean needsStoragePermission = ( mRegistry.getBool("useMediaFolder") && ( Build.VERSION.SDK_INT < 30 ));
       if (needsStoragePermission && ! checkStoragePermission()) {
         mV.alert("No storage permission, asking user");
-        askStoragePermission();
+        askStoragePermission(this);
         return;
       }
-      boolean needsNotificationPermission = mRg.getBool("askNotificationPermission") &&
+      boolean needsNotificationPermission = mRegistry.getBool("askNotificationPermission") &&
               ( Build.VERSION.SDK_INT >= 33 );
       if (needsNotificationPermission) {
         mV.alert("No default notification permission, asking user");
-        askNotificationPermission();
+        askNotificationPermission(this);
         return;
       }
 
@@ -109,6 +114,26 @@ public class TrackActivity extends SingleFragmentActivity {
         if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume"+"restarting dataWatcher");
       }
       mV.adjustVisibility(mTrackListener.isOn());
+    }
+
+    @Override
+    public void receivePermission(int reqCode, boolean isGranted) {
+      if ( ! isGranted) {
+        if (U.DEBUG) Log.d(U.TAG, "permission denied for code ="+reqCode);
+        if (reqCode == 2) { // STORAGE for older OS
+          mRegistry.setBool("useMediaFolder",false);
+          mRegistry.saveToShared("useMediaFolder");
+          mV.alert("Permission denied, falling back to native folder");
+        }
+      }
+      else {
+        if (U.DEBUG) Log.d(U.TAG,"permission granted for code ="+reqCode);
+        mV.alert("Permission granted, try to start again");
+      }
+      if (reqCode == 3) {  // POST_NOTIFICATIONS ; asked only on first run and not used inside the app
+        mRegistry.setBool("askNotificationPermission",false);
+        mRegistry.saveToShared("askNotificationPermission");
+      }
     }
 
     public void printStorageInfo() {
@@ -153,7 +178,7 @@ public class TrackActivity extends SingleFragmentActivity {
       try {
         if ( ! checkLocationPermission()) {
           mV.alert("No location permission, asking user");
-          askLocationPermission();
+          askLocationPermission(this);
           return;
         }
         checkGps();
@@ -183,52 +208,6 @@ public class TrackActivity extends SingleFragmentActivity {
       catch (U.FileException e) {
         mV.alert("FileException:"+e.getMessage());
         Log.e(U.TAG, "FileException:"+e.getMessage());
-      }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private boolean checkLocationPermission() {
-      int cl=getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION);
-      if (U.DEBUG) Log.d(U.TAG,"cl="+cl+"/"+PackageManager.PERMISSION_GRANTED);
-      return (cl == PackageManager.PERMISSION_GRANTED);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private boolean checkStoragePermission() {
-      int cl=getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-      if (U.DEBUG) Log.d(U.TAG,"cl="+cl+"/"+PackageManager.PERMISSION_GRANTED);
-      return (cl == PackageManager.PERMISSION_GRANTED);
-    }
-
-    private void askLocationPermission() {
-      genericRequestPermission(Manifest.permission.ACCESS_FINE_LOCATION, 1, this);
-    }
-
-    private void askStoragePermission() {
-      genericRequestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, 2, this);
-    }
-
-    private void askNotificationPermission() {
-      genericRequestPermission(Manifest.permission.POST_NOTIFICATIONS, 3, this);
-    }
-
-    @Override
-    public void receivePermission(int reqCode, boolean isGranted) {
-      if ( ! isGranted) {
-        if (U.DEBUG) Log.d(U.TAG, "permission denied for code ="+reqCode);
-        if (reqCode == 2) { // STORAGE for older OS
-          mRg.setBool("useMediaFolder",false);
-          mRg.saveToShared(getActivity(), "useMediaFolder");
-          mV.alert("Permission denied, falling back to native folder");
-        }
-      }
-      else {
-        if (U.DEBUG) Log.d(U.TAG,"permission granted");
-        mV.alert("Permission granted, try to start again");
-      }
-      if (reqCode == 3) {  // POST_NOTIFICATIONS ; asked only on first run and not used inside the app
-        mRg.setBool("askNotificationPermission",false);
-        mRg.saveToShared(getActivity(), "askNotificationPermission");
       }
     }
 
@@ -324,7 +303,7 @@ public class TrackActivity extends SingleFragmentActivity {
 
       private String getState() {
         if (mTrackListener.getCounter() == 0) return("STARTING UP");
-        if (mWaitingS > mRg.getInt("gpsTimeoutS")) return("LOST GPS SIGNAL");
+        if (mWaitingS > mRegistry.getInt("gpsTimeoutS")) return("LOST GPS SIGNAL");
         return("RECORDING");
       }
     }

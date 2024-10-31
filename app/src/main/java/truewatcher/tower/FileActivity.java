@@ -28,7 +28,7 @@ public class FileActivity extends SingleFragmentActivity {
 
   @Override
   public void onCreate(Bundle savedInstanceState) { super.onCreate(savedInstanceState); }
-  
+
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     getMenuInflater().inflate(R.menu.main, menu);
@@ -45,7 +45,7 @@ public class FileActivity extends SingleFragmentActivity {
     }
     return super.onOptionsItemSelected(item);
   }
-  
+
   public static class FileFragment extends Fragment implements AdapterView.OnItemSelectedListener {
     private Model mModel=Model.getInstance();
     private PointList mPointList=mModel.getPointList();
@@ -54,13 +54,13 @@ public class FileActivity extends SingleFragmentActivity {
     private JSbridge mJSbridge=mModel.getJSbridge();
     private FileFragment.Viewer mV;
     private String mSelectedFile="";
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
       setHasOptionsMenu(true);
     }
-    
+
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
       View v = inflater.inflate(R.layout.fragment_file, container, false);
@@ -91,7 +91,7 @@ public class FileActivity extends SingleFragmentActivity {
       catalog=U.arrayConcat(new String[] {"Choose file"}, catalog);
       ArrayAdapter<String> sa = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_spinner_item, catalog);
       sa.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);
-      spinner.setAdapter(sa); 
+      spinner.setAdapter(sa);
     }
 
     @Override
@@ -103,12 +103,12 @@ public class FileActivity extends SingleFragmentActivity {
 
     @Override
     public void onNothingSelected(AdapterView<?> arg0) { }
-    
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
       inflater.inflate(R.menu.file_fragment, menu);
     }
-    
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
       int id = item.getItemId();
@@ -124,18 +124,18 @@ public class FileActivity extends SingleFragmentActivity {
         return true;
       }
       if (id == R.id.action_list_from_file) {
-        getActivity().finish(); 
+        getActivity().finish();
         return true;
       }
       return super.onOptionsItemSelected(item);
     }
-    
+
     private String go(String act, String mode) throws U.DataException, U.FileException, IOException {
       String myFile=MyRegistry.getInstance().get("myFile");
       String targetFile;
       int removedCount=-1;
       U.Summary s;
-      
+
       mV.alert(act+" "+mSelectedFile);
       if (U.DEBUG) Log.d(U.TAG, "FileFragment_go:"+"act="+act+", file="+mSelectedFile);
       if (act.equals(getString(R.string.action_open))) {
@@ -165,7 +165,7 @@ public class FileActivity extends SingleFragmentActivity {
         // adb push ~/Desktop/myRoute.gpx /sdcard/Android/data/truewatcher.tower/files
         targetFile=assureExists(mSelectedFile,mode);
         s=mStorageHelper.readPoints(mPointList, targetFile, mPointList.getSize(), mode);
-        if (s.adopted > 0) { 
+        if (s.adopted > 0) {
           mPointList.save();
           mPointList.setDirty();
         }
@@ -242,7 +242,7 @@ public class FileActivity extends SingleFragmentActivity {
       }
       else throw new U.RunException ("FileActivity_go:"+"Wrong ACT="+act);
     }
-    
+
     private String assureExists(String f, String ext) throws U.FileException {
       if (f == null || f.isEmpty()) { throw new U.FileException("Choose the file"); }
       String ff=U.assureExtension(f, ext);
@@ -258,10 +258,10 @@ public class FileActivity extends SingleFragmentActivity {
       if (exists == true) { throw new U.FileException("File "+ff+" already exists, delete it or choose another name"); }
       return ff;
     }
-    
+
     private void setRegistryMyFile(String f) {
       MyRegistry.getInstance().set("myFile", f);
-      MyRegistry.getInstance().saveToShared(getActivity(), "myFile");
+      MyRegistry.getInstance().saveToShared("myFile");
     }
 
     private class Viewer {
@@ -464,7 +464,7 @@ public class FileActivity extends SingleFragmentActivity {
 
     }// end Viewer
   }// end FileFragment
-  
+
   @Override
   protected Fragment createFragment() { return new FileFragment(); }
 }

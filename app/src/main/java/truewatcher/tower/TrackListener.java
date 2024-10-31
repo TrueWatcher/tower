@@ -17,7 +17,7 @@ public class TrackListener implements LocationListener {
   public long startUpdatesTime=0;
   private LocationManager mLocationManager=null;// same instance for startListening and stopListening !
   //private Model.LocationReceiver mLocationReceiver = new Model.LocationReceiver();
-  private MyRegistry mRg = MyRegistry.getInstance();
+  private MyRegistry mRegistry = MyRegistry.getInstance();
   private TrackStorage mTrackStorage=null;//=Model.getInstance().getTrackStorage(); causes loop
   private TrackPointListener mListener=null;
 
@@ -34,8 +34,8 @@ public class TrackListener implements LocationListener {
   public int getCounter() { return mCounter; }
 
   public void startListening(Context ct) {
-    long minTimeMs=1000*mRg.getInt("gpsMinDelayS");//U.minFixDelayS;
-    float minDistanceM=mRg.getInt("gpsMinDistance");//0;
+    long minTimeMs=1000* mRegistry.getInt("gpsMinDelayS");//U.minFixDelayS;
+    float minDistanceM= mRegistry.getInt("gpsMinDistance");//0;
     try {
       mLocationManager = (LocationManager) ct.getSystemService(Context.LOCATION_SERVICE);
       mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTimeMs, minDistanceM,
@@ -67,7 +67,7 @@ public class TrackListener implements LocationListener {
     updateTime = U.getTimeStamp();
     if (prevUpdateTime > 0) {
       long delay = updateTime - prevUpdateTime;
-      if (delay - mRg.getInt("gpsMinDelayS") > mRg.getInt("gpsTimeoutS")) {
+      if (delay - mRegistry.getInt("gpsMinDelayS") > mRegistry.getInt("gpsTimeoutS")) {
         mTrackStorage.saveNote("delay=" + Long.toString(delay) + "s", "");
       }
     }

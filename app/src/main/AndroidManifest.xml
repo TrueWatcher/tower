@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    android:versionCode="77"
-    android:versionName="2.10.1" >
+    android:versionCode="78"
+    android:versionName="2.10.2" >
 <!--
-2.8.0  65 16.11.2020 updated WebMaps, track-delete bug fix
-2.8.1  66 24.11.2020 updated metadata
-2.8.2  67 14.12.2021 bugfix
 2.8.3  68 07.01.2021 adapted for Android 9+ restrictions
 2.9.0  69 16.11.2023 signal dbm in CellInformer, 5G, targetApi > 30
 2.9.1  70 18.11.2023 added cell info service "none"
@@ -16,6 +13,7 @@
 2.9.6  75 14.12.2023  refactored CellInformer
 2.10.0 76 29.10.2024  gradle -> 8.9, AGP -> 8.7.1, BuildSDK -> 33
 2.10.1 77 31.10.2024  useMediaFolder, other improvements from stw 2.7.2
+2.10.2 78 31.10.2024  refactoring
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

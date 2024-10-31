@@ -1,15 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 34
-    buildToolsVersion '35.0.0'
-
+    buildToolsVersion = '35.0.0'
     defaultConfig {
         applicationId "truewatcher.tower"
         minSdkVersion 21
         targetSdkVersion 33
+        compileSdk 34
     }
-
     buildTypes {
         release {
             // no optimisation
@@ -25,7 +23,6 @@ android {
         }
     }
     namespace 'truewatcher.tower'
-    buildToolsVersion '35.0.0'
     buildFeatures {
         buildConfig true
     }

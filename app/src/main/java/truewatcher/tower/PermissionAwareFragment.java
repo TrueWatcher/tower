@@ -1,7 +1,10 @@
 package truewatcher.tower;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.pm.PackageManager;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -32,4 +35,31 @@ public abstract class PermissionAwareFragment extends android.support.v4.app.Fra
     if (U.DEBUG) Log.d(U.TAG,"grantResults length="+grantResults.length);
     mPermissionReceivers.get(reqCode).receivePermission(reqCode,isGranted);
   }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  protected boolean checkLocationPermission() {
+    int cl = getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION);
+    if (U.DEBUG) Log.d(U.TAG,"cl="+cl+"/"+PackageManager.PERMISSION_GRANTED);
+    return (cl == PackageManager.PERMISSION_GRANTED);
+  }
+
+  protected void askLocationPermission(PermissionReceiver subFragment) {
+    genericRequestPermission(Manifest.permission.ACCESS_FINE_LOCATION, 1, subFragment);
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  protected boolean checkStoragePermission() {
+    int cl = getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+    if (U.DEBUG) Log.d(U.TAG,"cl="+cl+"/"+ PackageManager.PERMISSION_GRANTED);
+    return (cl == PackageManager.PERMISSION_GRANTED);
+  }
+
+  protected void askStoragePermission(PermissionReceiver subFragment) {
+    genericRequestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, 2, subFragment);
+  }
+
+  protected void askNotificationPermission(PermissionReceiver subFragment) {
+    genericRequestPermission(Manifest.permission.POST_NOTIFICATIONS, 3, subFragment);
+  }
+
 }

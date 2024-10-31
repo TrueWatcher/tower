@@ -179,7 +179,7 @@ public class PreferencesActivity extends AppCompatActivity {
       getPreferenceScreen().getSharedPreferences()
               .unregisterOnSharedPreferenceChangeListener(this);
       mRegistry.set(key,c.fallbackValue);
-      mRegistry.saveToShared(getActivity(),key);
+      mRegistry.saveToShared(key);
       ListPreference lp = (ListPreference) findPreference(key);
       lp.setValue(c.fallbackValue);
       lp.setSummary(c.fallbackValue);
@@ -230,7 +230,7 @@ public class PreferencesActivity extends AppCompatActivity {
       getPreferenceScreen().getSharedPreferences()
               .unregisterOnSharedPreferenceChangeListener(this);
       mRegistry.set(key, mRegistry.getScrambled(key));
-      mRegistry.saveToShared(getActivity(), key);
+      mRegistry.saveToShared(key);
       getPreferenceManager().findPreference(key).setSummary("[obfuscated]");
       getPreferenceScreen().getSharedPreferences()
               .registerOnSharedPreferenceChangeListener(this);

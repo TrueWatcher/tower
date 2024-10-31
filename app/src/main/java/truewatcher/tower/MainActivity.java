@@ -62,46 +62,29 @@ public class MainActivity extends SingleFragmentActivity {
       if (U.DEBUG) Log.i(U.TAG,"mainFragment:onCreate");
       setHasOptionsMenu(true);
 
+      mRegistry=MyRegistry.getInstance(getActivity());
       //if (U.DEBUG) U.clearPrefs(getActivity()); // DEBUG
       //U.clearPrefs(getActivity()); // DEBUG
-
-      mRegistry.readFromShared(getActivity());
-      mRegistry.syncSecrets(getActivity());
+      //mRegistry.readFromShared(getActivity());
+      try {
+        mRegistry.readFromShared();
+        mRegistry.syncSecrets();
+      } catch (U.DataException e) {
+        throw new RuntimeException(e);
+      }
       mCellPointFetcher.setFragment(this);
       mGpsPointFetcher.setFragment(this);
       boolean needsStoragePermission = ( mRegistry.getBool("useMediaFolder") && ( Build.VERSION.SDK_INT < 30 ));
       if (needsStoragePermission && ! checkStoragePermission()) {
         //mV.alert("No storage permission, asking user");
-        askStoragePermission();
+        askStoragePermission(this);
         return;
       }
       /*if (! checkLocationPermission()) {
-        askLocationPermission();
+        askLocationPermission(this);
         return;
       }*/
       mReadData = mModel.loadData(this.getActivity(), mRegistry);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private boolean checkStoragePermission() {
-      int cl = getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-      if (U.DEBUG) Log.d(U.TAG,"cl="+cl+"/"+ PackageManager.PERMISSION_GRANTED);
-      return (cl == PackageManager.PERMISSION_GRANTED);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private boolean checkLocationPermission() {
-      int cl = getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION);
-      if (U.DEBUG) Log.d(U.TAG,"cl="+cl+"/"+PackageManager.PERMISSION_GRANTED);
-      return (cl == PackageManager.PERMISSION_GRANTED);
-    }
-
-    private void askStoragePermission() {
-      genericRequestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, 2, this);
-    }
-
-    private void askLocationPermission() {
-      genericRequestPermission(Manifest.permission.ACCESS_FINE_LOCATION, 1, this);
     }
 
     @Override
@@ -110,17 +93,13 @@ public class MainActivity extends SingleFragmentActivity {
         if (U.DEBUG) Log.d(U.TAG, "permission denied for code ="+reqCode);
         if (reqCode == 2) { // STORAGE for older OS
           mRegistry.setBool("useMediaFolder",false);
-          mRegistry.saveToShared(getActivity(), "useMediaFolder");
+          mRegistry.saveToShared("useMediaFolder");
           //mV.alert("Permission denied, falling back to native folder");
         }
       }
       else {
         if (U.DEBUG) Log.d(U.TAG,"permission granted for code ="+reqCode);
         //mV.alert("Permission granted, try to start again");
-      }
-      if (reqCode == 3) {  // POST_NOTIFICATIONS ; asked only on first run and not used inside the app
-        mRegistry.setBool("askNotificationPermission",false);
-        mRegistry.saveToShared(getActivity(), "askNotificationPermission");
       }
 
       mReadData = mModel.loadData(this.getActivity(), mRegistry);

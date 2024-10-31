@@ -3,7 +3,7 @@ package truewatcher.tower;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
-import java.io.File;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ public class TrackStorage {
   private boolean mShouldStartNewSegment = false;
   private long mTotalPointCount =0;
   public Trackpoint latestStoredTrackpoint = null;
-  private MyRegistry mRg = MyRegistry.getInstance();
+  private MyRegistry mRegistry = MyRegistry.getInstance();
 
   public String getMyFile() { return mMyFileExt; }
 
@@ -32,7 +32,7 @@ public class TrackStorage {
   }
 
   public void initTargetDir(Context context) throws IOException, U.FileException {
-    String targetPath = StorageHelper.getWorkingFolder(context, mRg);
+    String targetPath = StorageHelper.getWorkingFolder(context, mRegistry);
     initTargetDir(targetPath);
   }
   public void initTargetDir(String targetPath) throws U.FileException, IOException {
