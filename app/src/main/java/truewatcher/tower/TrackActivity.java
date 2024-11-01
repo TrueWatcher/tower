@@ -93,6 +93,9 @@ public class TrackActivity extends SingleFragmentActivity {
       super.onResume();
       if (U.DEBUG) Log.d(U.TAG,"trackFragment:onResume");
 
+      U.useDayNightTheme(mRegistry.get("theme"));
+      U.setMsgColorDayNight(getActivity());
+
       boolean needsStoragePermission = ( mRegistry.getBool("useMediaFolder") && ( Build.VERSION.SDK_INT < 30 ));
       if (needsStoragePermission && ! checkStoragePermission()) {
         mV.alert("No storage permission, asking user");

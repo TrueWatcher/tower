@@ -1,21 +1,25 @@
 package truewatcher.tower;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import org.json.JSONException;
-import org.json.JSONObject;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 // A Singleton registry to keep all parameters
 public class MyRegistry {
 	private static MyRegistry sMe;
 	private static Map<String,String> sMap;
   private static Context sAppContext=null;
+
+  private MyRegistry() {}
 
 	public static void initMap() throws JSONException {
 	  String d = getDefaultsString();
@@ -122,7 +126,8 @@ public class MyRegistry {
     + "\"yandexMapKey\":\"\", \"yandexLocatorKey\":\"\", \"isKeylessDistro\":\"false\","
     + "\"gpsMinDistance\":\"12\", \"gpsMinDelayS\":\"10\", \"gpsTimeoutS\":\"120\","
     + "\"enableTrack\":\"true\", \"shouldCenterMapOnTrack\":\"true\", \"useTowerFolder\":\"false\","
-    +  "\"useMediaFolder\":\""+androidSince11+"\", \"askNotificationPermission\":\"true\""
+    + "\"useMediaFolder\":\""+androidSince11+"\", \"askNotificationPermission\":\"true\","
+    + "\"theme\":\"auto\""
     + "}";
     return defs;
   }

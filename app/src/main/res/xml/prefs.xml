@@ -55,6 +55,12 @@
   <EditTextPreference
       app:key="gpsMinDelayS"
       app:title="@string/gpsMinDelayS" />
+  
+  <ListPreference
+      app:key="theme"
+      app:title="@string/chooseTheme"
+      app:entries="@array/themeArray"
+      app:entryValues="@array/themeValues" />
 
   <EditTextPreference
       app:key="yandexMapKey"

@@ -1,0 +1,21 @@
+
+html, body, #mapDiv, table {
+  width: 100%; height: 100%; margin: 0; padding: 0; border: 0;
+}
+
+#mapDiv td {
+  vertical-align: middle; text-align: center;
+}
+
+#svg_logo {
+  min-width: 20%; min-height: 20%;
+}
+
+#mapDiv {
+  background-image: linear-gradient(rgba(255,255,255,0), #a0a0a0, #aaa, #592);
+}
+@media (prefers-color-scheme: dark) {
+  #mapDiv {
+    background-image: linear-gradient(#555, #a0a0a0, #aaa, #592);
+  }
+}

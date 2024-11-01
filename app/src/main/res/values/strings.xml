@@ -62,6 +62,7 @@
     <string name="shouldCenterMapOnTrack">Center map on a new trackpoint</string>
     <string name="useTowerFolder">Use Tower folder</string>
     <string name="useMediaFolder">Save to Android/media</string>
+    <string name="chooseTheme">Color theme</string>
     <string name="workingFileFull">Working file:</string>
     <string name="action_start">Start</string>
     <string name="action_start_new_segment">Start \nnew segment</string>

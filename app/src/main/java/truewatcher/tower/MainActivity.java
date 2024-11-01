@@ -62,7 +62,6 @@ public class MainActivity extends SingleFragmentActivity {
       if (U.DEBUG) Log.i(U.TAG,"mainFragment:onCreate");
       setHasOptionsMenu(true);
 
-      U.setMsgColorWithTheme(getActivity());
       mRegistry=MyRegistry.getInstance(getActivity());
       //if (U.DEBUG) U.clearPrefs(getActivity()); // DEBUG
       //U.clearPrefs(getActivity()); // DEBUG
@@ -75,6 +74,8 @@ public class MainActivity extends SingleFragmentActivity {
       }
       mCellPointFetcher.setFragment(this);
       mGpsPointFetcher.setFragment(this);
+      U.useDayNightTheme(mRegistry.get("theme"));
+      U.setMsgColorDayNight(getActivity());
       boolean needsStoragePermission = ( mRegistry.getBool("useMediaFolder") && ( Build.VERSION.SDK_INT < 30 ));
       if (needsStoragePermission && ! checkStoragePermission()) {
         //mV.alert("No storage permission, asking user");
@@ -85,7 +86,7 @@ public class MainActivity extends SingleFragmentActivity {
         askLocationPermission(this);
         return;
       }*/
-      mReadData = mModel.loadData(this.getActivity(), mRegistry);
+      mReadData = mModel.loadData(getActivity(), mRegistry);
     }
 
     @Override
@@ -192,6 +193,8 @@ public class MainActivity extends SingleFragmentActivity {
     public void onResume() {
       super.onResume();
       if (U.DEBUG) Log.i(U.TAG,"mainFragment:onResume");
+      U.useDayNightTheme(mRegistry.get("theme"));
+      U.setMsgColorDayNight(getActivity());
       mCellPointFetcher.setFragment(this);
       mGpsPointFetcher.setFragment(this);
       mMapViewer.clearIndicator();

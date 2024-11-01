@@ -90,6 +90,7 @@ public class PreferencesActivity extends AppCompatActivity {
       prepareSwitchPref("shouldCenterMapOnTrack");
       prepareEditTextPref("gpsMinDistance");
       prepareEditTextPref("gpsMinDelayS");
+      prepareListPreference("theme");
 
       if ( ! mRegistry.getBool("isKeylessDistro")) {
         PreferenceScreen screen = getPreferenceScreen();
@@ -167,6 +168,10 @@ public class PreferencesActivity extends AppCompatActivity {
       }
       if (key.equals("enableTrack")) {
         syncCurrentTrack(mRegistry.getBool(key));
+      }
+      if (key.equals("theme")) {
+        U.useDayNightTheme(mRegistry.get(key));
+        U.setMsgColorDayNight(getActivity());
       }
     }
 

@@ -30,25 +30,25 @@ public class Model {
   }
 
   private Model() {
-    mCellPointFetcher =new CellPointFetcher();
-    mGpsPointFetcher =new GpsPointFetcher();
-    mStorageHelper=new StorageHelper();
-    mPointList=new PointList( 0 , mStorageHelper);// must be resized after reading StoredPreferences in MainActivity
-    mJSbridge=new JSbridge();
+    mCellPointFetcher = new CellPointFetcher();
+    mGpsPointFetcher = new GpsPointFetcher();
+    mStorageHelper = new StorageHelper();
+    mPointList = new PointList( 0 , mStorageHelper);// must be resized after reading StoredPreferences in MainActivity
+    mJSbridge = new JSbridge();
     mJSbridge.setPointList(mPointList);
-    mTrackStorage=new TrackStorage();
-    mTrackListener=new TrackListener(mTrackStorage);
+    mTrackStorage = new TrackStorage();
+    mTrackListener = new TrackListener(mTrackStorage);
   }
 
   public U.Summary[] loadData(Context context, MyRegistry mrg) {
-    U.Summary[] res=new U.Summary[2];
-    res[0]=res[1]=null;
+    U.Summary[] res = new U.Summary[2];
+    res[0] = res[1] = null;
     if ( ! mIsFresh) return null;
     try {
       mPointList.adoptMax(mrg.getInt("maxPoints"));
       String targetPath = mStorageHelper.getWorkingFolder(context, mrg);
       mStorageHelper.init(targetPath, mrg.get("myFile"));
-      res[0]=mPointList.load();
+      res[0] = mPointList.load();
       if (U.DEBUG) Log.d(U.TAG,"MainPageFragment:"+ "Loaded "+res[0].adopted+" points");
 
       mTrackStorage.initTargetDir(targetPath);
