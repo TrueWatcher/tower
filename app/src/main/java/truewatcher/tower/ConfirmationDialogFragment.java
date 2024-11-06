@@ -2,13 +2,15 @@ package truewatcher.tower;
 
 import android.annotation.TargetApi;
 import android.app.Dialog;
-import android.support.v4.app.DialogFragment;
+//import android.support.v4.app.DialogFragment;
+import androidx.appcompat.app.AppCompatDialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
+//import android.support.v7.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 
-public class ConfirmationDialogFragment extends DialogFragment {
+public class ConfirmationDialogFragment extends AppCompatDialogFragment {
   // https://stackoverflow.com/questions/5393197/show-dialog-from-fragment  -- answer by EpicPandaForce
   public interface ConfirmationDialogReceiver {
     public void onConfirmationPositive(int id);//DialogFragment dialog
@@ -16,10 +18,10 @@ public class ConfirmationDialogFragment extends DialogFragment {
   }
 
   private ConfirmationDialogReceiver mListener;
-  private DialogFragment mMe=this;
+  private AppCompatDialogFragment mMe=this;
   private int mId=0;
   private int mStringId=0;
-  
+
   public ConfirmationDialogFragment() { super(); }
 
   @TargetApi(23)
@@ -42,7 +44,7 @@ public class ConfirmationDialogFragment extends DialogFragment {
     //Log.i(U.TAG, "ConfirmationDialogFragment:"+"got args="+mId+"/"+ mStringId);
     if (mId == 0 || mStringId == 0) throw new U.RunException("ConfirmationDialogFragment:Missing arguments");
 
-    android.support.v7.app.AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     builder
     .setMessage(R.string.are_you_sure)
     .setPositiveButton(mStringId, new DialogInterface.OnClickListener() {

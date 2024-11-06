@@ -2,7 +2,8 @@ package truewatcher.tower;
 
 import android.annotation.TargetApi;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+//import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -676,6 +677,6 @@ public class Tests1 extends SingleFragmentActivity {
   }// end Tests1
 
   @Override
-  protected android.support.v4.app.Fragment createFragment() { return new Tests1Fragment(); }
+  protected Fragment createFragment() { return new Tests1Fragment(); }
 
 }

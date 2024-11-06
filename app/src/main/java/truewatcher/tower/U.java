@@ -9,9 +9,13 @@ import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatDelegate;
+//import android.support.annotation.RequiresApi;
+import androidx.annotation.RequiresApi;
+//import android.support.v7.app.AppCompatDelegate;
+import androidx.appcompat.app.AppCompatDelegate;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.util.TypedValue;
@@ -39,6 +43,7 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import android.content.res.Configuration;
+import android.app.UiModeManager;
 
 public abstract class U {
 
@@ -70,11 +75,11 @@ public abstract class U {
   }
 
   public static void setMsgColorDayNight(Context context) {
-    int MSG_COLOR_DAY = Color.parseColor("#0000ff");
+    int MSG_COLOR_DAY   = Color.parseColor("#0000ff");
     int MSG_COLOR_NIGHT = Color.parseColor("#00ccff");
     int m = context.getResources().getConfiguration().uiMode &
             Configuration.UI_MODE_NIGHT_MASK;
-    if (m == Configuration.UI_MODE_NIGHT_NO) { MSG_COLOR = MSG_COLOR_DAY; }
+    if (m == Configuration.UI_MODE_NIGHT_NO ) { MSG_COLOR = MSG_COLOR_DAY; }
     if (m == Configuration.UI_MODE_NIGHT_YES) { MSG_COLOR = MSG_COLOR_NIGHT; }
   }
 
@@ -89,9 +94,23 @@ public abstract class U {
       AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
     }
     else {
-      Log.e(U.TAG, "useDayNightTheme : Wrong mode="+mode+"!");
-      throw new U.RunException("useDayNightTheme : Wrong mode="+mode+"!");
+      Log.e(U.TAG, "U.useDayNightTheme : Wrong mode="+mode+"!");
+      throw new U.RunException("U.useDayNightTheme : Wrong mode="+mode+"!");
     }
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
+  public static void useDayNightTheme2(Context context, String mode) {
+    int m = 0;
+    if (mode.equals("light")) { m = UiModeManager.MODE_NIGHT_NO; }
+    else if (mode.equals("dark")) { m = UiModeManager.MODE_NIGHT_YES; }
+    else if (mode.equals("auto")) { m = UiModeManager.MODE_NIGHT_AUTO; }
+    else {
+      Log.e(U.TAG, "U.useDayNightTheme2 : Wrong mode="+mode+"!");
+      throw new U.RunException("U.useDayNightTheme2 : Wrong mode="+mode+"!");
+    }
+    UiModeManager uim = (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
+    uim.setApplicationNightMode(m);
   }
 
   static class RunException extends RuntimeException {

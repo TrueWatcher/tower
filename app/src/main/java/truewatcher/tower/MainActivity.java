@@ -1,12 +1,9 @@
 package truewatcher.tower;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.RequiresApi;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -193,8 +190,8 @@ public class MainActivity extends SingleFragmentActivity {
     public void onResume() {
       super.onResume();
       if (U.DEBUG) Log.i(U.TAG,"mainFragment:onResume");
-      U.useDayNightTheme(mRegistry.get("theme"));
-      U.setMsgColorDayNight(getActivity());
+      //U.useDayNightTheme(mRegistry.get("theme"));
+      //U.setMsgColorDayNight(getActivity());
       mCellPointFetcher.setFragment(this);
       mGpsPointFetcher.setFragment(this);
       mMapViewer.clearIndicator();
@@ -239,5 +236,5 @@ public class MainActivity extends SingleFragmentActivity {
   }// end MainPageFragment
 
   @Override
-  protected android.support.v4.app.Fragment createFragment() { return new MainPageFragment(); }
+  protected androidx.fragment.app.Fragment createFragment() { return new MainPageFragment(); }
 }

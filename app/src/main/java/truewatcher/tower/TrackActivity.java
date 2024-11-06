@@ -9,7 +9,9 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.RequiresApi;
+import androidx.annotation.RequiresApi;
+import androidx.fragment.app.Fragment;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -389,6 +391,6 @@ public class TrackActivity extends SingleFragmentActivity {
   }// end MainPageFragment
 
   @Override
-  protected android.support.v4.app.Fragment createFragment() { return new TrackPageFragment(); }
+  protected Fragment createFragment() { return new TrackPageFragment(); }
 
 }

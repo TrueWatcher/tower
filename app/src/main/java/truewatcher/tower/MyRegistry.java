@@ -137,7 +137,6 @@ public class MyRegistry {
 
   public static final String[] APIS = new String[] { "yandexMapKey","yandexLocatorKey" };
 
-  //public void readFromShared(Context context) {
   public void readFromShared() throws U.DataException {
     if (sAppContext == null) throw new U.DataException("APPCONTEXT not set");
     String k;

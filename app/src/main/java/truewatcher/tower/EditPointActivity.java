@@ -1,10 +1,13 @@
 package truewatcher.tower;
 
-import android.support.v4.app.DialogFragment;
+//import android.support.v4.app.DialogFragment;
+import androidx.appcompat.app.AppCompatDialogFragment;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
+//import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
+//import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -53,11 +56,11 @@ public class EditPointActivity extends SingleFragmentActivity {
   public int getArgId() { return mArgId; }
   public String getArgCaller() { return mArgCaller; }
 
-  public void showEditTextDialog(DialogFragment dialog) {
+  public void showEditTextDialog(AppCompatDialogFragment dialog) {
     dialog.show(getSupportFragmentManager(), "EditTextDialogFragment");
   }
 
-  public void showConfirmationDialog(DialogFragment dialog) {
+  public void showConfirmationDialog(AppCompatDialogFragment dialog) {
     dialog.show(getSupportFragmentManager(), "ConfirmationDialogFragment");
   }
 
@@ -70,7 +73,7 @@ public class EditPointActivity extends SingleFragmentActivity {
     private Model mModel=Model.getInstance();;
     private PointList mPointList=mModel.getPointList();;
     private JSbridge mJSbribge=mModel.getJSbridge();
-    private android.support.v4.app.Fragment mFragment;
+    private Fragment mFragment;
     private EditPointFragment.Editor mEd;
     private EditPointFragment.Viewer mV;
     private Point mPoint;
@@ -373,5 +376,5 @@ public class EditPointActivity extends SingleFragmentActivity {
   }// end ListFragment
 
   @Override
-  protected android.support.v4.app.Fragment createFragment() { return new EditPointFragment(); }
+  protected Fragment createFragment() { return new EditPointFragment(); }
 }

@@ -2,7 +2,8 @@ package truewatcher.tower;
 
 import android.annotation.TargetApi;
 import android.content.pm.PackageManager;
-import android.support.v4.app.FragmentActivity;
+//import android.support.v4.app.FragmentActivity;
+import androidx.fragment.app.FragmentActivity;
 import android.util.Log;
 
 interface PointReceiver {
@@ -17,26 +18,26 @@ public abstract class PointFetcher implements PermissionReceiver {
   protected String mStatus="not run";
   protected Point mPoint=null;
   protected boolean mToUpdateLocation=true;
-  
+
   abstract String getPermissionType();
   abstract int getPermissionCode();
-  
+
   public String getStatus() { return mStatus; }
-  
+
   public Point getPoint() { return mPoint; }
-  
+
   public void setFragment(PermissionAwareFragment f) {
     mFragm=f;
     mActivity=f.getActivity();
   }
-  
+
   public void clearFragment() {
     mFragm=null;
     mActivity=null;
   }
-  
+
   protected boolean tryGiveMockLocation() { return false; }
-  
+
   public void go(PointIndicator pi, PointReceiver pr) {
     mPi=pi;
     mPointReceiver=pr;
@@ -55,7 +56,7 @@ public abstract class PointFetcher implements PermissionReceiver {
     //mPi.addProgress("positive");
     afterLocationPermissionOk();
   }
-  
+
   @TargetApi(23)
   private boolean checkLocalPermission() {
     if (mActivity == null) {
@@ -66,11 +67,11 @@ public abstract class PointFetcher implements PermissionReceiver {
     if (U.DEBUG) Log.d(U.TAG,"cl="+cl+"/"+PackageManager.PERMISSION_GRANTED);
     return (cl == PackageManager.PERMISSION_GRANTED);
   }
-  
+
   private void requestPermission() {
     mFragm.genericRequestPermission(getPermissionType(), getPermissionCode(), this);
-  } 
-  
+  }
+
   public void receivePermission(int reqCode, boolean isGranted) {
     if ( ! isGranted) {
       if (U.DEBUG) Log.d(U.TAG, "denied");
@@ -81,9 +82,9 @@ public abstract class PointFetcher implements PermissionReceiver {
     mPi.addProgress("granted");
     afterLocationPermissionOk();
   }
-  
+
   abstract void afterLocationPermissionOk();
-  
+
   protected void onPointavailable(Point p) {
     if ( p.hasCoords() ) mPi.hideProgress();// if it's an unresolved cell - keep progress visible
     p.setCurrentTime();

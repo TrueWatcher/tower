@@ -320,5 +320,5 @@ public class AddPointActivity  extends SingleFragmentActivity {
   }// end AddPointFragment
 
   @Override
-  protected android.support.v4.app.Fragment createFragment() { return new AddPointFragment(); }
+  protected androidx.fragment.app.Fragment createFragment() { return new AddPointFragment(); }
 }

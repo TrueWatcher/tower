@@ -4,7 +4,9 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
+//import android.support.annotation.RequiresApi;
+import androidx.annotation.RequiresApi;
+
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -12,7 +14,7 @@ interface PermissionReceiver {
   public void receivePermission(int reqCode, boolean isGranted);
 }
 
-public abstract class PermissionAwareFragment extends android.support.v4.app.Fragment {
+public abstract class PermissionAwareFragment extends androidx.fragment.app.Fragment {
   private SparseArray<PermissionReceiver> mPermissionReceivers = new SparseArray<PermissionReceiver>();
   private int mPermissionAttempts = 5; // to break loop on receiving coarse location on SDK .= 31
 

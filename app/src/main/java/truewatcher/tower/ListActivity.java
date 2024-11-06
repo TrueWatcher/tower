@@ -1,10 +1,12 @@
 package truewatcher.tower;
 
 import android.app.Activity;
-import android.support.v4.app.DialogFragment;
+//import android.support.v4.app.DialogFragment;
+import androidx.appcompat.app.AppCompatDialogFragment;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+//import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -40,17 +42,17 @@ public class ListActivity extends SingleFragmentActivity {
     }
     return super.onOptionsItemSelected(item);
   }
-  
+
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);// delegate to the fragment
   }
-  
-  public void showConfirmationDialog(DialogFragment dialog) {
+
+  public void showConfirmationDialog(AppCompatDialogFragment dialog) {
     dialog.show(getSupportFragmentManager(), "ConfirmationDialogFragment");
   }
-  
-  public static class ListPointsFragment extends Fragment 
+
+  public static class ListPointsFragment extends Fragment
       implements ConfirmationDialogFragment.ConfirmationDialogReceiver  {
 
     public static final String FLUSH="flush";
@@ -62,20 +64,20 @@ public class ListActivity extends SingleFragmentActivity {
     private ArrayList<String> mList;
     private ListHelper mListHelper = new ListHelper(mPointList);
     private ListHelper.MyArrayAdapter mAdapter;
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
       setHasOptionsMenu(true);
       mFragment=this;
     }
-      
+
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
       View v = inflater.inflate(R.layout.fragment_list, container, false);
       tvAlert = (TextView) v.findViewById(R.id.tvAlert);
       lvListView = (ListView) v.findViewById(R.id.lvListView);
-      
+
       if (mList == null) mList = mListHelper.getList();
       if (mList.isEmpty()) tvAlert.setText("No stored points");
       // Adapter must be created even if the list is empty
@@ -98,13 +100,13 @@ public class ListActivity extends SingleFragmentActivity {
       tvAlert.setTextColor(U.MSG_COLOR);
       return v;
     }
-    
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent dataIntent) {
       String result;
       if (requestCode != 1) return;
       if (resultCode == Activity.RESULT_OK) {
-        Bundle bd = dataIntent.getExtras();       
+        Bundle bd = dataIntent.getExtras();
         if (bd == null) {
           Log.e(U.TAG,"ListActivity:"+"No data received");
           return;
@@ -125,12 +127,12 @@ public class ListActivity extends SingleFragmentActivity {
         }
       }
     }
-    
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
       inflater.inflate(R.menu.list_fragment, menu);
     }
-    
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
       int id = item.getItemId();
@@ -193,7 +195,7 @@ public class ListActivity extends SingleFragmentActivity {
       }
       return true;
     }
-    
+
     private void requestConfirmation(int actionId, int actionStringId) {
       ConfirmationDialogFragment dialog = new ConfirmationDialogFragment();
       Map<String,String> args=new ArrayMap<String,String>();
@@ -201,13 +203,13 @@ public class ListActivity extends SingleFragmentActivity {
       args.put("actionStringId",String.valueOf(actionStringId));
       dialog.setArguments(U.map2bundle(args));
       dialog.setTargetFragment(mFragment, 1);
-      ((ListActivity) getActivity()).showConfirmationDialog(dialog);     
+      ((ListActivity) getActivity()).showConfirmationDialog(dialog);
     }
-        
+
     public void onConfirmationNegative(int id) {
       if (U.DEBUG) Log.d(U.TAG,"ListFragment:"+"ConfirmationNegative:"+id);
     }
-    
+
     public void onConfirmationPositive(int id) {
       if (U.DEBUG) Log.d(U.TAG,"ListFragment:"+"ConfirmationPositive:"+id);
       if (id == R.id.action_wipe) {
@@ -233,14 +235,14 @@ public class ListActivity extends SingleFragmentActivity {
       }
       trySavePoints();
     }
-    
+
     private void trySavePoints() {
       if ( ! mPointList.isDirty()) return;
       String res=mPointList.save();
       if ( ! res.equals(PointList.OK)) tvAlert.setText(res);
       if (U.DEBUG) Log.d(U.TAG,"ListFragment_trySavePoints:"+res);
     }
-    
+
     @Override
     public void onResume() {
       super.onResume();
@@ -260,11 +262,10 @@ public class ListActivity extends SingleFragmentActivity {
         adoptChanges();
       }
     }
-    
+
   }// end ListFragment
-  
+
   @Override
   protected Fragment createFragment() { return new ListPointsFragment(); }
 }
 
-  

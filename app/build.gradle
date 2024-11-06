@@ -29,7 +29,10 @@ android {
 }
 
 dependencies {
-    // still required after migration to androidX and setting targetApi 30
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.android.support:preference-v7:28.0.0'
+    //implementation 'com.android.support:appcompat-v7:28.0.0'
+    //implementation 'com.android.support:preference-v7:28.0.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation "androidx.preference:preference:1.2.1"
+    // cures "duplicate classes" error
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.0"))
 }

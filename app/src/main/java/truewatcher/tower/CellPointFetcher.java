@@ -5,8 +5,10 @@ import org.json.JSONObject;
 import android.Manifest;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
+//import android.support.annotation.RequiresApi;
+import androidx.annotation.RequiresApi;
 import android.util.Log;
+import androidx.fragment.app.FragmentActivity;
 
 public class CellPointFetcher extends PointFetcher implements PermissionReceiver,CellDataReceiver,HttpReceiver {
 
