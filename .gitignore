@@ -43,6 +43,7 @@ proguard/
 /*/out
 /*/*/build
 /*/*/production
+app/release
 captures/
 .navigation/
 *.ipr

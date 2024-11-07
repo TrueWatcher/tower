@@ -20,6 +20,16 @@ public class MainActivity extends SingleFragmentActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    MyRegistry registry = MyRegistry.getInstance(this);
+    try {
+      registry.readFromShared();
+      registry.syncSecrets();
+    } catch (U.DataException e) {
+      throw new RuntimeException(e);
+    }
+    U.useDayNightTheme(registry.get("theme"));
+    U.setMsgColorDayNight(this);
   }
 
   @Override
@@ -59,20 +69,21 @@ public class MainActivity extends SingleFragmentActivity {
       if (U.DEBUG) Log.i(U.TAG,"mainFragment:onCreate");
       setHasOptionsMenu(true);
 
-      mRegistry=MyRegistry.getInstance(getActivity());
+      //mRegistry=MyRegistry.getInstance(getActivity());
       //if (U.DEBUG) U.clearPrefs(getActivity()); // DEBUG
       //U.clearPrefs(getActivity()); // DEBUG
       //mRegistry.readFromShared(getActivity());
-      try {
+      /*try {
         mRegistry.readFromShared();
         mRegistry.syncSecrets();
       } catch (U.DataException e) {
         throw new RuntimeException(e);
-      }
+      }   moved to MainActivity.onCreate */
       mCellPointFetcher.setFragment(this);
       mGpsPointFetcher.setFragment(this);
-      U.useDayNightTheme(mRegistry.get("theme"));
-      U.setMsgColorDayNight(getActivity());
+      //U.useDayNightTheme(mRegistry.get("theme"));
+      //U.setMsgColorDayNight(getActivity());
+      mRegistry=MyRegistry.getInstance();
       boolean needsStoragePermission = ( mRegistry.getBool("useMediaFolder") && ( Build.VERSION.SDK_INT < 30 ));
       if (needsStoragePermission && ! checkStoragePermission()) {
         //mV.alert("No storage permission, asking user");
@@ -190,8 +201,6 @@ public class MainActivity extends SingleFragmentActivity {
     public void onResume() {
       super.onResume();
       if (U.DEBUG) Log.i(U.TAG,"mainFragment:onResume");
-      //U.useDayNightTheme(mRegistry.get("theme"));
-      //U.setMsgColorDayNight(getActivity());
       mCellPointFetcher.setFragment(this);
       mGpsPointFetcher.setFragment(this);
       mMapViewer.clearIndicator();

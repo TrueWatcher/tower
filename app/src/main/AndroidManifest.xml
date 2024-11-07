@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    android:versionCode="81"
-    android:versionName="2.11.0" >
+    android:versionCode="82"
+    android:versionName="2.11.1" >
 <!--
 2.8.3  68 07.01.2021 adapted for Android 9+ restrictions
 2.9.0  69 16.11.2023 signal dbm in CellInformer, 5G, targetApi > 30
@@ -17,6 +17,7 @@
 2.10.3 79 01.11.2024  added dayNight theme, BuildSDK -> 34
 2.10.4 80 01.11.2024  more on dayNight theme
 2.11.0 81 06.11.2024  migrated to androidx libraries
+2.11.1 82 07.11.2024  added TYPE_CLASS_NUMBER to Settings
 -->
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

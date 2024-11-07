@@ -15,6 +15,7 @@ import androidx.preference.ListPreference;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
@@ -87,14 +88,14 @@ public class PreferencesActivity extends AppCompatActivity {
 
       prepareListPreference("mapProvider");
       prepareListPreference("cellResolver");
-      prepareEditTextPref("mapZoom");
-      prepareEditTextPref("maxPoints");
+      prepareEditTextPref("mapZoom", true);
+      prepareEditTextPref("maxPoints", true);
       prepareSwitchPref("useMediaFolder");
       prepareSwitchPref("useTrash");
       prepareSwitchPref("enableTrack");
       prepareSwitchPref("shouldCenterMapOnTrack");
-      prepareEditTextPref("gpsMinDistance");
-      prepareEditTextPref("gpsMinDelayS");
+      prepareEditTextPref("gpsMinDistance", true);
+      prepareEditTextPref("gpsMinDelayS", true);
       prepareListPreference("theme");
 
       if ( ! mRegistry.getBool("isKeylessDistro")) {
@@ -118,10 +119,14 @@ public class PreferencesActivity extends AppCompatActivity {
       return lp;
     }
 
-    private EditTextPreference prepareEditTextPref(String key) {
+    private EditTextPreference prepareEditTextPref(String key, boolean isNumeric) {
       EditTextPreference etp = (EditTextPreference) findPreference(key);
       etp.setText(mRegistry.get(key));
       etp.setSummary(mRegistry.get(key));
+      if (isNumeric) {
+        // https://issuetracker.google.com/issues/118522177#comment18
+        etp.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER));
+      }
       return etp;
     }
 
@@ -145,8 +150,8 @@ public class PreferencesActivity extends AppCompatActivity {
         return;
       }
       if (key.equals("maxPoints")) {
-        String filtered=U.enforceInt(MyRegistry.INT_KEYS, key, String.valueOf(mp.get(key)));
-        int demanded=Integer.valueOf(filtered);
+        String filtered = U.enforceInt(MyRegistry.INT_KEYS, key, String.valueOf(mp.get(key)));
+        int demanded = Integer.valueOf(filtered);
         int adopted=Model.getInstance().getPointList().adoptMax(demanded);
         mRegistry.set(key, adopted);
         if (adopted != demanded) {
@@ -155,7 +160,7 @@ public class PreferencesActivity extends AppCompatActivity {
       }
       else {
         // make sure there are no letters in numbers
-        String filtered=U.enforceInt(MyRegistry.INT_KEYS, key, String.valueOf(mp.get(key)));
+        String filtered = U.enforceInt(MyRegistry.INT_KEYS, key, String.valueOf(mp.get(key)));
         mRegistry.set(key, filtered);
       }
       if (U.DEBUG) Log.i(U.TAG, "PreferencesFragment:"+"Preference "+key+" set to "+mRegistry.get(key));
