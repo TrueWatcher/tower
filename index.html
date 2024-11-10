@@ -14,11 +14,12 @@ This is a free software by TrueWatcher https://github.com/TrueWatcher/tower/tree
 1.16.2 02.12.2023 improved Point
 1.16.3 03.12.2023 fixed z-scaling over several tracks
 1.17.0 05.11.2023 added painting by cell id
-1.17.1 08.12.2023 cleanup Zmznager, README.md
+1.17.1 08.12.2023 cleanup Zmanager, README.md
 1.17.2 30.03.2024 minor fixes with JShint
+1.18.0 10.11.2024 added eNB
 -->
 <head>
-  <title>View GPX and CSV tracks and waypoints over online maps</title>
+  <title>View GPX and CSV tracks and waypoints over online maps (with cell mapping)</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <style>
@@ -58,10 +59,11 @@ This is a free software by TrueWatcher https://github.com/TrueWatcher/tower/tree
       <button id="getDataBtn" title="get point at map center">Point</button>
       &nbsp;&nbsp;&nbsp;
       <select id="zscaleSelect" name="zscaleSelect" title="Z scale" style="display: none;">
-        <option value="auto" selected>auto</option>
-        <option value="static -130 -30">-130 -30</option>
-        <option value="static -125 -85">-125 -85</option>
+        <option value="auto" selected>dBm auto</option>
+        <option value="static -130 -30">dBm -130 -30</option>
+        <option value="static -125 -85">dBm -125 -85</option>
         <option value="cell CID">cell CID</option>
+        <option value="cell ENB_ID">cell eNB ID</option>
         <option value="cell PCI">cell PCI</option>
       </select>
     </p>

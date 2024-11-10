@@ -16,6 +16,27 @@ wm.fb.Zmanager=function() {
     //alert(parts[header.ID]+": "+parts[header.DATA]+", "+parts[header.DATA1]);
     return [parts[header.DATA], parts[header.DATA1]];
   };
+  
+  this.addCellEnb = function(pointData, parts, header) {
+    const ENB = "ENB_ID";
+    var data1 = pointData[1];
+    var fromJson = JSON.parse(data1);
+    //alert(typeof asJson);
+    if (! (typeof fromJson == "object")) {
+      console.log("failed to parse json");
+      return pointData, parts;
+    }
+    if (fromJson.hasOwnProperty(ENB) || ! fromJson.CID) {
+      return pointData, parts;
+    }
+    var enb = 0;
+    if (fromJson.type == "LTE") enb = fromJson.CID >> 8;
+    fromJson[ENB] = enb;
+    var reJson = JSON.stringify(fromJson);
+    pointData[1] = reJson;
+    parts[header.DATA1] = reJson;
+    return pointData, parts;
+  }
 
   this.packSignalData=function(ret,extras) {
     var colors=[], breaks=[], bounds={};

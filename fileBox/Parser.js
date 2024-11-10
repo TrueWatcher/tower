@@ -183,19 +183,20 @@ wm.fb.Parser=function() {
   // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
   function readCsvLines(lines) {
     var i,processedCount=0,line,parts,lat,lon,newTrack,arr=[],segPositions=[],res,entry,makeEntry,pointData,ret,
-    getPointExtraData=function() { return false; }, onExtraData=function(x) { return x; };
+    getPointExtraData=function() { return false; }, processExtraData=function(x,y) { return x,y; }, onExtraData=function(x) { return x; };
 
     if (type == "csv_wpt") { makeEntry=makeMarker; }
     else if (type == "csv_track") { makeEntry=makeTrackLatLon; }
     else { alert("Possibly wrong type:"+type); }
     if (zPlugin && (type == "csv_track")) {
       //alert(zPlugin+"/"+zPlugin.searchCsvParts);
-      getPointExtraData=zPlugin.searchCsvParts;
-      onExtraData=zPlugin.packSignalData;
+      getPointExtraData = zPlugin.searchCsvParts;
+      processExtraData  = zPlugin.addCellEnb;
+      onExtraData       = zPlugin.packSignalData;
     }
 
     for (i=1; i<lines.length; i+=1) {
-      parts=cutCsvLine(lines[i], i);
+      parts = cutCsvLine(lines[i], i);
       if ( ! parts) continue;
       //console.log(wm.utils.dumpArray(parts));
       lat=parts[header.LAT];
@@ -203,8 +204,12 @@ wm.fb.Parser=function() {
       if ( ! lat || ! lon) continue;
       entry=makeEntry(lat,lon,parts);
       arr.push(entry);
-      pointData=getPointExtraData(parts, header);
-      if (pointData) extras.push(pointData);
+      pointData = getPointExtraData(parts, header);
+      if (pointData) {
+        pointData, parts = processExtraData(pointData, parts, header);
+        extras.push(pointData);
+        uncutCsvLine(parts, i);
+      }
       processedCount+=1;
     }
     res={total:lines.length, processed:processedCount, segments:1, segMap:[]};
@@ -255,6 +260,11 @@ wm.fb.Parser=function() {
     if (parts.length != header.count) throw new Error("Line "+i+": "+parts.length+" fields instead of "+header.count);
     return parts;
   }
+  
+  function uncutCsvLine(parts, i=0) {
+    if (parts.length != header.count) throw new Error("Line "+i+": "+parts.length+" fields instead of "+header.count);
+    lines[i] = parts.join(csv.SEP);
+  } 
 
   // @returns [lat,lon][][]
   function cutToSegments(arr,segPositions,res) {
