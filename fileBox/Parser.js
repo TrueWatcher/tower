@@ -182,8 +182,11 @@ wm.fb.Parser=function() {
 
   // @returns { trkPoints : [lat,lon][][], wayPoints : [lat,lon][], res : String };
   function readCsvLines(lines) {
-    var i,processedCount=0,line,parts,lat,lon,newTrack,arr=[],segPositions=[],res,entry,makeEntry,pointData,ret,
-    getPointExtraData=function() { return false; }, processExtraData=function(x,y) { return x,y; }, onExtraData=function(x) { return x; };
+    var i, processedCount=0, line, parts, partsMod, lat, lon, arr=[], segPositions=[], res, entry, pointData, ret, 
+    makeEntry=function() { alert("redefine this"); },
+    getPointExtraData=function() { return false; },
+    processExtraData=function(x,y) { return x,false; }, 
+    onExtraData=function(x) { return x; };
 
     if (type == "csv_wpt") { makeEntry=makeMarker; }
     else if (type == "csv_track") { makeEntry=makeTrackLatLon; }
@@ -206,9 +209,9 @@ wm.fb.Parser=function() {
       arr.push(entry);
       pointData = getPointExtraData(parts, header);
       if (pointData) {
-        pointData, parts = processExtraData(pointData, parts, header);
+        pointData, partsMod = processExtraData(pointData, parts, header);
         extras.push(pointData);
-        uncutCsvLine(parts, i);
+        if (partsMod) uncutCsvLine(partsMod, i);
       }
       processedCount+=1;
     }

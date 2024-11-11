@@ -8,6 +8,7 @@ wm.fb.Zmanager=function() {
       makeColorFn = makeSignalColor,
       colorSchemes = { orange: wm.utils.linearRGB2, redTrans: wm.utils.linearTranslucent, poly7: poly7 },
       cellList = [ 0 ];
+  const SIGNAL=0, CELL=1;
 
   this.searchCsvParts = function(parts, header) {
     if (parts[header.COMMENT] != 'S') return false;
@@ -19,21 +20,21 @@ wm.fb.Zmanager=function() {
   
   this.addCellEnb = function(pointData, parts, header) {
     const ENB = "ENB_ID";
-    var data1 = pointData[1];
+    var data1 = pointData[CELL];
     var fromJson = JSON.parse(data1);
     //alert(typeof asJson);
     if (! (typeof fromJson == "object")) {
       console.log("failed to parse json");
-      return pointData, parts;
+      return pointData, false;
     }
     if (fromJson.hasOwnProperty(ENB) || ! fromJson.CID) {
-      return pointData, parts;
+      return pointData, false;
     }
     var enb = 0;
     if (fromJson.type == "LTE") enb = fromJson.CID >> 8;
     fromJson[ENB] = enb;
     var reJson = JSON.stringify(fromJson);
-    pointData[1] = reJson;
+    pointData[CELL] = reJson;
     parts[header.DATA1] = reJson;
     return pointData, parts;
   }
@@ -52,9 +53,9 @@ wm.fb.Zmanager=function() {
     var i, prevCell='', extra, breaks=[];
     for (i=0; i<extras.length; i+=1) {
       extra=extras[i]; // [ dBm, cell ]
-      if (extra[1] != prevCell) {
-        prevCell=extra[1];
-        breaks.push(extra[1]);
+      if (extra[CELL] != prevCell) {
+        prevCell=extra[CELL];
+        breaks.push(extra[CELL]);
       }
       else { breaks.push(""); }
     }
@@ -67,7 +68,7 @@ wm.fb.Zmanager=function() {
     var failSafe = { low: defaultParams.low, high: defaultParams.high };
     if (params.scale == "static" || params.scale == "cell" ) return statiic;
     for (i=0; i<extras.length; i+=1) {
-      signal = getFieldValue(extras[i][0], params.dataField);
+      signal = getFieldValue(extras[i][SIGNAL], params.dataField);
       if (signal === false) continue;
       if (signal < params.lowYetReal) continue; // allows -999 instead of false
       if (signal < low) low = signal;
@@ -90,14 +91,14 @@ wm.fb.Zmanager=function() {
   }
 
   function makeSignalColor(extra, bounds) {
-    var signalAsInt = getFieldValue(extra[0], params.dataField);
+    var signalAsInt = getFieldValue(extra[SIGNAL], params.dataField);
     var as01 = normalize(signalAsInt, bounds);
     var asRgb = colorSchemes[params.colorScheme] (as01);
     return asRgb;
   }
 
   function makeCellColor(extra) {
-    var cellAsInt = getFieldValue(extra[1], params.cellField);
+    var cellAsInt = getFieldValue(extra[CELL], params.cellField);
     var asIndex = indexCells(cellAsInt);
     var asRgb = poly7(asIndex);
     return asRgb;
