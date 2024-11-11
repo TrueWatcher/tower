@@ -40,6 +40,10 @@ public class CellInformer {
   public static final long TOP = 0;
   public static final long ALL = -1;
   private int mIsCallback = -1;
+  public static final String NA1_str = "2147483647";
+  public static final String NA2_str = "268435455";
+  public static final int NA1_int = 2147483647;
+  public static final int NA2_int = 268435455;
 
   public void bindActivity(FragmentActivity a) { mActivity = a; }
 
@@ -118,7 +122,6 @@ public class CellInformer {
     mCallback.onCellDataObtained(cellDataList);
   }
 
-
   private int countRegisteres(List<CellInfo> cellInfos) {
     int found = 0;
     for (CellInfo c : cellInfos) {
@@ -182,8 +185,12 @@ public class CellInformer {
         data.accumulate("MCC", cellIdentityLte.getMcc());
         data.accumulate("MNC", cellIdentityLte.getMnc());
         data.accumulate("TAC", cellIdentityLte.getTac());
-        data.accumulate("CID", cellIdentityLte.getCi());
+        int cid = cellIdentityLte.getCi();
+        data.accumulate("CID", cid);
         data.accumulate("PCI", cellIdentityLte.getPci());
+        if (cid != 0 && cid != NA1_int && cid != NA2_int) {
+          data.accumulate("ENB_ID", cid >> 8);
+        }
         CellSignalStrengthLte ss = (CellSignalStrengthLte) cellInfoLte.getCellSignalStrength();
         if (U.classHasMethod(CellSignalStrengthLte.class, "getDbm")) {
           data.accumulate("dBm", ss.getDbm());

@@ -36,7 +36,7 @@ public class Trackpoint extends LatLon implements Cloneable {
           new String[] {"id","type","new_track","time","lat","lon","alt","range","comment","data","data1"}
           ));
   public static final List<String> CELL_PARAMS = Collections.unmodifiableList(Arrays.asList(
-          new String[] {"type","MCC","MNC","LAC","TAC","CID","PCI"}
+          new String[] {"type","MCC","MNC","LAC","TAC","CID","PCI","ENB_ID"}
   ));
   public static final String SEP = ";";
   public static final String NL = "\n";

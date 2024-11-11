@@ -11,7 +11,9 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
+import android.util.ArrayMap;
 import android.util.Log;
+import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -26,8 +28,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.List;
+import java.util.Map;
 
 import androidx.annotation.RequiresApi;
+import androidx.collection.SparseArrayCompat;
 import androidx.fragment.app.FragmentActivity;
 
 public class CellsActivity extends SingleFragmentActivity {
@@ -188,9 +192,10 @@ public class CellsActivity extends SingleFragmentActivity {
 
     private class Viewer {
       private TextView tvState, tvData;
-      private final String fields = "[\"type\", \"MNC\", \"CID\", \"PCI\", \"dBm\"]";
-      JSONArray mFa = new JSONArray();
+      private final String FIELDS = "[\"type\", \"MNC\", \"CID\", \"ENB_ID\", \"PCI\", \"dBm\"]";
+      JSONArray mFieldArr = new JSONArray();
       String mHeadline = "";
+      private SparseArrayCompat<String> mEnbCache = Model.getInstance().getEnbCache();
 
       @RequiresApi(api = Build.VERSION_CODES.N)
       public Viewer(View v) {
@@ -198,22 +203,22 @@ public class CellsActivity extends SingleFragmentActivity {
         tvData = (TextView) v.findViewById(R.id.tvData);
         tvState.setTextColor(U.MSG_COLOR);
         try {
-          mFa = new JSONArray(fields);
+          mFieldArr = new JSONArray(FIELDS);
         } catch (JSONException e) {
           throw new U.RunException("Not to happen");
         }
         String s = "";
-        for (int i = 0; i < mFa.length(); i += 1) {
+        for (int i = 0; i < mFieldArr.length(); i += 1) {
           try {
-            s = mFa.getString(i);
+            s = mFieldArr.getString(i);
           } catch (JSONException e) {
             s = "*";
           }
-          mHeadline += s + " \t";
+          mHeadline += s + "  ";
         }
         float textSize = tvState.getTextSize(); // gives px
         // https://stackoverflow.com/questions/3687065/textview-settextsize-behaves-abnormally-how-to-set-text-size-of-textview-dynam
-        tvData.setTextSize( TypedValue.COMPLEX_UNIT_PX,textSize * 1.25f);
+        tvData.setTextSize( TypedValue.COMPLEX_UNIT_PX,textSize * 1.15f);
       }
 
       public void alert(String s) {
@@ -247,20 +252,54 @@ public class CellsActivity extends SingleFragmentActivity {
 
       private String cell(JSONObject cellData) {
         StringBuilder b = new StringBuilder();
-        String s = "";
-        String f="";
-        for (int i=0; i < mFa.length(); i+=1) {
+        String value = "";
+        String key = "";
+        for (int i = 0; i < mFieldArr.length(); i+=1) {
           try {
-            f = mFa.getString(i);
-            s = cellData.getString(f);
+            key = mFieldArr.getString(i);
+          } catch (JSONException e) {
+            throw new U.RunException("Not to happen");
           }
-          catch (JSONException e) { s = "-"; }
-          if (s.equals("2147483647")) s="--";
-          if (s.equals("268435455")) s="--";
-          b.append(s);
-          b.append(" \t");
+          value = getField(key, cellData);
+          if (key.equals("ENB_ID")) { value = cacheEnb(value, cellData); }
+          b.append(value);
+          b.append("  ");
         }
         return b.toString();
+      }
+
+      private String getField(String key, JSONObject cellData) {
+        String value = "-";
+        try {
+          value = cellData.getString(key);
+        }
+        catch (JSONException e) { value = "-"; }
+        if (value.equals(CellInformer.NA1_str) ||
+                value.equals(CellInformer.NA2_str)) value="--";
+        return value;
+      }
+
+      private int getPci(JSONObject cellData) {
+        int pci = 0;
+        String v = getField("PCI", cellData);
+        try {
+          pci = Integer.parseInt(v);
+        }
+        catch (NumberFormatException e) { pci = 0; }
+        return pci;
+      }
+
+      private String cacheEnb(String enbValue, JSONObject cellData) {
+        int pci = getPci(cellData);
+        if (pci <= 0) return enbValue;
+        if (! enbValue.isEmpty() && enbValue.indexOf("-") < 0) {
+          mEnbCache.put(pci, enbValue);
+          return enbValue;
+        }
+        else {
+          if (mEnbCache.containsKey(pci)) { return mEnbCache.get(pci); }
+        }
+        return enbValue;
       }
 
       private SpannableString setColor(String s, int color) {

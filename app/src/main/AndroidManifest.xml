@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="truewatcher.signaltrackwriter"
-    android:versionCode="34"
-    android:versionName="2.7.2" >
+    android:versionCode="35"
+    android:versionName="2.8.0" >
   <!--
   trackwriter
   1.4.0 5 18.02.2020 added saving to the truewatcher.tower folder
@@ -26,10 +26,12 @@
   2.7.0  32 30.09.2024 upgrade to SDK 33 (Android 13)
   2.7.1  33 31.09.2024 improvements
   2.7.2  34 12.10.2024 notification permission for Android 13+
+  2.8.0  35 11.11.2024 added ENB_ID
   -->
 
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />

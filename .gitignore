@@ -42,6 +42,7 @@ proguard/
 /*/local.properties
 /*/out
 /*/*/build
+app/release/
 /*/*/production
 captures/
 .navigation/
