@@ -8,9 +8,11 @@ The app writes a GPS track with cell ID and signal strength data to a local stor
 To start recording, press _Start_ or _Start New Segment_ and wait for your device's GPS to become operational.
 Keep the app window maximized to avoid sudden stopping by your OS. 
 Your can turn the screen off with the Power button.
-To stop recording, press _Stop_.
+To stop recording, press _Stop_. The recording service does not run at startup, nor survives reboot.
 
-The resulting file is called currentSignalTrack.csv and is stored in the app data folder. As Android 10+ do not allow third-party access to Androis/data, [newer versions of the app](http://tower.posmotrel.net/index.html#stw) (since 2.7.0) use Documents or Android/media
+There is a CELLS screen, that monitors all cells, visible to the phone's radio module at the moment. Since 2.8.1, it shows base station id (eNB for LTE and its equivalent for 3G) along with CellId, PCI and signal strength.
+
+The resulting file is called currentSignalTrack.csv and is stored in the app data folder. As Android 10+ do not allow sharing of files stored in Androis/data, [newer versions of the app](http://tower.posmotrel.net/index.html#stw) (since 2.7.0) use Documents or Android/media
 (somewhere like /storage/emulated/0/Documents/truewatcher.signaltrackwriter or /storage/emulated/0/Android/media/truewatcher.signaltrackwriter).
 You can rename, remove or edit that file if you like.
 

@@ -173,7 +173,11 @@ public class CellInformer {
         data.accumulate("MCC", cellIdentityWcdma.getMcc());
         data.accumulate("MNC", cellIdentityWcdma.getMnc());
         data.accumulate("LAC", cellIdentityWcdma.getLac());
-        data.accumulate("CID", cellIdentityWcdma.getCid());
+        int cid = cellIdentityWcdma.getCid();
+        data.accumulate("CID", cid);
+        if (cid != 0 && cid != NA1_int && cid != NA2_int) {
+          data.accumulate("ENB_ID", (cid & 0x0000ffff) / 10 );
+        }
         int dbm = cellInfoWcdma.getCellSignalStrength().getDbm();
         // Get the RSCP as dBm value -120..-24dBm or UNAVAILABLE
         data.accumulate("dBm", dbm);
