@@ -32,6 +32,7 @@ wm.fb.Zmanager=function() {
     }
     var enb = 0;
     if (fromJson.type == "LTE") enb = fromJson.CID >> 8;
+    if (fromJson.type == "WCDMA") enb = Math.trunc((fromJson.CID & 0xffff)/10 + 0.0001);
     fromJson[ENB] = enb;
     var reJson = JSON.stringify(fromJson);
     pointData[CELL] = reJson;
