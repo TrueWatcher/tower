@@ -42,12 +42,12 @@
                 android:layout_height="wrap_content"
                 android:layout_marginRight="10dp"
                 android:text="type" />
-            
+
             <TextView
                 android:id="@+id/tvComment"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
-            
+
         </LinearLayout>
 
         <TextView
@@ -95,7 +95,7 @@
                 android:id="@+id/tvAlt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
-            
+
         </LinearLayout>
 
         <TextView
@@ -119,7 +119,8 @@
                 android:id="@+id/bNoteOk"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/ic_done_black_24dp" />
+                android:src="@drawable/ic_done_black_white_24dp"
+                 />
 
         </LinearLayout>
 
